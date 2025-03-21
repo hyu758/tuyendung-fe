@@ -99,45 +99,60 @@ const router = createRouter({
   }
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  const isAuthenticated = authStore.isAuthenticated
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const guestOnly = to.matched.some(record => record.meta.guestOnly)
   
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!isAuthenticated) {
-      next({ name: 'Login', query: { redirect: to.fullPath } })
+  // Nếu route cần xác thực
+  if (requiresAuth) {
+    // Kiểm tra nếu có token
+    if (authStore.isAuthenticated) {
+      // Kiểm tra trạng thái kích hoạt từ token trước
+      if (!authStore.isActivated && to.name !== 'Activate') {
+        // Nếu chưa kích hoạt theo thông tin từ token, cập nhật thông tin từ token
+        if (!authStore.user) {
+          authStore.updateUserFromToken()
+        }
+        
+        // Kiểm tra lại sau khi cập nhật - nếu vẫn chưa kích hoạt
+        if (!authStore.isActivated) {
+          const email = authStore.user?.username || localStorage.getItem('username')
+          return next({
+            name: 'Activate',
+            params: { email }
+          })
+        }
+      }
+      
+      // Kiểm tra quyền truy cập dựa trên vai trò
+      const roleRequired = to.matched.find(record => record.meta.role)?.meta.role
+      if (roleRequired && authStore.userRole !== roleRequired) {
+        // Nếu không có quyền, điều hướng về trang chủ
+        return next({ path: '/' })
+      }
+      
+      // Cho phép truy cập
+      next()
     } else {
-      if (!authStore.isActivated) {
-        authStore.error = 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt.'
-        next({ name: 'Activate', params: { email: authStore.user?.email || '' } })
-      } else if (to.matched.some(record => record.meta.role) && 
-          !to.matched.some(record => record.meta.role === authStore.userRole)) {
-        next({ name: 'Home' })
-      } else {
-        next()
-      }
+      // Chuyển hướng đến trang đăng nhập nếu chưa xác thực
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      })
     }
-  } else if (to.matched.some(record => record.meta.guest)) {
-    if (isAuthenticated) {
-      if (authStore.isActivated) {
-        if (authStore.userRole === 'admin' && router.hasRoute('AdminDashboard')) {
-          next({ name: 'AdminDashboard' })
-        } else if (authStore.userRole === 'employer' && router.hasRoute('EmployerDashboard')) {
-          next({ name: 'EmployerDashboard' })
-        } else {
-          next({ name: 'Home' })
-        }
-      } else {
-        if (to.name === 'Activate') {
-          next()
-        } else {
-          next({ name: 'Activate', params: { email: authStore.user?.email || '' } })
-        }
-      }
+  } 
+  // Nếu route chỉ dành cho khách
+  else if (guestOnly) {
+    if (authStore.isAuthenticated) {
+      // Nếu đã đăng nhập, chuyển hướng về trang chủ
+      next({ path: '/' })
     } else {
       next()
     }
-  } else {
+  } 
+  // Route công khai, cho phép truy cập
+  else {
     next()
   }
 })

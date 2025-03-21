@@ -3,25 +3,86 @@ import axios from 'axios'
 import router from '../router'
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    user: null,
-    token: localStorage.getItem('token') || null,
-    loading: false,
-    error: null
-  }),
+  state: () => {
+    return {
+      user: null,
+      token: localStorage.getItem('token') || null,
+      loading: false,
+      error: null
+    }
+  },
   
   getters: {
     isAuthenticated: (state) => !!state.token,
-    isEmployer: (state) => state.user?.is_recruiter === true,
-    isCandidate: (state) => state.user?.is_applicant === true,
-    isAdmin: (state) => state.user?.is_admin === true,
-    isActivated: (state) => state.user?.is_active === true,
-    userFullName: (state) => state.user ? `${state.user.firstName || ''} ${state.user.lastName || ''}`.trim() : '',
-    userRole: (state) => {
-      if (!state.user) return null
-      if (state.user.is_admin) return 'admin'
-      if (state.user.is_recruiter) return 'employer'
-      if (state.user.is_applicant) return 'candidate'
+    
+    // Giải mã JWT token để lấy thông tin
+    decodedToken() {
+      if (!this.token) return null
+      
+      try {
+        // Phân tích JWT token để lấy payload
+        const base64Url = this.token.split('.')[1]
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+        return JSON.parse(window.atob(base64))
+      } catch (e) {
+        console.error('Lỗi khi giải mã JWT token:', e)
+        return null
+      }
+    },
+    
+    // Lấy toàn bộ thông tin user từ token hoặc state
+    userInfo() {
+      // Nếu đã có thông tin user trong state, trả về nó
+      if (this.user) return this.user
+      
+      // Nếu không có, thử lấy từ token
+      const decoded = this.decodedToken
+      if (!decoded) return null
+      
+      // Tạo đối tượng user từ thông tin trong token
+      return {
+        username: decoded.username || decoded.email || localStorage.getItem('username'),
+        user_id: decoded.user_id,
+        is_active: decoded.is_active,
+        is_admin: decoded.role === 'admin',
+        is_recruiter: decoded.role === 'employer',
+        is_applicant: decoded.role === 'candidate' || decoded.role === 'Người tìm việc'
+      }
+    },
+    
+    // Các getter dựa trên userInfo
+    isActivated() {
+      const user = this.userInfo
+      return user ? user.is_active === true : false
+    },
+    
+    isEmployer() {
+      const user = this.userInfo
+      return user ? user.is_recruiter === true : false
+    },
+    
+    isCandidate() {
+      const user = this.userInfo
+      return user ? user.is_applicant === true : false
+    },
+    
+    isAdmin() {
+      const user = this.userInfo
+      return user ? user.is_admin === true : false
+    },
+    
+    userFullName() {
+      const user = this.userInfo
+      if (!user) return ''
+      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || ''
+    },
+    
+    userRole() {
+      const user = this.userInfo
+      if (!user) return null
+      if (user.is_admin) return 'admin'
+      if (user.is_recruiter) return 'employer'
+      if (user.is_applicant) return 'candidate'
       return null
     }
   },
@@ -38,6 +99,8 @@ export const useAuthStore = defineStore('auth', {
         })
         
         if (response.data.status === 200) {
+          console.log('Full login response:', response.data)
+          
           // Lưu token
           const accessToken = response.data.data.access
           const refreshToken = response.data.data.refresh
@@ -46,13 +109,28 @@ export const useAuthStore = defineStore('auth', {
           localStorage.setItem('token', accessToken)
           localStorage.setItem('refreshToken', refreshToken)
           
-          // Lấy thông tin người dùng từ token
-          await this.fetchCurrentUser()
+          // Giải mã token để lấy thông tin người dùng
+          const decodedToken = this.decodedToken
+          console.log('Decoded JWT token:', decodedToken)
+          
+          // Lưu username vào localStorage
+          localStorage.setItem('username', credentials.email)
+          
+          // Cập nhật thông tin từ token
+          this.updateUserFromToken()
           
           // Kiểm tra tài khoản đã kích hoạt chưa
           if (!this.isActivated) {
             // Thông báo cần kích hoạt và chuyển hướng đến trang kích hoạt
             this.error = 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt tài khoản.'
+            
+            // Thêm thông báo cho người dùng
+            localStorage.setItem('notification', JSON.stringify({
+              type: 'warning',
+              message: this.error,
+              show: true
+            }))
+            
             this.logout(false) // Đăng xuất nhưng không chuyển hướng
             router.push({
               name: 'Activate',
@@ -61,14 +139,15 @@ export const useAuthStore = defineStore('auth', {
             return { success: false, error: this.error }
           }
           
-          // Chuyển hướng dựa trên vai trò
-          if (this.userRole === 'admin') {
-            router.push('/admin/dashboard')
-          } else if (this.userRole === 'employer') {
-            router.push('/employer/dashboard')
-          } else {
-            router.push('/')
-          }
+          // Thêm thông báo đăng nhập thành công
+          localStorage.setItem('notification', JSON.stringify({
+            type: 'success',
+            message: 'Đăng nhập thành công! Chào mừng trở lại.',
+            show: true
+          }))
+          
+          // Chuyển hướng về trang chủ sau khi đăng nhập thành công
+          router.push('/')
           
           return { success: true }
         } else {
@@ -77,6 +156,14 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         console.error('Đăng nhập thất bại:', error)
         this.error = error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
+        
+        // Thêm thông báo lỗi đăng nhập
+        localStorage.setItem('notification', JSON.stringify({
+          type: 'error',
+          message: this.error,
+          show: true
+        }))
+        
         return { success: false, error: this.error }
       } finally {
         this.loading = false
@@ -98,14 +185,30 @@ export const useAuthStore = defineStore('auth', {
         })
         
         if (response.data.status === 201) {
+          // Thêm thông báo đăng ký thành công
+          const successMessage = 'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.'
+          localStorage.setItem('notification', JSON.stringify({
+            type: 'success',
+            message: successMessage,
+            show: true
+          }))
+          
           // Đăng ký thành công, chuyển hướng về trang kích hoạt
-          return { success: true, message: response.data.message }
+          return { success: true, message: successMessage }
         } else {
           throw new Error(response.data.message || 'Đăng ký thất bại')
         }
       } catch (error) {
         console.error('Đăng ký thất bại:', error)
         this.error = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.'
+        
+        // Thêm thông báo lỗi đăng ký
+        localStorage.setItem('notification', JSON.stringify({
+          type: 'error',
+          message: this.error,
+          show: true
+        }))
+        
         return { success: false, error: this.error }
       } finally {
         this.loading = false
@@ -123,7 +226,7 @@ export const useAuthStore = defineStore('auth', {
         if (response.data.status === 200) {
           // Nếu kích hoạt thành công, cập nhật trạng thái người dùng nếu đang đăng nhập
           if (this.isAuthenticated) {
-            await this.fetchCurrentUser()
+            await this.updateUserFromToken()
           }
           return { success: true, message: response.data.message || 'Tài khoản đã được kích hoạt thành công!' }
         } else {
@@ -164,26 +267,43 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    async fetchCurrentUser() {
-      if (!this.token) return
-      
-      this.loading = true
+    updateUserFromToken() {
+      if (!this.token) return null
       
       try {
-        // Giả định rằng API trả về thông tin người dùng hiện tại từ token
-        // Đây là điểm bạn cần điều chỉnh dựa vào API thực tế của bạn
-        const response = await axios.get('/api/user/me/') // Thay đổi endpoint thành API lấy thông tin user
-        this.user = response.data
-        
-        // Chỉ lưu username, không lưu vai trò vào localStorage
-        localStorage.setItem('username', this.user.username)
-      } catch (error) {
-        console.error('Không thể lấy thông tin người dùng:', error)
-        if (error.response?.status === 401) {
-          this.logout()
+        const decoded = this.decodedToken
+        if (!decoded) {
+          console.error('Không thể giải mã token')
+          return null
         }
-      } finally {
-        this.loading = false
+        
+        console.log('Sử dụng thông tin từ token:', decoded)
+        
+        // Cập nhật thông tin user từ token
+        this.user = {
+          username: decoded.username || decoded.email || localStorage.getItem('username'),
+          user_id: decoded.user_id,
+          is_active: decoded.is_active,
+          is_admin: decoded.role === 'admin',
+          is_recruiter: decoded.role === 'employer',
+          is_applicant: decoded.role === 'candidate' || decoded.role === 'Người tìm việc'
+        }
+        
+        console.log('User object after setting from token:', this.user)
+        
+        // Nếu tài khoản chưa kích hoạt, xử lý tương tự fetchCurrentUser
+        if (!this.isActivated) {
+          this.error = 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt tài khoản.'
+          router.push({
+            name: 'Activate',
+            params: { email: this.user.username }
+          })
+        }
+        
+        return this.user
+      } catch (error) {
+        console.error('Lỗi khi cập nhật thông tin từ token:', error)
+        return null
       }
     },
     
@@ -191,6 +311,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.token = null
       
+      // Xóa dữ liệu từ localStorage
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('username')

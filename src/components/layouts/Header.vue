@@ -114,7 +114,7 @@
   </header>
 
   <!-- Thông báo tài khoản chưa kích hoạt -->
-  <div v-if="isAuthenticated && !isActivated" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+  <div v-if="isAuthenticated && !isActive" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
     <div class="container mx-auto px-4 flex items-center justify-between">
       <div class="flex items-center">
         <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="mr-2" />
@@ -128,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 
@@ -140,20 +140,39 @@ const profileDropdown = ref(null)
 
 // Sử dụng thông tin từ authStore
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const isActivated = computed(() => authStore.isActivated)
+const isActive = computed(() => {
+  // Lấy trạng thái kích hoạt trực tiếp từ getter đã cập nhật
+  const active = authStore.isActivated
+  console.log('isActive computed from token:', active)
+  return active
+})
 const userRole = computed(() => authStore.userRole)
 const userFullName = computed(() => authStore.userFullName)
 
 // Giữ lại biến username từ localStorage cho trường hợp chưa lấy được thông tin người dùng
 const username = ref('')
 
+// Watch cho sự thay đổi của authStore.user để cập nhật UI
+watch(() => authStore.user, (newUser) => {
+  console.log('User changed in Header watch:', newUser)
+  if (newUser) {
+    console.log('New user is_active:', newUser.is_active)
+  }
+}, { deep: true, immediate: true })
+
 onMounted(() => {
-  // Lấy username từ localStorage
+  // Lấy username từ localStorage để hiển thị ban đầu
   username.value = localStorage.getItem('username') || 'Người dùng'
   
-  // Nếu đã đăng nhập nhưng chưa có thông tin user, thử lấy thông tin
-  if (isAuthenticated.value && !authStore.user) {
-    authStore.fetchCurrentUser()
+  // Kiểm tra thông tin từ token
+  if (isAuthenticated.value) {
+    console.log('Header mounted - Checking token info')
+    console.log('Is account activated (from token):', isActive.value)
+    
+    // Nếu cần thông tin chi tiết hơn, cập nhật từ token
+    if (!authStore.user) {
+      authStore.updateUserFromToken()
+    }
   }
   
   // Thêm sự kiện click bên ngoài để đóng dropdown

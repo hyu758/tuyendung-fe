@@ -33,7 +33,7 @@ library.add(
 )
 
 // Cấu hình Axios
-axios.defaults.baseURL = 'http://127.0.0.1:8000/api'  // Cấu hình với API endpoint cơ bản
+axios.defaults.baseURL = 'http://127.0.0.1:8000'  // Cấu hình với API endpoint cơ bản
 axios.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
   if (token) {
