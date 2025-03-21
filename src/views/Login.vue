@@ -20,14 +20,15 @@
         <form @submit.prevent="handleSubmit">
           <div class="space-y-6">
             <BaseInput
-              v-model="email"
-              type="email"
-              label="Email"
-              placeholder="Email của bạn"
-              autocomplete="email"
+              v-model="username"
+              type="text"
+              label="Tên đăng nhập"
+              placeholder="Tên đăng nhập của bạn"
+              autocomplete="username"
               required
-              prefixIcon="envelope"
-              :error="errors.email"
+              prefixIcon="user"
+              :error="errors.username"
+              class="transform transition-all duration-200 focus-within:scale-105"
             />
             
             <BaseInput
@@ -39,21 +40,24 @@
               required
               prefixIcon="lock"
               :error="errors.password"
+              class="transform transition-all duration-200 focus-within:scale-105"
             />
             
             <div class="flex items-center justify-between">
               <div class="flex items-center">
                 <input
-                  id="remember-me"
+                  id="remember_me"
                   type="checkbox"
                   v-model="rememberMe"
-                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all"
                 />
-                <label for="remember-me" class="ml-2 block text-sm text-gray-700">Ghi nhớ đăng nhập</label>
+                <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                  Ghi nhớ đăng nhập
+                </label>
               </div>
               
               <div class="text-sm">
-                <router-link to="/forgot-password" class="text-blue-600 hover:text-blue-800">
+                <router-link to="/forgot-password" class="font-medium text-blue-600 hover:text-blue-800 transition-colors">
                   Quên mật khẩu?
                 </router-link>
               </div>
@@ -67,7 +71,7 @@
                 label="Đăng nhập"
                 :loading="authStore.loading"
                 :disabled="authStore.loading"
-                class="w-full"
+                class="w-full transform transition-all duration-300 hover:shadow-lg hover:scale-105 rounded-lg py-4 text-lg font-bold"
               />
             </div>
           </div>
@@ -126,7 +130,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 // Form fields
-const email = ref('')
+const username = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const errors = ref({})
@@ -139,10 +143,9 @@ onMounted(() => {
   // Check if user is already authenticated
   if (authStore.isAuthenticated) {
     // Redirect based on role
-    const userRole = localStorage.getItem('userRole')
-    if (userRole === 'admin') {
+    if (authStore.userRole === 'admin') {
       router.push('/admin/dashboard')
-    } else if (userRole === 'employer') {
+    } else if (authStore.userRole === 'employer') {
       router.push('/employer/dashboard')
     } else {
       router.push('/')
@@ -157,11 +160,8 @@ const handleSubmit = async () => {
   authStore.error = null
   let isValid = true
   
-  if (!email.value) {
-    errors.value.email = 'Email không được để trống'
-    isValid = false
-  } else if (!isValidEmail(email.value)) {
-    errors.value.email = 'Email không hợp lệ'
+  if (!username.value) {
+    errors.value.username = 'Tên đăng nhập không được để trống'
     isValid = false
   }
   
@@ -175,7 +175,7 @@ const handleSubmit = async () => {
   try {
     // Submit form
     const result = await authStore.login({
-      email: email.value,
+      email: username.value,
       password: password.value,
       remember: rememberMe.value
     })

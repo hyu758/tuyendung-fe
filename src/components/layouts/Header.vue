@@ -37,7 +37,7 @@
           </router-link>
           
           <!-- Menu cho người dùng chưa đăng nhập -->
-          <template v-if="!isLoggedIn">
+          <template v-if="!isAuthenticated">
             <router-link to="/login" class="text-gray-700 hover:text-blue-600">
               Đăng nhập
             </router-link>
@@ -55,7 +55,7 @@
               @click="toggleDropdown" 
               class="flex items-center text-gray-700 hover:text-blue-600 focus:outline-none"
             >
-              <span class="mr-1">{{ username }}</span>
+              <span class="mr-1">{{ userFullName || username }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
@@ -112,29 +112,48 @@
       </div>
     </div>
   </header>
+
+  <!-- Thông báo tài khoản chưa kích hoạt -->
+  <div v-if="isAuthenticated && !isActivated" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+    <div class="container mx-auto px-4 flex items-center justify-between">
+      <div class="flex items-center">
+        <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="mr-2" />
+        <p>Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt tài khoản.</p>
+      </div>
+      <router-link to="/activate" class="text-blue-600 hover:text-blue-800 underline font-medium">
+        Gửi lại mã kích hoạt
+      </router-link>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const searchTerm = ref('')
 const showDropdown = ref(false)
 const profileDropdown = ref(null)
 
-// Giả sử các thông tin người dùng được lưu trong localStorage
-const isLoggedIn = ref(false)
+// Sử dụng thông tin từ authStore
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+const isActivated = computed(() => authStore.isActivated)
+const userRole = computed(() => authStore.userRole)
+const userFullName = computed(() => authStore.userFullName)
+
+// Giữ lại biến username từ localStorage cho trường hợp chưa lấy được thông tin người dùng
 const username = ref('')
-const userRole = ref('')
 
 onMounted(() => {
-  // Kiểm tra trạng thái đăng nhập
-  const token = localStorage.getItem('token')
-  if (token) {
-    isLoggedIn.value = true
-    username.value = localStorage.getItem('username') || 'Người dùng'
-    userRole.value = localStorage.getItem('userRole') || ''
+  // Lấy username từ localStorage
+  username.value = localStorage.getItem('username') || 'Người dùng'
+  
+  // Nếu đã đăng nhập nhưng chưa có thông tin user, thử lấy thông tin
+  if (isAuthenticated.value && !authStore.user) {
+    authStore.fetchCurrentUser()
   }
   
   // Thêm sự kiện click bên ngoài để đóng dropdown
@@ -165,16 +184,7 @@ const handleClickOutside = (event) => {
 }
 
 const logout = () => {
-  // Xóa thông tin đăng nhập
-  localStorage.removeItem('token')
-  localStorage.removeItem('username')
-  localStorage.removeItem('userRole')
-  
-  // Cập nhật trạng thái
-  isLoggedIn.value = false
+  authStore.logout()
   showDropdown.value = false
-  
-  // Chuyển hướng về trang chủ
-  router.push('/')
 }
 </script> 

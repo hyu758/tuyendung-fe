@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const routes = [
   {
@@ -17,6 +18,21 @@ const routes = [
     name: 'Register',
     component: () => import('../views/Register.vue'),
     meta: { guest: true }
+  },
+  {
+    path: '/activate/:email?',
+    name: 'Activate',
+    component: () => import('../views/Activate.vue'),
+    meta: { guest: true }
+  },
+  {
+    path: '/api/activate/:token',
+    redirect: to => {
+      return { 
+        name: 'Activate', 
+        params: { token: to.params.token } 
+      }
+    }
   },
   {
     path: '/forgot-password',
@@ -84,15 +100,18 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('token')
-  const userRole = localStorage.getItem('userRole')
+  const authStore = useAuthStore()
+  const isAuthenticated = authStore.isAuthenticated
   
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!isAuthenticated) {
       next({ name: 'Login', query: { redirect: to.fullPath } })
     } else {
-      if (to.matched.some(record => record.meta.role) && 
-          !to.matched.some(record => record.meta.role === userRole)) {
+      if (!authStore.isActivated) {
+        authStore.error = 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt.'
+        next({ name: 'Activate', params: { email: authStore.user?.email || '' } })
+      } else if (to.matched.some(record => record.meta.role) && 
+          !to.matched.some(record => record.meta.role === authStore.userRole)) {
         next({ name: 'Home' })
       } else {
         next()
@@ -100,20 +119,20 @@ router.beforeEach((to, from, next) => {
     }
   } else if (to.matched.some(record => record.meta.guest)) {
     if (isAuthenticated) {
-      if (userRole === 'admin') {
-        if (router.hasRoute('AdminDashboard')) {
+      if (authStore.isActivated) {
+        if (authStore.userRole === 'admin' && router.hasRoute('AdminDashboard')) {
           next({ name: 'AdminDashboard' })
-        } else {
-          next({ name: 'Home' })
-        }
-      } else if (userRole === 'employer') {
-        if (router.hasRoute('EmployerDashboard')) {
+        } else if (authStore.userRole === 'employer' && router.hasRoute('EmployerDashboard')) {
           next({ name: 'EmployerDashboard' })
         } else {
           next({ name: 'Home' })
         }
       } else {
-        next({ name: 'Home' })
+        if (to.name === 'Activate') {
+          next()
+        } else {
+          next({ name: 'Activate', params: { email: authStore.user?.email || '' } })
+        }
       }
     } else {
       next()

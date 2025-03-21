@@ -10,7 +10,7 @@
         v-if="prefixIcon" 
         class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500"
       >
-        <font-awesome-icon :icon="prefixIcon" />
+        <font-awesome-icon :icon="prefixIcon" class="text-lg" />
       </div>
       
       <input
@@ -23,7 +23,7 @@
         :disabled="disabled"
         :readonly="readonly"
         :class="[
-          'w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500',
+          'w-full py-3 px-4 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base',
           { 'pl-10': prefixIcon },
           { 'pr-10': suffixIcon || type === 'password' },
           { 'opacity-60 cursor-not-allowed': disabled },
@@ -42,7 +42,7 @@
         v-if="suffixIcon" 
         class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-500"
       >
-        <font-awesome-icon :icon="suffixIcon" />
+        <font-awesome-icon :icon="suffixIcon" class="text-lg" />
       </div>
       
       <button
@@ -51,15 +51,15 @@
         class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 focus:outline-none"
         @click="togglePasswordVisibility"
       >
-        <font-awesome-icon :icon="showPassword ? 'eye-slash' : 'eye'" />
+        <font-awesome-icon :icon="showPassword ? 'eye-slash' : 'eye'" class="text-lg" />
       </button>
     </div>
     
-    <div v-if="error" class="mt-1 text-sm text-red-600">
+    <div v-if="error" class="mt-1.5 text-sm text-red-600">
       {{ error }}
     </div>
     
-    <div v-if="helpText" class="mt-1 text-sm text-gray-500">
+    <div v-if="helpText" class="mt-1.5 text-sm text-gray-500">
       {{ helpText }}
     </div>
   </div>

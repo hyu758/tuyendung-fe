@@ -1,12 +1,12 @@
 <template>
-  <div class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-lg mx-auto">
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Đăng ký tài khoản</h1>
-        <p class="text-gray-600">Tạo tài khoản mới để sử dụng đầy đủ tính năng của JobHub</p>
+      <div class="text-center mb-10">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-3 animate__animated animate__fadeIn">Đăng ký tài khoản</h1>
+        <p class="text-lg text-gray-600">Tạo tài khoản mới để sử dụng đầy đủ tính năng của JobHub</p>
       </div>
       
-      <div class="bg-white py-8 px-6 shadow rounded-lg">
+      <div class="bg-white py-8 px-6 shadow-xl rounded-xl transition-all duration-300 transform hover:shadow-2xl">
         <BaseAlert
           v-if="authStore.error"
           variant="error"
@@ -15,105 +15,124 @@
           class="mb-6"
         />
         
+        <BaseAlert
+          v-if="successMessage"
+          variant="success"
+          :message="successMessage"
+          :show="!!successMessage"
+          class="mb-6"
+        />
+        
         <!-- Lựa chọn loại tài khoản -->
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Bạn là?</label>
+        <div class="mb-8">
+          <label class="block text-sm font-semibold text-gray-700 mb-3">Bạn là?</label>
           <div class="flex space-x-4">
             <div
               :class="[
-                'flex-1 rounded-md border p-4 cursor-pointer',
+                'flex-1 rounded-lg border-2 p-5 cursor-pointer transition-all duration-200 transform hover:scale-105',
                 {
-                  'border-blue-500 bg-blue-50': accountType === 'candidate',
-                  'border-gray-300 hover:border-blue-300': accountType !== 'candidate'
+                  'border-blue-500 bg-blue-50 shadow-md': registerType === 'applicant',
+                  'border-gray-200 hover:border-blue-300': registerType !== 'applicant'
                 }
               ]"
-              @click="accountType = 'candidate'"
+              @click="registerType = 'applicant'"
             >
-              <div class="flex items-center mb-2">
-                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <font-awesome-icon icon="user" class="text-blue-600" />
+              <div class="flex items-center mb-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <font-awesome-icon icon="user" class="text-blue-600 text-lg" />
                 </div>
-                <h3 class="font-medium">Ứng viên</h3>
+                <h3 class="font-bold text-lg">Ứng viên</h3>
               </div>
-              <p class="text-sm text-gray-500">Tìm kiếm công việc phù hợp từ nhà tuyển dụng uy tín</p>
+              <p class="text-sm text-gray-600">Tìm kiếm công việc phù hợp từ nhà tuyển dụng uy tín</p>
             </div>
             
             <div
               :class="[
-                'flex-1 rounded-md border p-4 cursor-pointer',
+                'flex-1 rounded-lg border-2 p-5 cursor-pointer transition-all duration-200 transform hover:scale-105',
                 {
-                  'border-blue-500 bg-blue-50': accountType === 'employer',
-                  'border-gray-300 hover:border-blue-300': accountType !== 'employer'
+                  'border-blue-500 bg-blue-50 shadow-md': registerType === 'recruiter',
+                  'border-gray-200 hover:border-blue-300': registerType !== 'recruiter'
                 }
               ]"
-              @click="accountType = 'employer'"
+              @click="registerType = 'recruiter'"
             >
-              <div class="flex items-center mb-2">
-                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <font-awesome-icon icon="building" class="text-blue-600" />
+              <div class="flex items-center mb-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <font-awesome-icon icon="building" class="text-blue-600 text-lg" />
                 </div>
-                <h3 class="font-medium">Nhà tuyển dụng</h3>
+                <h3 class="font-bold text-lg">Nhà tuyển dụng</h3>
               </div>
-              <p class="text-sm text-gray-500">Đăng tin tuyển dụng và tìm kiếm ứng viên phù hợp</p>
+              <p class="text-sm text-gray-600">Đăng tin tuyển dụng và tìm kiếm ứng viên phù hợp</p>
             </div>
           </div>
         </div>
         
-        <form @submit.prevent="handleSubmit">
-          <div class="space-y-6">
+        <form @submit.prevent="handleSubmit" class="transform transition-all duration-300">
+          <div class="space-y-8">
             <!-- Form cho cả hai loại tài khoản -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
               <BaseInput
-                v-model="form.firstName"
-                label="Họ"
-                placeholder="Họ của bạn"
+                v-model="username"
+                label="Tên đăng nhập"
+                placeholder="Tên đăng nhập"
                 required
-                :error="errors.firstName"
+                prefixIcon="user"
+                :error="errors.username"
+                class="transform transition-all duration-200 focus-within:scale-105"
               />
               
               <BaseInput
-                v-model="form.lastName"
-                label="Tên"
-                placeholder="Tên của bạn"
+                v-model="email"
+                type="email"
+                label="Email"
+                placeholder="Email của bạn"
+                autocomplete="email"
                 required
-                :error="errors.lastName"
+                prefixIcon="envelope"
+                :error="errors.email"
+                class="transform transition-all duration-200 focus-within:scale-105"
               />
             </div>
             
-            <BaseInput
-              v-model="form.email"
-              type="email"
-              label="Email"
-              placeholder="Email của bạn"
-              autocomplete="email"
-              required
-              prefixIcon="envelope"
-              :error="errors.email"
-            />
-            
-            <!-- Form cho nhà tuyển dụng -->
-            <div v-if="accountType === 'employer'">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
               <BaseInput
-                v-model="form.companyName"
-                label="Tên công ty"
-                placeholder="Tên công ty của bạn"
+                v-model="fullname"
+                label="Họ và tên"
+                placeholder="Họ và tên đầy đủ"
                 required
-                prefixIcon="building"
-                :error="errors.companyName"
+                prefixIcon="user"
+                :error="errors.fullname"
+                class="transform transition-all duration-200 focus-within:scale-105"
               />
               
-              <BaseInput
-                v-model="form.companySize"
-                label="Quy mô công ty"
-                placeholder="Số lượng nhân viên"
-                class="mt-6"
-                :error="errors.companySize"
-              />
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                <div class="relative">
+                  <select
+                    v-model="gender"
+                    class="appearance-none block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    :class="{'border-red-500': errors.gender}"
+                  >
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                    <option value="other">Khác</option>
+                  </select>
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <font-awesome-icon icon="venus-mars" class="text-gray-400" />
+                  </div>
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <font-awesome-icon icon="chevron-down" class="text-gray-400" />
+                  </div>
+                </div>
+                <div v-if="errors.gender" class="mt-1 text-sm text-red-600">
+                  {{ errors.gender }}
+                </div>
+              </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
               <BaseInput
-                v-model="form.password"
+                v-model="password"
                 type="password"
                 label="Mật khẩu"
                 placeholder="Tạo mật khẩu"
@@ -121,10 +140,11 @@
                 required
                 prefixIcon="lock"
                 :error="errors.password"
+                class="transform transition-all duration-200 focus-within:scale-105"
               />
               
               <BaseInput
-                v-model="form.confirmPassword"
+                v-model="confirmPassword"
                 type="password"
                 label="Xác nhận mật khẩu"
                 placeholder="Xác nhận mật khẩu"
@@ -132,27 +152,28 @@
                 required
                 prefixIcon="lock"
                 :error="errors.confirmPassword"
+                class="transform transition-all duration-200 focus-within:scale-105"
               />
             </div>
             
-            <div class="flex items-center">
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-center">
               <input
                 id="terms"
                 type="checkbox"
-                v-model="form.terms"
-                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                :class="{'border-red-500': errors.terms}"
+                v-model="acceptTerms"
+                class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all"
+                :class="{'border-red-500': errors.acceptTerms}"
                 required
               />
-              <label for="terms" class="ml-2 block text-sm text-gray-700">
-                Tôi đồng ý với <a href="#" class="text-blue-600 hover:text-blue-800">Điều khoản sử dụng</a> và <a href="#" class="text-blue-600 hover:text-blue-800">Chính sách bảo mật</a>
+              <label for="terms" class="ml-3 block text-sm text-gray-700">
+                Tôi đồng ý với <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Điều khoản sử dụng</a> và <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Chính sách bảo mật</a>
               </label>
             </div>
-            <div v-if="errors.terms" class="text-sm text-red-600 mt-1">
-              {{ errors.terms }}
+            <div v-if="errors.acceptTerms" class="text-sm text-red-600 mt-1 italic">
+              {{ errors.acceptTerms }}
             </div>
             
-            <div>
+            <div class="pt-2">
               <BaseButton
                 type="submit"
                 variant="primary"
@@ -160,17 +181,17 @@
                 label="Đăng ký tài khoản"
                 :loading="authStore.loading"
                 :disabled="authStore.loading"
-                class="w-full"
+                class="w-full transform transition-all duration-300 hover:shadow-lg hover:scale-105 rounded-lg py-4 text-lg font-bold"
               />
             </div>
           </div>
         </form>
       </div>
       
-      <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600">
+      <div class="mt-8 text-center">
+        <p class="text-gray-600">
           Đã có tài khoản?
-          <router-link to="/login" class="font-medium text-blue-600 hover:text-blue-500">
+          <router-link to="/login" class="font-bold text-blue-600 hover:text-blue-800 transition-colors duration-300 ml-1">
             Đăng nhập ngay
           </router-link>
         </p>
@@ -185,105 +206,145 @@ import { useAuthStore } from '../stores/auth'
 import BaseInput from '../components/common/BaseInput.vue'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseAlert from '../components/common/BaseAlert.vue'
+import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
+const router = useRouter()
 
-// Loại tài khoản (ứng viên hoặc nhà tuyển dụng)
-const accountType = ref('candidate')
-
-// Form fields
-const form = reactive({
-  firstName: '',
-  lastName: '',
-  email: '',
-  companyName: '',
-  companySize: '',
-  password: '',
-  confirmPassword: '',
-  terms: false
-})
-
+const registerType = ref('applicant')
+const username = ref('')
+const email = ref('')
+const fullname = ref('')
+const gender = ref('male')
+const password = ref('')
+const confirmPassword = ref('')
 const errors = ref({})
+const acceptTerms = ref(false)
+const successMessage = ref('')
 
-// Form submission
 const handleSubmit = async () => {
-  // Validate form
+  // Reset lỗi
   errors.value = {}
-  let isValid = true
   
-  if (!form.firstName.trim()) {
-    errors.value.firstName = 'Họ không được để trống'
-    isValid = false
-  }
+  // Xác thực các trường
+  validateFields()
   
-  if (!form.lastName.trim()) {
-    errors.value.lastName = 'Tên không được để trống'
-    isValid = false
-  }
-  
-  if (!form.email) {
-    errors.value.email = 'Email không được để trống'
-    isValid = false
-  } else if (!isValidEmail(form.email)) {
-    errors.value.email = 'Email không hợp lệ'
-    isValid = false
-  }
-  
-  if (accountType.value === 'employer' && !form.companyName.trim()) {
-    errors.value.companyName = 'Tên công ty không được để trống'
-    isValid = false
-  }
-  
-  if (!form.password) {
-    errors.value.password = 'Mật khẩu không được để trống'
-    isValid = false
-  } else if (form.password.length < 8) {
-    errors.value.password = 'Mật khẩu phải có ít nhất 8 ký tự'
-    isValid = false
-  }
-  
-  if (!form.confirmPassword) {
-    errors.value.confirmPassword = 'Vui lòng xác nhận mật khẩu'
-    isValid = false
-  } else if (form.password !== form.confirmPassword) {
-    errors.value.confirmPassword = 'Mật khẩu xác nhận không khớp'
-    isValid = false
-  }
-  
-  if (!form.terms) {
-    errors.value.terms = 'Bạn phải đồng ý với điều khoản sử dụng'
-    isValid = false
-  }
-  
-  if (!isValid) return
-  
-  // Prepare user data
-  const userData = {
-    firstName: form.firstName,
-    lastName: form.lastName,
-    email: form.email,
-    password: form.password,
-    role: accountType.value
-  }
-  
-  // Add employer specific fields
-  if (accountType.value === 'employer') {
-    userData.companyName = form.companyName
-    userData.companySize = form.companySize
-  }
+  // Nếu có lỗi, dừng lại
+  if (hasErrors()) return
   
   // Submit form
-  const result = await authStore.register(userData)
-  
-  if (!result.success) {
-    // Display error message from the store
-    console.error('Đăng ký thất bại')
+  try {
+    const result = await authStore.register({
+      username: username.value,
+      email: email.value,
+      password: password.value,
+      fullname: fullname.value,
+      gender: gender.value,
+      is_recruiter: registerType.value === 'recruiter',
+      is_applicant: registerType.value === 'applicant',
+    })
+    console.log(result)
+    if (result.success) {
+      // Hiển thị thông báo thành công
+      successMessage.value = result.message || 'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.'
+      
+      // Chuyển hướng đến trang kích hoạt với email
+      setTimeout(() => {
+        router.push({
+          name: 'Activate',
+          params: { email: email.value }
+        })
+      }, 2000)
+    } else if (result.error) {
+      // Hiển thị lỗi từ server
+      if (typeof result.error === 'object') {
+        // Nếu lỗi là object với các trường
+        for (const [key, value] of Object.entries(result.error)) {
+          errors.value[key] = Array.isArray(value) ? value[0] : value
+        }
+      } else {
+        // Nếu lỗi là string
+        errors.value.general = result.error
+      }
+    }
+  } catch (err) {
+    console.error('Lỗi đăng ký:', err)
+    errors.value.general = 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.'
   }
 }
 
-// Email validation
+// Validate email format
 const isValidEmail = (email) => {
-  const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-  return re.test(String(email).toLowerCase())
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return re.test(email)
 }
-</script> 
+
+const validateFields = () => {
+  // Kiểm tra username
+  if (!username.value) {
+    errors.value.username = 'Tên đăng nhập không được để trống'
+  }
+  
+  // Kiểm tra email
+  if (!email.value) {
+    errors.value.email = 'Email không được để trống'
+  } else if (!isValidEmail(email.value)) {
+    errors.value.email = 'Email không hợp lệ'
+  }
+  
+  // Kiểm tra họ tên
+  if (!fullname.value) {
+    errors.value.fullname = 'Họ và tên không được để trống'
+  }
+  
+  // Kiểm tra giới tính
+  if (!gender.value) {
+    errors.value.gender = 'Vui lòng chọn giới tính'
+  }
+  
+  // Kiểm tra mật khẩu
+  if (!password.value) {
+    errors.value.password = 'Mật khẩu không được để trống'
+  } else if (password.value.length < 8) {
+    errors.value.password = 'Mật khẩu phải có ít nhất 8 ký tự'
+  }
+  
+  // Kiểm tra xác nhận mật khẩu
+  if (!confirmPassword.value) {
+    errors.value.confirmPassword = 'Vui lòng xác nhận mật khẩu'
+  } else if (confirmPassword.value !== password.value) {
+    errors.value.confirmPassword = 'Mật khẩu xác nhận không khớp'
+  }
+  
+  // Kiểm tra điều khoản sử dụng
+  if (!acceptTerms.value) {
+    errors.value.acceptTerms = 'Bạn phải đồng ý với điều khoản sử dụng'
+  }
+}
+
+const hasErrors = () => {
+  return Object.values(errors.value).some(value => typeof value === 'string' && value.length > 0)
+}
+</script>
+
+<style>
+/* Thêm các styles cho animation */
+.animate__animated {
+  animation-duration: 1s;
+}
+
+.animate__fadeIn {
+  animation-name: fadeIn;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style> 

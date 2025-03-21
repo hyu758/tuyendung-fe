@@ -14,7 +14,8 @@ import {
   faMapMarkerAlt, faClock, faMoneyBill, faTag, faChevronDown,
   faSignOutAlt, faPlus, faEdit, faTrash, faCheck, faTimes, faEye, faEyeSlash,
   faList, faSave, faFilter, faSort, faCalendar, faChartBar, faUsers, 
-  faArrowLeft, faCheckCircle, faInfoCircle, faExclamationCircle, faTimesCircle
+  faArrowLeft, faCheckCircle, faInfoCircle, faExclamationCircle, faTimesCircle,
+  faKey, faVenusMars
 } from '@fortawesome/free-solid-svg-icons'
 import { 
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle 
@@ -27,11 +28,12 @@ library.add(
   faSignOutAlt, faPlus, faEdit, faTrash, faCheck, faTimes, faEye, faEyeSlash,
   faList, faSave, faFilter, faSort, faCalendar, faChartBar, faUsers,
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle,
-  faArrowLeft, faCheckCircle, faInfoCircle, faExclamationCircle, faTimesCircle
+  faArrowLeft, faCheckCircle, faInfoCircle, faExclamationCircle, faTimesCircle,
+  faKey, faVenusMars
 )
 
 // Cấu hình Axios
-axios.defaults.baseURL = 'http://localhost:3000'  // Cấu hình với API endpoint cơ bản
+axios.defaults.baseURL = 'http://127.0.0.1:8000/api'  // Cấu hình với API endpoint cơ bản
 axios.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -48,13 +50,16 @@ axios.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Token hết hạn hoặc không hợp lệ
       localStorage.removeItem('token')
-      localStorage.removeItem('userRole')
+      localStorage.removeItem('refreshToken')
       localStorage.removeItem('username')
       router.push('/login')
     }
     return Promise.reject(error)
   }
 )
+
+// Import animation CSS
+import 'animate.css/animate.min.css'
 
 const app = createApp(App)
 const pinia = createPinia()
