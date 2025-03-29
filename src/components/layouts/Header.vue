@@ -64,47 +64,107 @@
             <!-- Dropdown Menu -->
             <div 
               v-if="showDropdown" 
-              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10"
+              class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200"
             >
-              <router-link 
-                to="/profile" 
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                Hồ sơ cá nhân
-              </router-link>
-              
-              <!-- Menu cho nhà tuyển dụng -->
-              <template v-if="userRole === 'employer'">
+              <!-- Menu cá nhân -->
+              <div>
                 <router-link 
-                  to="/employer/dashboard" 
+                  to="/profile" 
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  Bảng điều khiển
+                  <i class="fas fa-user mr-2"></i> Hồ sơ cá nhân
                 </router-link>
+              </div>
+              
+              <!-- Phân cách khi người dùng là nhà tuyển dụng -->
+              <template v-if="isRecruiter">
+                <div class="border-t border-gray-100 my-1"></div>
+                
+                <div class="px-4 py-1">
+                  <span class="text-xs text-gray-500 font-medium">QUẢN LÝ TUYỂN DỤNG</span>
+                </div>
+                
                 <router-link 
-                  to="/employer/jobs" 
+                  to="/dashboard" 
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  Tin tuyển dụng
+                  <i class="fas fa-tachometer-alt mr-2"></i> Bảng điều khiển
+                </router-link>
+                
+                <router-link 
+                  to="/enterprise/profile" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <i class="fas fa-building mr-2"></i> Thông tin doanh nghiệp
+                </router-link>
+                
+                <router-link 
+                  to="/campaigns" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <i class="fas fa-bullhorn mr-2"></i> Chiến dịch tuyển dụng
+                </router-link>
+                
+                <router-link 
+                  to="/job-listings" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <i class="fas fa-briefcase mr-2"></i> Tin tuyển dụng
+                </router-link>
+                
+                <router-link 
+                  to="/applications" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <i class="fas fa-users mr-2"></i> Quản lý ứng viên
                 </router-link>
               </template>
               
               <!-- Menu cho admin -->
               <template v-if="userRole === 'admin'">
+                <div class="border-t border-gray-100 my-1"></div>
+                
+                <div class="px-4 py-1">
+                  <span class="text-xs text-gray-500 font-medium">QUẢN TRỊ HỆ THỐNG</span>
+                </div>
+                
                 <router-link 
                   to="/admin/dashboard" 
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  Quản trị
+                  <i class="fas fa-tachometer-alt mr-2"></i> Bảng điều khiển
+                </router-link>
+                
+                <router-link 
+                  to="/admin/users" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <i class="fas fa-users-cog mr-2"></i> Quản lý người dùng
+                </router-link>
+                
+                <router-link 
+                  to="/admin/companies" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <i class="fas fa-building mr-2"></i> Quản lý doanh nghiệp
+                </router-link>
+                
+                <router-link 
+                  to="/admin/jobs" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <i class="fas fa-briefcase mr-2"></i> Quản lý tin tuyển dụng
                 </router-link>
               </template>
+              
+              <div class="border-t border-gray-100 my-1"></div>
               
               <a 
                 href="#" 
                 @click.prevent="logout" 
                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
-                Đăng xuất
+                <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
               </a>
             </div>
           </div>
@@ -152,7 +212,16 @@ const userFullName = computed(() => authStore.userFullName)
 // Giữ lại biến username từ localStorage cho trường hợp chưa lấy được thông tin người dùng
 const username = ref('')
 
-// Watch cho sự thay đổi của authStore.user để cập nhật UI
+// Kiểm tra người dùng có phải là nhà tuyển dụng không
+const isRecruiter = computed(() => {
+  console.log('isRecruiter computed - authStore.user:', authStore.user);
+  console.log('isRecruiter computed - authStore.userRole:', authStore.userRole);
+  console.log('isRecruiter computed - authStore.isEmployer:', authStore.isEmployer);
+  
+  // Sử dụng getter isEmployer từ authStore thay vì truy cập trực tiếp role
+  return authStore.isEmployer;
+});
+
 watch(() => authStore.user, (newUser) => {
   console.log('User changed in Header watch:', newUser)
   if (newUser) {
@@ -166,13 +235,22 @@ onMounted(() => {
   
   // Kiểm tra thông tin từ token
   if (isAuthenticated.value) {
-    console.log('Header mounted - Checking token info')
-    console.log('Is account activated (from token):', isActive.value)
+    console.log('Header mounted - Token tồn tại')
     
-    // Nếu cần thông tin chi tiết hơn, cập nhật từ token
+    // Thử cập nhật thông tin từ token
     if (!authStore.user) {
+      console.log('Header mounted - User null, updating from token')
       authStore.updateUserFromToken()
+    } else {
+      console.log('Header mounted - User already exists:', authStore.user)
     }
+    
+    // Ghi log tất cả thông tin quan trọng
+    console.log('Header mounted - isActive:', isActive.value)
+    console.log('Header mounted - userRole:', userRole.value)
+    console.log('Header mounted - isRecruiter:', isRecruiter.value)
+  } else {
+    console.log('Header mounted - Người dùng chưa đăng nhập')
   }
   
   // Thêm sự kiện click bên ngoài để đóng dropdown

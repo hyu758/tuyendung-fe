@@ -1,11 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import EmployerLayout from '../layouts/EmployerLayout.vue'
 
 const routes = [
+  // Public routes
   {
     path: '/',
     name: 'Home',
-    component: () => import('../views/Home.vue')
+    component: () => import('../views/Home.vue'),
+    meta: { guest: true }
   },
   {
     path: '/login',
@@ -15,7 +18,7 @@ const routes = [
   },
   {
     path: '/register',
-    name: 'Register',
+    name: 'Register', 
     component: () => import('../views/Register.vue'),
     meta: { guest: true }
   },
@@ -29,8 +32,8 @@ const routes = [
     path: '/api/activate/:token',
     redirect: to => {
       return { 
-        name: 'Activate', 
-        params: { token: to.params.token } 
+        name: 'Activate',
+        params: { token: to.params.token }
       }
     }
   },
@@ -39,6 +42,14 @@ const routes = [
     name: 'ForgotPassword',
     component: () => import('../views/ForgotPassword.vue'),
     meta: { guest: true }
+  },
+
+  // Routes yêu cầu đăng nhập
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/Profile.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/job-search',
@@ -50,36 +61,60 @@ const routes = [
     name: 'JobDetail',
     component: () => import('../views/JobDetail.vue')
   },
+
+  // Employer routes with layout
   {
-    path: '/profile',
-    name: 'Profile',
-    component: () => import('../views/Profile.vue'),
-    meta: { requiresAuth: true }
+    path: '/employer',
+    component: EmployerLayout,
+    meta: { requiresAuth: true, role: 'employer' },
+    children: [
+      {
+        path: '',
+        name: 'EmployerDashboard',
+        component: () => import('../views/employer/Dashboard.vue')
+      },
+      {
+        path: 'profile',
+        name: 'EmployerProfile',
+        component: () => import('../views/Profile.vue')
+      },
+      {
+        path: 'create-enterprise',
+        name: 'CreateEnterprise',
+        component: () => import('../views/enterprise/CreateEnterprise.vue')
+      },
+      {
+        path: 'company',
+        name: 'Company',
+        component: () => import('../views/enterprise/EnterpriseProfile.vue')
+      },
+      {
+        path: 'campaigns',
+        name: 'Campaigns',
+        component: () => import('../views/campaign/CampaignList.vue')
+      },
+      {
+        path: 'campaigns/:id',
+        name: 'CampaignDetail',
+        component: () => import('../views/campaign/CampaignDetail.vue')
+      },
+      {
+        path: 'jobs',
+        name: 'Jobs',
+        component: () => import('../views/employer/Jobs.vue')
+      }
+    ]
   },
+
+  // Admin routes
   {
-    path: '/employer/dashboard',
-    name: 'EmployerDashboard',
-    component: () => import('../views/employer/Dashboard.vue'),
-    meta: { requiresAuth: true, role: 'employer' }
-  },
-  {
-    path: '/employer/jobs',
-    name: 'EmployerJobs',
-    component: () => import('../views/employer/Jobs.vue'),
-    meta: { requiresAuth: true, role: 'employer' }
-  },
-  {
-    path: '/employer/create-job',
-    name: 'CreateJob',
-    component: () => import('../views/employer/CreateJob.vue'),
-    meta: { requiresAuth: true, role: 'employer' }
-  },
-  {
-    path: '/admin/dashboard',
+    path: '/admin',
     name: 'AdminDashboard',
     component: () => import('../views/admin/Dashboard.vue'),
     meta: { requiresAuth: true, role: 'admin' }
   },
+
+  // Not found
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -102,20 +137,20 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const guestOnly = to.matched.some(record => record.meta.guestOnly)
+  const guestOnly = to.matched.some(record => record.meta.guest)
   
   // Nếu route cần xác thực
   if (requiresAuth) {
     // Kiểm tra nếu có token
     if (authStore.isAuthenticated) {
-      // Kiểm tra trạng thái kích hoạt từ token trước
+      // Kiểm tra trạng thái kích hoạt
       if (!authStore.isActivated && to.name !== 'Activate') {
-        // Nếu chưa kích hoạt theo thông tin từ token, cập nhật thông tin từ token
+        // Nếu chưa kích hoạt, cập nhật thông tin từ token
         if (!authStore.user) {
           authStore.updateUserFromToken()
         }
         
-        // Kiểm tra lại sau khi cập nhật - nếu vẫn chưa kích hoạt
+        // Kiểm tra lại sau khi cập nhật
         if (!authStore.isActivated) {
           const email = authStore.user?.username || localStorage.getItem('username')
           return next({
@@ -125,33 +160,34 @@ router.beforeEach(async (to, from, next) => {
         }
       }
       
-      // Kiểm tra quyền truy cập dựa trên vai trò
+      // Chỉ kiểm tra role nếu route yêu cầu role cụ thể
       const roleRequired = to.matched.find(record => record.meta.role)?.meta.role
       if (roleRequired && authStore.userRole !== roleRequired) {
-        // Nếu không có quyền, điều hướng về trang chủ
-        return next({ path: '/' })
+        // Nếu route yêu cầu role mà user không có role đó
+        return next('/')
       }
       
-      // Cho phép truy cập
       next()
     } else {
-      // Chuyển hướng đến trang đăng nhập nếu chưa xác thực
+      // Chuyển hướng đến trang đăng nhập
       next({
         path: '/login',
         query: { redirect: to.fullPath }
       })
     }
-  } 
-  // Nếu route chỉ dành cho khách
-  else if (guestOnly) {
-    if (authStore.isAuthenticated) {
-      // Nếu đã đăng nhập, chuyển hướng về trang chủ
-      next({ path: '/' })
-    } else {
-      next()
+  }
+  // Route chỉ dành cho khách
+  else if (guestOnly && authStore.isAuthenticated) {
+    // Chỉ chuyển hướng employer và admin về dashboard của họ
+    // Ứng viên vẫn có thể xem các trang guest
+    if (authStore.userRole === 'employer') {
+      return next('/employer')
+    } else if (authStore.userRole === 'admin') {
+      return next('/admin')
     }
-  } 
-  // Route công khai, cho phép truy cập
+    next()
+  }
+  // Route công khai
   else {
     next()
   }

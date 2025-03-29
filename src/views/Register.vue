@@ -173,6 +173,34 @@
               {{ errors.acceptTerms }}
             </div>
             
+            <!-- Form thông tin doanh nghiệp cho nhà tuyển dụng -->
+            <div v-if="registerType === 'recruiter'" class="space-y-8 border-t pt-8 mt-8">
+              <h3 class="text-xl font-bold text-gray-900">Thông tin doanh nghiệp</h3>
+              <p class="text-sm text-gray-500 mb-6">Bạn có thể cập nhật thêm thông tin doanh nghiệp sau khi đăng ký</p>
+              
+              <div class="grid grid-cols-1 gap-7">
+                <BaseInput
+                  v-model="companyInfo.company_name"
+                  label="Tên công ty"
+                  placeholder="Tên công ty"
+                  required
+                  prefixIcon="building"
+                  :error="errors.company_name"
+                  class="transform transition-all duration-200 focus-within:scale-105"
+                />
+
+                <BaseInput
+                  v-model="companyInfo.address"
+                  label="Địa chỉ"
+                  placeholder="Địa chỉ công ty"
+                  required
+                  prefixIcon="map-marker-alt"
+                  :error="errors.address"
+                  class="transform transition-all duration-200 focus-within:scale-105"
+                />
+              </div>
+            </div>
+            
             <div class="pt-2">
               <BaseButton
                 type="submit"
@@ -222,6 +250,11 @@ const errors = ref({})
 const acceptTerms = ref(false)
 const successMessage = ref('')
 
+const companyInfo = ref({
+  company_name: '',
+  address: ''
+})
+
 const handleSubmit = async () => {
   // Reset lỗi
   errors.value = {}
@@ -230,46 +263,38 @@ const handleSubmit = async () => {
   validateFields()
   
   // Nếu có lỗi, dừng lại
-  if (hasErrors()) return
+  if (Object.keys(errors.value).length > 0) return
   
   // Submit form
   try {
-    const result = await authStore.register({
+    const registerData = {
       username: username.value,
       email: email.value,
       password: password.value,
       fullname: fullname.value,
       gender: gender.value,
-      is_recruiter: registerType.value === 'recruiter',
-      is_applicant: registerType.value === 'applicant',
-    })
-    console.log(result)
+      role: registerType.value === 'recruiter' ? 'employer' : 'candidate'
+    }
+
+    // Nếu là nhà tuyển dụng, thêm thông tin doanh nghiệp
+    if (registerType.value === 'recruiter') {
+      registerData.enterprise = companyInfo.value
+    }
+
+    const result = await authStore.register(registerData)
+    
     if (result.success) {
-      // Hiển thị thông báo thành công
       successMessage.value = result.message || 'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.'
       
-      // Chuyển hướng đến trang kích hoạt với email
-      setTimeout(() => {
-        router.push({
-          name: 'Activate',
-          params: { email: email.value }
-        })
-      }, 2000)
-    } else if (result.error) {
-      // Hiển thị lỗi từ server
-      if (typeof result.error === 'object') {
-        // Nếu lỗi là object với các trường
-        for (const [key, value] of Object.entries(result.error)) {
-          errors.value[key] = Array.isArray(value) ? value[0] : value
-        }
+      // Nếu là nhà tuyển dụng, chuyển hướng đến trang employer
+      if (registerType.value === 'recruiter') {
+        router.push('/employer')
       } else {
-        // Nếu lỗi là string
-        errors.value.general = result.error
+        router.push('/job-search')
       }
     }
-  } catch (err) {
-    console.error('Lỗi đăng ký:', err)
-    errors.value.general = 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.'
+  } catch (error) {
+    console.error('Lỗi đăng ký:', error)
   }
 }
 
@@ -280,50 +305,23 @@ const isValidEmail = (email) => {
 }
 
 const validateFields = () => {
-  // Kiểm tra username
-  if (!username.value) {
-    errors.value.username = 'Tên đăng nhập không được để trống'
-  }
-  
-  // Kiểm tra email
-  if (!email.value) {
-    errors.value.email = 'Email không được để trống'
-  } else if (!isValidEmail(email.value)) {
-    errors.value.email = 'Email không hợp lệ'
-  }
-  
-  // Kiểm tra họ tên
-  if (!fullname.value) {
-    errors.value.fullname = 'Họ và tên không được để trống'
-  }
-  
-  // Kiểm tra giới tính
-  if (!gender.value) {
-    errors.value.gender = 'Vui lòng chọn giới tính'
-  }
-  
-  // Kiểm tra mật khẩu
-  if (!password.value) {
-    errors.value.password = 'Mật khẩu không được để trống'
-  } else if (password.value.length < 8) {
-    errors.value.password = 'Mật khẩu phải có ít nhất 8 ký tự'
-  }
-  
-  // Kiểm tra xác nhận mật khẩu
-  if (!confirmPassword.value) {
-    errors.value.confirmPassword = 'Vui lòng xác nhận mật khẩu'
-  } else if (confirmPassword.value !== password.value) {
+  // Validate các trường cơ bản
+  if (!username.value) errors.value.username = 'Vui lòng nhập tên đăng nhập'
+  if (!email.value) errors.value.email = 'Vui lòng nhập email'
+  if (!fullname.value) errors.value.fullname = 'Vui lòng nhập họ và tên'
+  if (!password.value) errors.value.password = 'Vui lòng nhập mật khẩu'
+  if (password.value !== confirmPassword.value) {
     errors.value.confirmPassword = 'Mật khẩu xác nhận không khớp'
   }
-  
-  // Kiểm tra điều khoản sử dụng
   if (!acceptTerms.value) {
-    errors.value.acceptTerms = 'Bạn phải đồng ý với điều khoản sử dụng'
+    errors.value.acceptTerms = 'Vui lòng đồng ý với điều khoản sử dụng'
   }
-}
 
-const hasErrors = () => {
-  return Object.values(errors.value).some(value => typeof value === 'string' && value.length > 0)
+  // Validate thông tin doanh nghiệp nếu là nhà tuyển dụng
+  if (registerType.value === 'recruiter') {
+    if (!companyInfo.value.company_name) errors.value.company_name = 'Vui lòng nhập tên công ty'
+    if (!companyInfo.value.address) errors.value.address = 'Vui lòng nhập địa chỉ công ty'
+  }
 }
 </script>
 

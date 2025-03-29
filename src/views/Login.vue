@@ -179,11 +179,6 @@ const handleSubmit = async () => {
       password: password.value,
       remember: rememberMe.value
     })
-    
-    if (!result.success && result.error) {
-      // Hiển thị lỗi từ API nếu có
-      authStore.error = result.error
-    }
   } catch (error) {
     console.error('Lỗi khi đăng nhập:', error)
     authStore.error = 'Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.'

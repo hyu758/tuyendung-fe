@@ -1,29 +1,24 @@
 <template>
   <Teleport to="body">
-    <transition
-      enter-active-class="transition ease-out duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition ease-in duration-150"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div v-if="modelValue" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-        <!-- Overlay -->
-        <div 
-          class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" 
-          @click="closeOnBackdrop && close()"
-        ></div>
-
-        <div class="flex min-h-screen items-center justify-center p-4">
-          <!-- Modal panel -->
+    <transition name="modal-fade">
+      <div 
+        v-if="modelValue" 
+        class="fixed inset-0 z-50 overflow-y-auto"
+        @click.self="close"
+      >
+        <div class="flex items-center justify-center min-h-screen p-4">
+          <div 
+            class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            @click="close"
+          ></div>
+          
           <transition
             enter-active-class="transition ease-out duration-300"
-            enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            enter-to-class="opacity-100 translate-y-0 sm:scale-100"
+            enter-from-class="transform scale-95 opacity-0"
+            enter-to-class="transform scale-100 opacity-100"
             leave-active-class="transition ease-in duration-200"
-            leave-from-class="opacity-100 translate-y-0 sm:scale-100"
-            leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            leave-from-class="transform scale-100 opacity-100"
+            leave-to-class="transform scale-95 opacity-0"
           >
             <div 
               :class="[
@@ -94,15 +89,11 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  persistent: {
+    type: Boolean,
+    default: false
+  },
   showCloseButton: {
-    type: Boolean,
-    default: true
-  },
-  closeOnBackdrop: {
-    type: Boolean,
-    default: true
-  },
-  closeOnEsc: {
     type: Boolean,
     default: true
   }
@@ -110,37 +101,53 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'close'])
 
+// Compute modal size classes
 const sizeClasses = computed(() => {
   switch (props.size) {
-    case 'sm': return 'max-w-md w-full'
-    case 'md': return 'max-w-lg w-full'
-    case 'lg': return 'max-w-2xl w-full'
-    case 'xl': return 'max-w-4xl w-full'
-    case 'full': return 'max-w-full w-full h-full m-0 rounded-none'
-    default: return 'max-w-lg w-full'
+    case 'sm': return 'max-w-sm w-full'
+    case 'md': return 'max-w-md w-full'
+    case 'lg': return 'max-w-lg w-full'
+    case 'xl': return 'max-w-xl w-full'
+    case 'full': return 'max-w-4xl w-full'
+    default: return 'max-w-md w-full'
   }
 })
 
-const close = () => {
-  emit('update:modelValue', false)
-  emit('close')
-}
-
-// Handle ESC key to close modal
+// Handle escape key to close modal
 const handleKeyDown = (e) => {
-  if (e.key === 'Escape' && props.closeOnEsc && props.modelValue) {
+  if (e.key === 'Escape' && props.modelValue && !props.persistent) {
     close()
   }
 }
 
-// Register and remove keyboard event listeners
-watch(() => props.modelValue, (newVal) => {
-  if (newVal) {
+// Add and remove event listener for escape key
+watch(() => props.modelValue, (value) => {
+  if (value) {
     document.addEventListener('keydown', handleKeyDown)
-    document.body.style.overflow = 'hidden' // Prevent scrolling when modal is open
+    document.body.style.overflow = 'hidden'
   } else {
     document.removeEventListener('keydown', handleKeyDown)
-    document.body.style.overflow = '' // Restore scrolling when modal is closed
+    document.body.style.overflow = ''
   }
-}, { immediate: true })
-</script> 
+})
+
+// Close the modal
+const close = () => {
+  if (!props.persistent) {
+    emit('update:modelValue', false)
+    emit('close')
+  }
+}
+</script>
+
+<style scoped>
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+</style> 
