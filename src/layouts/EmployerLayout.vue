@@ -4,7 +4,7 @@
     <aside class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-30">
       <div class="flex items-center justify-center h-16 border-b border-gray-200">
         <router-link to="/" class="text-xl font-bold text-blue-600 hover:text-blue-700">
-          JobMaster
+          JobHub
         </router-link>
       </div>
       

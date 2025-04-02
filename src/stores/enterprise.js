@@ -4,9 +4,15 @@ import { useAuthStore } from './auth'
 
 export const useEnterpriseStore = defineStore('enterprise', {
   state: () => ({
-    enterprise: null,
+    enterprise: null, // doanh nghiệp của user hiện tại
+    enterprises: [], // danh sách doanh nghiệp
     loading: false,
-    error: null
+    error: null,
+    pagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0
+    }
   }),
 
   getters: {
@@ -27,36 +33,71 @@ export const useEnterpriseStore = defineStore('enterprise', {
   },
 
   actions: {
-    // Lấy thông tin doanh nghiệp
-    async fetchEnterprise() {
+    // Lấy danh sách doanh nghiệp đang hoạt động
+    async fetchEnterprises({ page = 1, pageSize = 10, sortBy = 'company_name', sortOrder = 'asc' } = {}) {
       this.loading = true
       this.error = null
 
       try {
-        const authStore = useAuthStore()
-        const token = authStore.token
-
-        const response = await axios.get('/api/enterprises/', {
-          headers: {
-            'Authorization': `Bearer ${token}`
+        const response = await axios.get('api/enterprises/', {
+          params: {
+            page,
+            page_size: pageSize,
+            sort_by: sortBy,
+            sort_order: sortOrder
           }
         })
+
+        if (response.data.status === 200) {
+          this.enterprises = response.data.data.items || []
+          this.pagination = {
+            currentPage: page,
+            totalPages: Math.ceil(response.data.data.total / pageSize),
+            totalItems: response.data.data.total
+          }
+          return { success: true, data: this.enterprises }
+        }
         
-        console.log('Dữ liệu doanh nghiệp từ API:', response.data)
+        throw new Error(response.data.message || 'Không thể lấy danh sách doanh nghiệp')
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách doanh nghiệp:', error)
+        this.error = error.response?.data?.message || 'Không thể lấy danh sách doanh nghiệp. Vui lòng thử lại.'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Lấy thông tin doanh nghiệp của user đang đăng nhập
+    async fetchUserEnterprise() {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+
+      try {
+        const response = await axios.get('api/enterprises/user/', {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
         
         if (response.data.status === 200) {
           this.enterprise = response.data.data
           return { success: true, data: this.enterprise }
-        } else {
-          // Nếu là mã lỗi 404, có thể doanh nghiệp chưa được tạo
-          if (response.data.status === 404) {
-            this.enterprise = null
-            return { success: false, notFound: true }
-          }
-          throw new Error(response.data.message || 'Không thể lấy thông tin doanh nghiệp')
         }
+        
+        if (response.data.status === 404) {
+          this.enterprise = null
+          return { success: false, notFound: true }
+        }
+
+        throw new Error(response.data.message || 'Không thể lấy thông tin doanh nghiệp')
       } catch (error) {
         console.error('Lỗi khi lấy thông tin doanh nghiệp:', error)
+        if (error.response?.status === 404) {
+          this.enterprise = null
+          return { success: false, notFound: true }
+        }
         this.error = error.response?.data?.message || 'Không thể lấy thông tin doanh nghiệp. Vui lòng thử lại.'
         return { success: false, error: this.error }
       } finally {
@@ -64,31 +105,58 @@ export const useEnterpriseStore = defineStore('enterprise', {
       }
     },
 
-    // Tạo doanh nghiệp mới
+    // Validate URL
+    isValidUrl(string) {
+      try {
+        new URL(string)
+        return true
+      } catch (_) {
+        return false
+      }
+    },
+
     async createEnterprise(data) {
       try {
         this.loading = true
         this.error = null
-        
-        const response = await axios.post('/enterprises/create/', data)
-        
-        if (response.data) {
-          this.enterprise = response.data
-          // Lưu thông báo thành công
-          localStorage.setItem('notification', JSON.stringify({
-            show: true,
-            type: 'success',
-            message: 'Tạo doanh nghiệp thành công!'
-          }))
+        const authStore = useAuthStore()
+
+        if (data.link_web_site && !this.isValidUrl(data.link_web_site)) {
+          throw new Error('URL website không hợp lệ. Vui lòng nhập đúng định dạng (ví dụ: https://example.com)')
         }
+
+        const formData = new FormData()
+        
+        Object.keys(data).forEach(key => {
+          if (data[key] !== '' && data[key] !== undefined && data[key] !== null) {
+            if (key === 'logo' && data[key] instanceof File) {
+              formData.append(key, data[key])
+            } else {
+              formData.append(key, data[key])
+            }
+          }
+        })
+
+        console.log('FormData being sent:', Object.fromEntries(formData))
+        
+        const response = await axios.post('api/enterprises/create/', formData, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+        
+        if (response.data.status === 201) {
+          this.enterprise = response.data.data
+          this.createNotification('success', 'Tạo doanh nghiệp thành công!')
+          return { success: true, data: this.enterprise }
+        }
+
+        throw new Error(response.data.message || 'Không thể tạo doanh nghiệp')
       } catch (error) {
-        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tạo doanh nghiệp'
-        // Lưu thông báo lỗi
-        localStorage.setItem('notification', JSON.stringify({
-          show: true,
-          type: 'error',
-          message: this.error
-        }))
+        console.error('Error creating enterprise:', error)
+        this.error = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo doanh nghiệp'
+        this.createNotification('error', this.error)
         throw error
       } finally {
         this.loading = false
@@ -101,25 +169,18 @@ export const useEnterpriseStore = defineStore('enterprise', {
         this.loading = true
         this.error = null
         
-        const response = await axios.put('/enterprises/update/', data)
+        const response = await axios.put('api/enterprises/update/', data)
         
-        if (response.data) {
-          this.enterprise = response.data
-          // Lưu thông báo thành công
-          localStorage.setItem('notification', JSON.stringify({
-            show: true,
-            type: 'success',
-            message: 'Cập nhật thông tin doanh nghiệp thành công!'
-          }))
+        if (response.data.status === 200) {
+          this.enterprise = response.data.data
+          this.createNotification('success', 'Cập nhật thông tin doanh nghiệp thành công!')
+          return { success: true, data: this.enterprise }
         }
+
+        throw new Error(response.data.message || 'Không thể cập nhật thông tin doanh nghiệp')
       } catch (error) {
         this.error = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin doanh nghiệp'
-        // Lưu thông báo lỗi
-        localStorage.setItem('notification', JSON.stringify({
-          show: true,
-          type: 'error',
-          message: this.error
-        }))
+        this.createNotification('error', this.error)
         throw error
       } finally {
         this.loading = false

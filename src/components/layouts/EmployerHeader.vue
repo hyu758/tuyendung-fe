@@ -12,12 +12,80 @@
         <!-- Right Menu -->
         <div class="flex items-center space-x-6">
           <!-- Notifications -->
-          <button class="text-gray-500 hover:text-gray-600 relative">
-            <i class="fas fa-bell text-xl"></i>
-            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-              2
-            </span>
-          </button>
+          <div class="relative" ref="notificationDropdown">
+            <button 
+              @click="toggleNotifications"
+              class="text-gray-500 hover:text-gray-600 relative"
+            >
+              <i class="fas fa-bell text-xl"></i>
+              <span 
+                v-if="notificationStore.hasUnread" 
+                class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
+              >
+                {{ notificationStore.unreadCount > 9 ? '9+' : notificationStore.unreadCount }}
+              </span>
+            </button>
+
+            <!-- Notifications Dropdown -->
+            <div 
+              v-if="showNotifications"
+              class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200 max-h-[400px] overflow-y-auto"
+            >
+              <div class="px-4 py-2 border-b border-gray-100 sticky top-0 bg-white z-10">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-medium text-gray-900">Thông báo</h3>
+                  <span v-if="notificationStore.hasUnread" class="text-xs font-medium text-blue-600">
+                    {{ notificationStore.unreadCount }} chưa đọc
+                  </span>
+                </div>
+              </div>
+
+              <div v-if="notificationStore.loading" class="py-4 text-center">
+                <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
+              </div>
+
+              <div v-else-if="notificationStore.hasNotifications">
+                <div 
+                  v-for="notification in notificationStore.notifications" 
+                  :key="notification.id"
+                  :class="['px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors', 
+                    !notification.read ? 'bg-blue-50' : '']"
+                  @click="readNotification(notification.id)"
+                >
+                  <div class="flex items-start">
+                    <div class="flex-shrink-0 mt-0.5">
+                      <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-bell text-blue-500 text-sm"></i>
+                      </div>
+                    </div>
+                    <div class="ml-3 flex-1">
+                      <p class="text-sm text-gray-800" v-html="notification.message"></p>
+                      <p class="text-xs text-gray-500 mt-1">{{ formatDate(notification.created_at) }}</p>
+                    </div>
+                    <div v-if="!notification.read" class="ml-2 flex-shrink-0">
+                      <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="notificationStore.hasMore" class="px-4 py-2 text-center">
+                  <button 
+                    @click="loadMoreNotifications"
+                    class="text-xs text-blue-600 hover:text-blue-800"
+                    :disabled="notificationStore.loading"
+                  >
+                    <span v-if="notificationStore.loading">Đang tải...</span>
+                    <span v-else>Xem thêm</span>
+                  </button>
+                </div>
+              </div>
+
+              <div v-else class="py-6 text-center">
+                <i class="fas fa-bell-slash text-gray-300 text-2xl mb-2"></i>
+                <p class="text-sm text-gray-500">Bạn chưa có thông báo nào</p>
+              </div>
+            </div>
+          </div>
 
           <!-- User Menu -->
           <div class="relative" ref="profileDropdown">
@@ -94,11 +162,15 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useNotificationStore } from '../../stores/notification'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const showDropdown = ref(false)
+const showNotifications = ref(false)
 const profileDropdown = ref(null)
+const notificationDropdown = ref(null)
 
 // Sử dụng thông tin từ authStore
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -106,10 +178,16 @@ const isActive = computed(() => authStore.isActivated)
 const userFullName = computed(() => authStore.userFullName)
 const username = ref(localStorage.getItem('username') || 'Người dùng')
 
-onMounted(() => {
+onMounted(async () => {
   if (isAuthenticated.value && !authStore.user) {
     authStore.updateUserFromToken()
   }
+  
+  // Lấy số lượng thông báo chưa đọc khi component được mounted
+  if (isAuthenticated.value) {
+    await notificationStore.fetchUnreadCount()
+  }
+  
   document.addEventListener('click', handleClickOutside)
 })
 
@@ -119,16 +197,69 @@ onUnmounted(() => {
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
+  if (showNotifications.value) {
+    showNotifications.value = false
+  }
+}
+
+const toggleNotifications = async () => {
+  showNotifications.value = !showNotifications.value
+  if (showDropdown.value) {
+    showDropdown.value = false
+  }
+  
+  // Tải thông báo khi mở dropdown
+  if (showNotifications.value && !notificationStore.hasNotifications) {
+    await notificationStore.fetchNotifications(true)
+  }
 }
 
 const handleClickOutside = (event) => {
   if (profileDropdown.value && !profileDropdown.value.contains(event.target)) {
     showDropdown.value = false
   }
+  
+  if (notificationDropdown.value && !notificationDropdown.value.contains(event.target)) {
+    showNotifications.value = false
+  }
+}
+
+const loadMoreNotifications = async () => {
+  await notificationStore.fetchNotifications()
+}
+
+const readNotification = async (id) => {
+  await notificationStore.markAsRead(id)
+}
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInMs = now - date
+  
+  // Thời gian đã trôi qua (tính bằng phút)
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+  
+  if (diffInMinutes < 1) {
+    return 'Vừa xong'
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} phút trước`
+  } else if (diffInMinutes < 24 * 60) {
+    return `${Math.floor(diffInMinutes / 60)} giờ trước`
+  } else if (diffInMinutes < 7 * 24 * 60) {
+    return `${Math.floor(diffInMinutes / (24 * 60))} ngày trước`
+  } else {
+    return date.toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
 }
 
 const logout = () => {
   authStore.logout()
+  notificationStore.resetStore()
   showDropdown.value = false
 }
 </script> 

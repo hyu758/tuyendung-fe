@@ -173,34 +173,6 @@
               {{ errors.acceptTerms }}
             </div>
             
-            <!-- Form thông tin doanh nghiệp cho nhà tuyển dụng -->
-            <div v-if="registerType === 'recruiter'" class="space-y-8 border-t pt-8 mt-8">
-              <h3 class="text-xl font-bold text-gray-900">Thông tin doanh nghiệp</h3>
-              <p class="text-sm text-gray-500 mb-6">Bạn có thể cập nhật thêm thông tin doanh nghiệp sau khi đăng ký</p>
-              
-              <div class="grid grid-cols-1 gap-7">
-                <BaseInput
-                  v-model="companyInfo.company_name"
-                  label="Tên công ty"
-                  placeholder="Tên công ty"
-                  required
-                  prefixIcon="building"
-                  :error="errors.company_name"
-                  class="transform transition-all duration-200 focus-within:scale-105"
-                />
-
-                <BaseInput
-                  v-model="companyInfo.address"
-                  label="Địa chỉ"
-                  placeholder="Địa chỉ công ty"
-                  required
-                  prefixIcon="map-marker-alt"
-                  :error="errors.address"
-                  class="transform transition-all duration-200 focus-within:scale-105"
-                />
-              </div>
-            </div>
-            
             <div class="pt-2">
               <BaseButton
                 type="submit"
@@ -250,11 +222,6 @@ const errors = ref({})
 const acceptTerms = ref(false)
 const successMessage = ref('')
 
-const companyInfo = ref({
-  company_name: '',
-  address: ''
-})
-
 const handleSubmit = async () => {
   // Reset lỗi
   errors.value = {}
@@ -274,11 +241,6 @@ const handleSubmit = async () => {
       fullname: fullname.value,
       gender: gender.value,
       role: registerType.value === 'recruiter' ? 'employer' : 'candidate'
-    }
-
-    // Nếu là nhà tuyển dụng, thêm thông tin doanh nghiệp
-    if (registerType.value === 'recruiter') {
-      registerData.enterprise = companyInfo.value
     }
 
     const result = await authStore.register(registerData)
@@ -315,12 +277,6 @@ const validateFields = () => {
   }
   if (!acceptTerms.value) {
     errors.value.acceptTerms = 'Vui lòng đồng ý với điều khoản sử dụng'
-  }
-
-  // Validate thông tin doanh nghiệp nếu là nhà tuyển dụng
-  if (registerType.value === 'recruiter') {
-    if (!companyInfo.value.company_name) errors.value.company_name = 'Vui lòng nhập tên công ty'
-    if (!companyInfo.value.address) errors.value.address = 'Vui lòng nhập địa chỉ công ty'
   }
 }
 </script>

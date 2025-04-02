@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import EmployerLayout from '../layouts/EmployerLayout.vue'
+import { useEnterpriseStore } from '../stores/enterprise'
 
 const routes = [
   // Public routes
@@ -86,7 +87,12 @@ const routes = [
       {
         path: 'company',
         name: 'Company',
-        component: () => import('../views/enterprise/EnterpriseProfile.vue')
+        component: () => import('../views/enterprise/EnterpriseProfile.vue'),
+      },
+      {
+        path: 'company/edit',
+        name: 'EditEnterprise',
+        component: () => import('../views/enterprise/EnterpriseEdit.vue')
       },
       {
         path: 'campaigns',
@@ -119,7 +125,7 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')
-  }
+  },
 ]
 
 const router = createRouter({
@@ -136,6 +142,7 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  const enterpriseStore = useEnterpriseStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const guestOnly = to.matched.some(record => record.meta.guest)
   
@@ -165,6 +172,18 @@ router.beforeEach(async (to, from, next) => {
       if (roleRequired && authStore.userRole !== roleRequired) {
         // Nếu route yêu cầu role mà user không có role đó
         return next('/')
+      }
+
+      // Kiểm tra thông tin doanh nghiệp cho nhà tuyển dụng
+      if (authStore.userRole === 'employer' && to.name !== 'CreateEnterprise') {
+        try {
+          const result = await enterpriseStore.fetchUserEnterprise()
+          if (!result.success && result.notFound) {
+            return next({ name: 'CreateEnterprise' })
+          }
+        } catch (error) {
+          console.error('Error checking enterprise:', error)
+        }
       }
       
       next()

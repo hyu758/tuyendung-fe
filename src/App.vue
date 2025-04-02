@@ -5,26 +5,23 @@ import { useAuthStore } from './stores/auth'
 import CandidateHeader from './components/layouts/CandidateHeader.vue'
 import BaseAlert from './components/common/BaseAlert.vue'
 
-// Lấy route hiện tại
+
 const route = useRoute()
 const authStore = useAuthStore()
 
-// Khởi tạo trạng thái thông báo
+
 const notification = ref({
   show: false,
   type: 'info',
   message: '',
-  autoClose: 5000  // Tự động đóng sau 5 giây
+  autoClose: 5000
 })
 
-// Bắt sự kiện thay đổi route để kiểm tra thông báo mới
 watch(() => route.path, () => {
   checkNotification()
 })
 
-// Khởi tạo dữ liệu người dùng và kiểm tra thông báo khi component được mount
 onMounted(() => {
-  // Khởi tạo thông tin người dùng từ token nếu có
   if (localStorage.getItem('token') && !authStore.user) {
     console.log('App mounted - Initializing user data from token')
     authStore.updateUserFromToken()

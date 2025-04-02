@@ -5,7 +5,7 @@
         <!-- Logo -->
         <div class="flex items-center">
           <router-link to="/" class="text-2xl font-bold text-blue-600">
-            JobHub
+            JobHubbbb
           </router-link>
         </div>
 
