@@ -95,20 +95,29 @@ const routes = [
         component: () => import('../views/enterprise/EnterpriseEdit.vue')
       },
       {
-        path: 'campaigns',
-        name: 'Campaigns',
-        component: () => import('../views/campaign/CampaignList.vue')
+        path: 'posts',
+        name: 'PostList',
+        component: () => import('../views/post/PostList.vue'),
+        meta: { requiresAuth: true, role: 'employer' }
       },
       {
-        path: 'campaigns/:id',
-        name: 'CampaignDetail',
-        component: () => import('../views/campaign/CampaignDetail.vue')
+        path: 'posts/create',
+        name: 'PostCreate',
+        component: () => import('../views/post/PostCreate.vue'),
+        meta: { requiresAuth: true, role: 'employer' }
       },
+      // {
+      //   path: 'posts/:id',
+      //   name: 'PostDetail',
+      //   component: () => import('../views/post/PostDetail.vue'),
+      //   meta: { requiresAuth: true, role: 'employer' }
+      // },
       {
-        path: 'jobs',
-        name: 'Jobs',
-        component: () => import('../views/employer/Jobs.vue')
-      }
+        path: 'posts/:id/edit',
+        name: 'EditPost',
+        component: () => import('../views/post/PostEdit.vue'),
+        meta: { requiresAuth: true }
+      },
     ]
   },
 

@@ -24,7 +24,7 @@
             <form @submit.prevent="handleSubmit" class="space-y-8">
               <!-- Logo và ảnh nền -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
+                <div v-memo="[logoPreview, form.logo]">
                   <label class="block text-sm font-medium text-gray-700 mb-2">Logo công ty</label>
                   <div class="flex items-center">
                     <div class="relative w-32 h-32">
@@ -62,7 +62,7 @@
                   </div>
                 </div>
 
-                <div>
+                <div v-memo="[backgroundPreview, form.background_image]">
                   <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh nền</label>
                   <div class="flex items-center">
                     <div class="relative w-48 h-32">
@@ -99,13 +99,52 @@
                     </div>
                   </div>
                 </div>
+
+                <div v-memo="[certificatePreview, form.business_certificate, errors.business_certificate]">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Giấy phép kinh doanh <span class="text-red-500">*</span></label>
+                  <div class="flex items-center">
+                    <div class="relative w-48 h-32">
+                      <img
+                        v-if="certificatePreview || form.business_certificate"
+                        :src="certificatePreview || form.business_certificate"
+                        class="w-full h-full object-cover rounded-lg border-2 border-gray-200"
+                        alt="Business certificate preview"
+                      />
+                      <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                        <i class="fas fa-file-alt text-3xl text-gray-400"></i>
+                      </div>
+                      <button
+                        v-if="certificatePreview || form.business_certificate"
+                        type="button"
+                        class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none"
+                        @click="removeCertificate"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                    <div class="ml-5">
+                      <label class="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-upload mr-2"></i>
+                        Tải giấy phép
+                        <input
+                          type="file"
+                          class="hidden"
+                          accept="image/*"
+                          @change="handleCertificateUpload"
+                        >
+                      </label>
+                      <p class="mt-2 text-xs text-gray-500">PNG, JPG, JPEG (Max. 2MB)</p>
+                    </div>
+                  </div>
+                  <p v-if="errors.business_certificate" class="mt-1 text-sm text-red-500">{{ errors.business_certificate }}</p>
+                </div>
               </div>
 
               <!-- Thông tin cơ bản -->
               <div>
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Thông tin cơ bản</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                  <div v-memo="[form.company_name, errors.company_name]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tên công ty <span class="text-red-500">*</span></label>
                     <input
                       v-model="form.company_name"
@@ -117,7 +156,7 @@
                     <p v-if="errors.company_name" class="mt-1 text-sm text-red-500">{{ errors.company_name }}</p>
                   </div>
 
-                  <div>
+                  <div v-memo="[form.tax, errors.tax]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Mã số thuế <span class="text-red-500">*</span></label>
                     <input
                       v-model="form.tax"
@@ -129,19 +168,7 @@
                     <p v-if="errors.tax" class="mt-1 text-sm text-red-500">{{ errors.tax }}</p>
                   </div>
 
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Giấy phép kinh doanh <span class="text-red-500">*</span></label>
-                    <input
-                      v-model="form.business_certificate"
-                      type="text"
-                      required
-                      class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      :class="{'border-red-500': errors.business_certificate}"
-                    >
-                    <p v-if="errors.business_certificate" class="mt-1 text-sm text-red-500">{{ errors.business_certificate }}</p>
-                  </div>
-
-                  <div>
+                  <div v-memo="[form.field_of_activity, errors.field_of_activity]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Lĩnh vực hoạt động <span class="text-red-500">*</span></label>
                     <select
                       v-model="form.field_of_activity"
@@ -162,7 +189,7 @@
                     <p v-if="errors.field_of_activity" class="mt-1 text-sm text-red-500">{{ errors.field_of_activity }}</p>
                   </div>
 
-                  <div>
+                  <div v-memo="[form.scale, errors.scale]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Quy mô công ty <span class="text-red-500">*</span></label>
                     <select
                       v-model="form.scale"
@@ -187,7 +214,7 @@
               <div>
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Thông tin liên hệ</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                  <div v-memo="[form.email_company, errors.email_company]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Email công ty <span class="text-red-500">*</span></label>
                     <input
                       v-model="form.email_company"
@@ -199,7 +226,7 @@
                     <p v-if="errors.email_company" class="mt-1 text-sm text-red-500">{{ errors.email_company }}</p>
                   </div>
 
-                  <div>
+                  <div v-memo="[form.phone_number, errors.phone_number]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span class="text-red-500">*</span></label>
                     <input
                       v-model="form.phone_number"
@@ -211,7 +238,7 @@
                     <p v-if="errors.phone_number" class="mt-1 text-sm text-red-500">{{ errors.phone_number }}</p>
                   </div>
 
-                  <div>
+                  <div v-memo="[form.link_web_site, errors.link_web_site]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
                     <input
                       v-model="form.link_web_site"
@@ -224,7 +251,7 @@
                     <p v-if="errors.link_web_site" class="mt-1 text-sm text-red-500">{{ errors.link_web_site }}</p>
                   </div>
 
-                  <div>
+                  <div v-memo="[form.city, errors.city]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Thành phố <span class="text-red-500">*</span></label>
                     <input
                       v-model="form.city"
@@ -236,7 +263,7 @@
                     <p v-if="errors.city" class="mt-1 text-sm text-red-500">{{ errors.city }}</p>
                   </div>
 
-                  <div class="md:col-span-2">
+                  <div class="md:col-span-2" v-memo="[form.address, errors.address]">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ <span class="text-red-500">*</span></label>
                     <input
                       v-model="form.address"
@@ -251,7 +278,7 @@
               </div>
 
               <!-- Mô tả -->
-              <div>
+              <div v-memo="[form.description, errors.description]">
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Giới thiệu công ty</h2>
                 <div>
                   <textarea
@@ -267,7 +294,7 @@
               </div>
 
               <!-- Buttons -->
-              <div class="flex justify-end space-x-4 pt-6 border-t">
+              <div class="flex justify-end space-x-4 pt-6 border-t" v-memo="[isSubmitting]">
                 <button
                   type="button"
                   @click="router.back()"
@@ -306,6 +333,7 @@ const loading = ref(true)
 const isSubmitting = ref(false)
 const logoPreview = ref(null)
 const backgroundPreview = ref(null)
+const certificatePreview = ref(null)
 const errors = ref({})
 
 const form = reactive({
@@ -314,14 +342,17 @@ const form = reactive({
   address: '',
   phone_number: '',
   email_company: '',
-  business_certificate: '',
+  business_certificate: null,
+  business_certificate_public_id: null,
   field_of_activity: '',
   scale: '',
   description: '',
   city: '',
   link_web_site: '',
   logo: null,
-  background_image: null
+  logo_public_id: null,
+  background_image: null,
+  background_image_public_id: null
 })
 
 // Xử lý upload logo
@@ -383,6 +414,30 @@ const validateUrl = () => {
   }
 }
 
+// Xử lý upload giấy phép kinh doanh
+const handleCertificateUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    if (file.size > 2 * 1024 * 1024) {
+      errors.value.business_certificate = 'Kích thước file không được vượt quá 2MB'
+      return
+    }
+    if (!file.type.match('image.*')) {
+      errors.value.business_certificate = 'Vui lòng chọn file hình ảnh'
+      return
+    }
+    form.business_certificate = file
+    certificatePreview.value = URL.createObjectURL(file)
+    errors.value.business_certificate = ''
+  }
+}
+
+// Xóa giấy phép kinh doanh
+const removeCertificate = () => {
+  form.business_certificate = null
+  certificatePreview.value = null
+}
+
 // Submit form
 const handleSubmit = async () => {
   try {
@@ -416,11 +471,15 @@ onMounted(async () => {
     const result = await enterpriseStore.fetchUserEnterprise()
     if (result.success) {
       const enterprise = result.data[0]
+      console.log(enterprise)
       Object.keys(form).forEach(key => {
         if (enterprise[key] !== undefined) {
           form[key] = enterprise[key]
         }
       })
+      form.business_certificate = enterprise.business_certificate_url
+      form.background_image = enterprise.background_image_url
+      form.logo = enterprise.logo_url
     }
   } catch (err) {
     console.error('Error loading enterprise:', err)

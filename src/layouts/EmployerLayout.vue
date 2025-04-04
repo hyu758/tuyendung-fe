@@ -43,16 +43,7 @@
           </router-link>
 
           <router-link 
-            to="/employer/campaigns"
-            class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
-            :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/campaigns') }"
-          >
-            <font-awesome-icon icon="bullhorn" class="w-5 h-5 mr-3" />
-            <span>Chiến dịch tuyển dụng</span>
-          </router-link>
-
-          <router-link 
-            to="/employer/jobs"
+            to="/employer/posts"
             class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
             :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/jobs') }"
           >

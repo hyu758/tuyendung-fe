@@ -8,35 +8,47 @@
       <template v-else-if="enterprise">
         <!-- Header card với banner và logo -->
         <div class="bg-white shadow-md rounded-lg overflow-hidden mb-8">
-          <div class="relative h-56 bg-black">
+          <div class="relative h-56 bg-black" v-memo="enterprise.background_image_url">
             <img 
-              v-if="enterprise.background_image"
-              :src="enterprise.background_image"
+              v-if="enterprise.background_image_url"
+              :src="enterprise.background_image_url"
               class="w-full h-full object-cover"
               alt="Background"
             />
+            <div v-else class="w-full h-full bg-gray-800"></div>
           </div>
           
           <div class="relative px-8 pb-6">
             <div class="flex flex-col md:flex-row">
               <div class="flex-shrink-0 -mt-20">
-                <img 
-                  :src="enterprise.logo || '/placeholder-logo.png'"
-                  class="w-32 h-32 rounded-lg border-4 border-white bg-white object-cover shadow-md"
-                  alt="Company logo"
-                />
+                <div class="w-32 h-32 rounded-lg border-4 border-white bg-white shadow-md overflow-hidden" v-memo="enterprise.logo_url">
+                  <img 
+                    v-if="enterprise.logo_url"
+                    :src="enterprise.logo_url"
+                    class="w-full h-full object-cover"
+                    alt="Company logo"
+                  />
+                  <div v-else class="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <i class="fas fa-building text-gray-400 text-4xl"></i>
+                  </div>
+                </div>
               </div>
               <div class="mt-4 md:mt-4 md:ml-8 flex-grow">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div>
+                  <div v-memo="[enterprise.company_name, enterprise.city]">
                     <h1 class="text-3xl font-bold text-gray-900">{{ enterprise.company_name }}</h1>
                     <p class="text-gray-600 mt-2 text-base">
                       {{ enterprise.city }}
                     </p>
                   </div>
                   <div class="mt-4 md:mt-0 flex items-center space-x-4">
-                    <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                      Chờ xác thực
+                    <span 
+                      :class="[
+                        'inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium',
+                        enterprise.is_active ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      ]"
+                    >
+                      {{ enterprise.is_active ? 'Đã xác thực' : 'Chờ xác thực' }}
                     </span>
                     <button 
                       @click="navigateToEdit"
@@ -52,24 +64,37 @@
         </div>
 
         <!-- Grid layout cho thông tin chi tiết -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Thông tin liên hệ -->
-          <div>
-            <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Cột trái: Thông tin cơ bản -->
+          <div class="space-y-8">
+            <!-- Giới thiệu công ty -->
+            <div class="bg-white shadow-md rounded-lg p-6" v-memo="enterprise.description">
+              <h2 class="text-xl font-bold text-gray-900 mb-4">
+                Giới thiệu công ty
+              </h2>
+              <p class="text-gray-600 text-base">{{ enterprise.description }}</p>
+            </div>
+
+            <!-- Thông tin liên hệ -->
+            <div class="bg-white shadow-md rounded-lg p-6" v-memo="[enterprise.email_company, enterprise.phone_number, enterprise.address, enterprise.link_web_site]">
               <h2 class="text-xl font-bold text-gray-900 mb-4">
                 Thông tin liên hệ
               </h2>
               <div class="space-y-4">
-                <div>
+                <div class="flex items-start">
+                  <i class="fas fa-envelope text-gray-400 mt-1 mr-3"></i>
                   <p class="text-gray-600 text-base">{{ enterprise.email_company }}</p>
                 </div>
-                <div>
+                <div class="flex items-start">
+                  <i class="fas fa-phone text-gray-400 mt-1 mr-3"></i>
                   <p class="text-gray-600 text-base">{{ enterprise.phone_number }}</p>
                 </div>
-                <div>
+                <div class="flex items-start">
+                  <i class="fas fa-map-marker-alt text-gray-400 mt-1 mr-3"></i>
                   <p class="text-gray-600 text-base">{{ enterprise.address }}</p>
                 </div>
-                <div v-if="enterprise.link_web_site">
+                <div v-if="enterprise.link_web_site" class="flex items-start">
+                  <i class="fas fa-globe text-gray-400 mt-1 mr-3"></i>
                   <a :href="enterprise.link_web_site" target="_blank" class="text-blue-600 hover:underline text-base">
                     {{ enterprise.link_web_site }}
                   </a>
@@ -78,47 +103,59 @@
             </div>
           </div>
 
-          <!-- Thông tin doanh nghiệp -->
-          <div>
+          <!-- Cột phải: Thông tin doanh nghiệp -->
+          <div class="space-y-8" v-memo="[enterprise.tax, enterprise.scale, enterprise.field_of_activity]">
+            <!-- Thông tin doanh nghiệp -->
             <div class="bg-white shadow-md rounded-lg p-6">
               <h2 class="text-xl font-bold text-gray-900 mb-4">
                 Thông tin doanh nghiệp
               </h2>
               <div class="space-y-4">
-                <div>
+                <div class="flex items-start">
+                  <i class="fas fa-id-card text-gray-400 mt-1 mr-3"></i>
                   <p class="text-gray-600 text-base">Mã số thuế: {{ enterprise.tax }}</p>
                 </div>
-                <div>
-                  <p class="text-gray-600 text-base">GPKD: {{ enterprise.business_certificate }}</p>
-                </div>
-                <div>
+                <div class="flex items-start">
+                  <i class="fas fa-users text-gray-400 mt-1 mr-3"></i>
                   <p class="text-gray-600 text-base">Quy mô: {{ enterprise.scale }}</p>
                 </div>
-                <div>
+                <div class="flex items-start">
+                  <i class="fas fa-industry text-gray-400 mt-1 mr-3"></i>
                   <p class="text-gray-600 text-base">Lĩnh vực: {{ getFieldName(enterprise.field_of_activity) }}</p>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Giới thiệu và thông tin thời gian -->
-          <div class="space-y-8">
-            <div class="bg-white shadow-md rounded-lg p-6">
+            <!-- Giấy phép kinh doanh -->
+            <div class="bg-white shadow-md rounded-lg p-6" v-memo="enterprise.business_certificate_url">
               <h2 class="text-xl font-bold text-gray-900 mb-4">
-                Giới thiệu công ty
+                Giấy phép kinh doanh
               </h2>
-              <p class="text-gray-600 text-base">{{ enterprise.description }}</p>
+              <div v-if="enterprise.business_certificate_url" class="mt-4">
+                <img 
+                  :src="enterprise.business_certificate_url" 
+                  alt="Giấy phép kinh doanh"
+                  class="w-full rounded-lg shadow-sm border border-gray-200"
+                />
+              </div>
+              <div v-else class="text-gray-500 text-center py-4">
+                <i class="fas fa-file-alt text-4xl mb-2"></i>
+                <p>Chưa có giấy phép kinh doanh</p>
+              </div>
             </div>
 
-            <div class="bg-white shadow-md rounded-lg p-6">
+            <!-- Thông tin thời gian -->
+            <div class="bg-white shadow-md rounded-lg p-6" v-memo="[enterprise.created_at, enterprise.modified_at || enterprise.updated_at]">
               <h2 class="text-xl font-bold text-gray-900 mb-4">
                 Thông tin thời gian
               </h2>
               <div class="space-y-4">
-                <div>
+                <div class="flex items-start">
+                  <i class="fas fa-calendar-plus text-gray-400 mt-1 mr-3"></i>
                   <p class="text-gray-600 text-base">Tham gia: {{ formatDate(enterprise.created_at) }}</p>
                 </div>
-                <div>
+                <div class="flex items-start">
+                  <i class="fas fa-calendar-check text-gray-400 mt-1 mr-3"></i>
                   <p class="text-gray-600 text-base">Cập nhật: {{ formatDate(enterprise.modified_at || enterprise.updated_at) }}</p>
                 </div>
               </div>

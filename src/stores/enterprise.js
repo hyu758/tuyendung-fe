@@ -168,8 +168,13 @@ export const useEnterpriseStore = defineStore('enterprise', {
       try {
         this.loading = true
         this.error = null
-        
-        const response = await axios.put('api/enterprises/update/', data)
+        const authStore = useAuthStore()
+        const response = await axios.put('api/enterprises/update/', data, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`,
+            'Content-Type': 'multipart/form-data'
+          },
+        })
         
         if (response.data.status === 200) {
           this.enterprise = response.data.data
