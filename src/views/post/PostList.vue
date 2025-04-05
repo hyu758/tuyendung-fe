@@ -1,5 +1,43 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-8">
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Xác nhận xóa</h3>
+        <p class="text-gray-500 mb-6">Bạn có chắc chắn muốn xóa tin tuyển dụng này? Hành động này không thể hoàn tác.</p>
+        <div class="flex justify-end space-x-3">
+          <button
+            @click="showDeleteModal = false"
+            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Hủy
+          </button>
+          <button
+            @click="deletePost(selectedPost)"
+            class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+          >
+            Xóa
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success/Error Notification -->
+    <div v-if="showNotification" class="fixed top-4 right-4 z-50">
+      <div :class="[
+        'rounded-lg p-4 shadow-lg',
+        notificationType === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      ]">
+        <div class="flex items-center">
+          <i :class="[
+            'mr-2',
+            notificationType === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'
+          ]"></i>
+          <span>{{ notificationMessage }}</span>
+        </div>
+      </div>
+    </div>
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="flex justify-between items-center mb-8">
@@ -80,6 +118,13 @@
                   >
                     <i class="fas fa-file-alt"></i>
                   </button>
+                  <button
+                    @click="confirmDelete(post)"
+                    class="text-gray-400 hover:text-red-500"
+                    title="Xóa"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -99,6 +144,11 @@ const router = useRouter()
 const postStore = usePostStore()
 const loading = ref(true)
 const posts = ref([])
+const showDeleteModal = ref(false)
+const selectedPost = ref(null)
+const showNotification = ref(false)
+const notificationType = ref('')
+const notificationMessage = ref('')
 
 // Format date
 const formatDate = (dateString) => {
@@ -129,8 +179,13 @@ const loadPosts = async () => {
     loading.value = true
     const result = await postStore.fetchPosts()
     if (result.success) {
-      posts.value = result.data.data
-      console.log(posts.value)
+      posts.value = result.data.data.results || []
+      pagination.value = {
+        currentPage: result.data.data.page || 1,
+        totalPages: result.data.data.total_pages || 1,
+        totalItems: result.data.data.total || 0,
+        pageSize: result.data.data.page_size || 10
+      }
     }
   } catch (err) {
     console.error('Error loading posts:', err)
@@ -141,12 +196,51 @@ const loadPosts = async () => {
 
 // Edit post
 const editPost = (post) => {
-  postStore.currentPost = post
+  console.log(post)
   router.push({
     name: 'EditPost',
     params: { id: post.id }
   })
 }
+
+// Delete post
+const confirmDelete = (post) => {
+  selectedPost.value = post
+  showDeleteModal.value = true
+}
+
+const showNotificationMessage = (type, message) => {
+  notificationType.value = type
+  notificationMessage.value = message
+  showNotification.value = true
+  setTimeout(() => {
+    showNotification.value = false
+  }, 3000)
+}
+
+const deletePost = async (post) => {
+  try {
+    showDeleteModal.value = false
+    const result = await postStore.deletePost(post.id)
+    if (result.success) {
+      showNotificationMessage('success', 'Xóa tin tuyển dụng thành công')
+      await loadPosts()
+    } else {
+      showNotificationMessage('error', result.error || 'Có lỗi xảy ra khi xóa tin tuyển dụng')
+    }
+  } catch (err) {
+    console.error('Error deleting post:', err)
+    showNotificationMessage('error', 'Có lỗi xảy ra khi xóa tin tuyển dụng')
+  }
+}
+
+// Thêm state pagination
+const pagination = ref({
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+  pageSize: 10
+})
 
 // Load posts when component is mounted
 onMounted(loadPosts)

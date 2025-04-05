@@ -106,25 +106,39 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Thành phố <span class="text-red-500">*</span></label>
-                  <input
+                  <select
                     v-model="form.city"
-                    type="text"
                     required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{'border-red-500': errors.city}"
+                    @change="handleProvinceChange(form.city)"
                   >
+                    <option value="">Chọn tỉnh/thành phố</option>
+                    <option v-for="province in addressStore.provinces" 
+                            :key="province.code" 
+                            :value="province.name">
+                      {{ province.name }}
+                    </option>
+                  </select>
                   <p v-if="errors.city" class="mt-1 text-sm text-red-500">{{ errors.city }}</p>
                 </div>
 
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện <span class="text-red-500">*</span></label>
-                  <input
+                  <select
                     v-model="form.district"
-                    type="text"
                     required
+                    :disabled="!form.city"
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{'border-red-500': errors.district}"
                   >
+                    <option value="">{{ form.city ? 'Chọn quận/huyện' : 'Vui lòng chọn tỉnh/thành phố trước' }}</option>
+                    <option v-for="district in addressStore.getDistrictsByProvince" 
+                            :key="district.code" 
+                            :value="district.name">
+                      {{ district.name }}
+                    </option>
+                  </select>
                   <p v-if="errors.district" class="mt-1 text-sm text-red-500">{{ errors.district }}</p>
                 </div>
 
@@ -311,11 +325,13 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePostStore } from '../../stores/post'
 import { useFieldStore } from '../../stores/field'
+import { useAddressStore } from '../../stores/address'
 import { debounce } from 'lodash'
 
 const router = useRouter()
 const postStore = usePostStore()
 const fieldStore = useFieldStore()
+const addressStore = useAddressStore()
 const isSubmitting = ref(false)
 const errors = ref({})
 const fields = ref([])
@@ -341,23 +357,59 @@ const form = reactive({
 })
 
 onMounted(async () => {
-  const result = await fieldStore.fetchFields()
-  if (result.success) {
-    fields.value = result.data.results
+  const [fieldsResult, provincesResult] = await Promise.all([
+    fieldStore.fetchFields(),
+    addressStore.fetchProvinces()
+  ])
+  
+  if (fieldsResult.success) {
+    fields.value = fieldsResult.data.results
+  }
+  
+  if (provincesResult.success) {
+    console.log('Provinces loaded:', addressStore.provinces)
   }
 })
 
 const handleFieldChange = debounce(async () => {
-  form.position = ''
-  positions.value = []
-  
-  if (form.field_id) {
-    const result = await fieldStore.fetchPositionsByField(form.field_id)
-    if (result.success) {
-      positions.value = result.data
+  try {
+    form.position = ''
+    positions.value = []
+    
+    if (form.field_id) {
+      const result = await fieldStore.fetchPositionsByField(form.field_id)
+      if (result.success) {
+        console.log('Positions data:', result.data)
+        
+        positions.value = result.data.results
+        
+        console.log('Updated positions:', positions.value)
+      } else {
+        console.error('Failed to fetch positions:', result.error)
+      }
     }
+  } catch (err) {
+    console.error('Error in handleFieldChange:', err)
   }
 }, 300)
+
+// Thêm watch để debug
+watch(() => positions.value, (newVal) => {
+  console.log('Positions changed:', newVal)
+}, { deep: true })
+
+watch(() => form.position, (newVal) => {
+  console.log('Selected position changed:', newVal)
+})
+
+const handleProvinceChange = (name) => {
+  const province = addressStore.provinces.find(p => p.name === name)
+  if (province) {
+    form.district = ''
+    addressStore.setSelectedProvince(province.code)
+  }
+  
+}
 
 const handleSubmit = async () => {
   try {
@@ -366,12 +418,13 @@ const handleSubmit = async () => {
 
     const postData = {
       ...form,
-      enterprise: form.enterprise?.id || null,
+      city: form.city,
+      district: form.district,
       position: form.position || null,
       quantity: parseInt(form.quantity) || 1,
       deadline: form.deadline ? new Date(form.deadline).toISOString().split('T')[0] : null
     }
-
+    console.log(postData)
     const result = await postStore.createPost(postData)
     if (result.success) {
       router.push('/employer/posts')

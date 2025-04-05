@@ -109,14 +109,14 @@
                       :class="{'border-red-500': errors.field_of_activity}"
                     >
                       <option value="">Chọn lĩnh vực</option>
-                      <option value="it">Công nghệ thông tin</option>
-                      <option value="finance">Tài chính - Ngân hàng</option>
-                      <option value="marketing">Marketing - Truyền thông</option>
-                      <option value="education">Giáo dục</option>
-                      <option value="healthcare">Y tế - Chăm sóc sức khỏe</option>
-                      <option value="manufacturing">Sản xuất - Công nghiệp</option>
-                      <option value="retail">Bán lẻ - Thương mại</option>
-                      <option value="other">Khác</option>
+                      <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+                      <option value="Tài chính - Ngân hàng">Tài chính - Ngân hàng</option>
+                      <option value="Marketing - Truyền thông">Marketing - Truyền thông</option>
+                      <option value="Giáo dục">Giáo dục</option>
+                      <option value="Y tế - Chăm sóc sức khỏe">Y tế - Chăm sóc sức khỏe</option>
+                      <option value="Sản xuất - Công nghiệp">Sản xuất - Công nghiệp</option>
+                      <option value="Bán lẻ - Thương mại">Bán lẻ - Thương mại</option>
+                      <option value="Khác">Khác</option>
                     </select>
                     <div v-if="errors.field_of_activity" class="mt-2 text-sm text-red-600">
                       {{ errors.field_of_activity }}
@@ -145,15 +145,22 @@
                     </div>
                   </div>
 
-                  <BaseInput
-                    v-model="form.city"
-                    label="Thành phố"
-                    placeholder="VD: Hà Nội"
-                    required
-                    prefixIcon="map-marker-alt"
-                    :error="errors.city"
-                    class="shadow-sm"
-                  />
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Thành phố</label>
+                    <select
+                      v-model="form.city"
+                      class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md shadow-sm"
+                      :class="{'border-red-500': errors.city}"
+                    >
+                      <option value="">Chọn thành phố</option>
+                      <option v-for="city in cities" :key="city.code" :value="city.name">
+                        {{ city.name }}
+                      </option>
+                    </select>
+                    <div v-if="errors.city" class="mt-2 text-sm text-red-600">
+                      {{ errors.city }}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -228,7 +235,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEnterpriseStore } from '../../stores/enterprise'
 import BaseInput from '../../components/common/BaseInput.vue'
@@ -255,6 +262,23 @@ const form = reactive({
   city: '',
   link_web_site: '',
   logo: ''
+})
+
+const cities = ref([])
+
+// Hàm lấy danh sách tỉnh thành
+const fetchCities = async () => {
+  try {
+    const response = await fetch('https://provinces.open-api.vn/api/?depth=1')
+    const data = await response.json()
+    cities.value = data
+  } catch (err) {
+    console.error('Lỗi khi lấy danh sách tỉnh thành:', err)
+  }
+}
+
+onMounted(() => {
+  fetchCities()
 })
 
 const handleSubmit = async () => {

@@ -10,15 +10,20 @@ export const usePostStore = defineStore('post', {
   }),
 
   actions: {
-    async fetchPosts() {
+    async fetchPosts(page = 1, pageSize = 10) {
       try {
         this.loading = true
-        const response = await axios.get('/api/posts/')
-        this.posts = response.data
-        return { success: true, data: response.data }
+        const response = await axios.get(`/api/posts?page=${page}&page_size=${pageSize}`)
+        return {
+          success: true,
+          data: response.data
+        }
       } catch (error) {
-        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách tin tuyển dụng'
-        return { success: false, error: this.error }
+        console.error('Error fetching posts:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách tin tuyển dụng'
+        }
       } finally {
         this.loading = false
       }
@@ -52,15 +57,19 @@ export const usePostStore = defineStore('post', {
 
     async deletePost(id) {
       try {
-        this.loading = true
-        await axios.delete(`/api/posts/${id}`)
-        this.posts = this.posts.filter(post => post.id !== id)
-        return { success: true }
+        const url = `/api/posts/${id}/delete/`;
+        console.log("DELETE URL:", url);
+        const response = await axios.delete(url);
+        return {
+          success: true,
+          data: response.data
+        }
       } catch (error) {
-        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi xóa tin tuyển dụng'
-        return { success: false, error: this.error }
-      } finally {
-        this.loading = false
+        console.error('Error deleting post:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi xóa tin tuyển dụng'
+        }
       }
     },
 

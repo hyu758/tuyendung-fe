@@ -175,7 +175,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import JobCard from '../components/common/JobCard.vue'
 import { jobService } from '../services/api'
-
+import { useFieldStore } from '../stores/field'
 const router = useRouter()
 
 // State
@@ -203,24 +203,18 @@ const popularTags = [
   'Remote'
 ]
 
-const categories = [
-  { id: 1, name: 'Công nghệ thông tin', jobs: 1240, icon: 'fas fa-laptop-code' },
-  { id: 2, name: 'Kinh doanh', jobs: 850, icon: 'fas fa-chart-line' },
-  { id: 3, name: 'Marketing', jobs: 654, icon: 'fas fa-bullhorn' },
-  { id: 4, name: 'Thiết kế', jobs: 350, icon: 'fas fa-pencil-ruler' },
-  { id: 5, name: 'Kế toán', jobs: 278, icon: 'fas fa-calculator' },
-  { id: 6, name: 'Giáo dục', jobs: 320, icon: 'fas fa-graduation-cap' },
-  { id: 7, name: 'Y tế', jobs: 235, icon: 'fas fa-heartbeat' },
-  { id: 8, name: 'Khác', jobs: 560, icon: 'fas fa-ellipsis-h' }
-]
+const categories = ref([]);
 
 // Lifecycle hooks
 onMounted(async () => {
+  const fieldStore = useFieldStore();
   try {
-    // Trong thực tế, sẽ gọi API để lấy danh sách công việc nổi bật
-    // const response = await jobService.getAllJobs({ featured: true })
-    // featuredJobs.value = response.data
-    
+    const result = await fieldStore.fetchFields();
+    console.log(result);
+    if (result.success) {
+      categories.value = result.data.results;
+    }
+    console.log(categories.value);
     // Dữ liệu mẫu
     featuredJobs.value = [
       {

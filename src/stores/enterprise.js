@@ -4,64 +4,66 @@ import { useAuthStore } from './auth'
 
 export const useEnterpriseStore = defineStore('enterprise', {
   state: () => ({
-    enterprise: null, // doanh nghiệp của user hiện tại
-    enterprises: [], // danh sách doanh nghiệp
+    enterprises: [],
+    currentEnterprise: null,
     loading: false,
     error: null,
     pagination: {
       currentPage: 1,
       totalPages: 1,
-      totalItems: 0
+      totalItems: 0,
+      pageSize: 10
     }
   }),
 
   getters: {
-    hasEnterprise: (state) => !!state.enterprise,
-    enterpriseId: (state) => state.enterprise?.id,
-    companyName: (state) => state.enterprise?.company_name,
-    address: (state) => state.enterprise?.address,
-    businessCertificate: (state) => state.enterprise?.business_certificate,
-    description: (state) => state.enterprise?.description,
-    emailCompany: (state) => state.enterprise?.email_company,
-    fieldOfActivity: (state) => state.enterprise?.field_of_activity,
-    linkWebSite: (state) => state.enterprise?.link_web_site,
-    logo: (state) => state.enterprise?.logo,
-    phoneNumber: (state) => state.enterprise?.phone_number,
-    scale: (state) => state.enterprise?.scale,
-    tax: (state) => state.enterprise?.tax,
-    city: (state) => state.enterprise?.city
+    hasEnterprise: (state) => !!state.currentEnterprise,
+    enterpriseId: (state) => state.currentEnterprise?.id,
+    companyName: (state) => state.currentEnterprise?.company_name,
+    address: (state) => state.currentEnterprise?.address,
+    businessCertificate: (state) => state.currentEnterprise?.business_certificate,
+    description: (state) => state.currentEnterprise?.description,
+    emailCompany: (state) => state.currentEnterprise?.email_company,
+    fieldOfActivity: (state) => state.currentEnterprise?.field_of_activity,
+    linkWebSite: (state) => state.currentEnterprise?.link_web_site,
+    logo: (state) => state.currentEnterprise?.logo,
+    phoneNumber: (state) => state.currentEnterprise?.phone_number,
+    scale: (state) => state.currentEnterprise?.scale,
+    tax: (state) => state.currentEnterprise?.tax,
+    city: (state) => state.currentEnterprise?.city
   },
 
   actions: {
-    // Lấy danh sách doanh nghiệp đang hoạt động
-    async fetchEnterprises({ page = 1, pageSize = 10, sortBy = 'company_name', sortOrder = 'asc' } = {}) {
-      this.loading = true
-      this.error = null
-
+    async fetchEnterprises(page = 1, pageSize = 10) {
       try {
-        const response = await axios.get('api/enterprises/', {
-          params: {
-            page,
-            page_size: pageSize,
-            sort_by: sortBy,
-            sort_order: sortOrder
-          }
-        })
-
-        if (response.data.status === 200) {
-          this.enterprises = response.data.data.items || []
-          this.pagination = {
-            currentPage: page,
-            totalPages: Math.ceil(response.data.data.total / pageSize),
-            totalItems: response.data.data.total
-          }
-          return { success: true, data: this.enterprises }
+        this.loading = true
+        const response = await axios.get(`/api/enterprises?page=${page}&page_size=${pageSize}`)
+        this.enterprises = response.data.data.results
+        this.pagination = {
+          currentPage: response.data.data.page,
+          totalPages: response.data.data.total_pages,
+          totalItems: response.data.data.total,
+          pageSize: response.data.data.page_size
         }
-        
-        throw new Error(response.data.message || 'Không thể lấy danh sách doanh nghiệp')
+        return { success: true, data: response.data }
       } catch (error) {
-        console.error('Lỗi khi lấy danh sách doanh nghiệp:', error)
-        this.error = error.response?.data?.message || 'Không thể lấy danh sách doanh nghiệp. Vui lòng thử lại.'
+        console.error('Error fetching enterprises:', error)
+        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách công ty'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchEnterpriseById(id) {
+      try {
+        this.loading = true
+        const response = await axios.get(`/api/enterprises/${id}`)
+        this.currentEnterprise = response.data.data
+        return { success: true, data: response.data }
+      } catch (error) {
+        console.error('Error fetching enterprise:', error)
+        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tải thông tin công ty'
         return { success: false, error: this.error }
       } finally {
         this.loading = false
@@ -82,12 +84,12 @@ export const useEnterpriseStore = defineStore('enterprise', {
         })
         
         if (response.data.status === 200) {
-          this.enterprise = response.data.data
-          return { success: true, data: this.enterprise }
+          this.currentEnterprise = response.data.data
+          return { success: true, data: this.currentEnterprise }
         }
         
         if (response.data.status === 404) {
-          this.enterprise = null
+          this.currentEnterprise = null
           return { success: false, notFound: true }
         }
 
@@ -95,7 +97,7 @@ export const useEnterpriseStore = defineStore('enterprise', {
       } catch (error) {
         console.error('Lỗi khi lấy thông tin doanh nghiệp:', error)
         if (error.response?.status === 404) {
-          this.enterprise = null
+          this.currentEnterprise = null
           return { success: false, notFound: true }
         }
         this.error = error.response?.data?.message || 'Không thể lấy thông tin doanh nghiệp. Vui lòng thử lại.'
@@ -147,9 +149,9 @@ export const useEnterpriseStore = defineStore('enterprise', {
         })
         
         if (response.data.status === 201) {
-          this.enterprise = response.data.data
+          this.currentEnterprise = response.data.data
           this.createNotification('success', 'Tạo doanh nghiệp thành công!')
-          return { success: true, data: this.enterprise }
+          return { success: true, data: this.currentEnterprise }
         }
 
         throw new Error(response.data.message || 'Không thể tạo doanh nghiệp')
@@ -177,9 +179,9 @@ export const useEnterpriseStore = defineStore('enterprise', {
         })
         
         if (response.data.status === 200) {
-          this.enterprise = response.data.data
+          this.currentEnterprise = response.data.data
           this.createNotification('success', 'Cập nhật thông tin doanh nghiệp thành công!')
-          return { success: true, data: this.enterprise }
+          return { success: true, data: this.currentEnterprise }
         }
 
         throw new Error(response.data.message || 'Không thể cập nhật thông tin doanh nghiệp')
@@ -198,6 +200,31 @@ export const useEnterpriseStore = defineStore('enterprise', {
         message: message,
         show: true
       }))
+    },
+
+    async searchEnterprises({ q = '', city = '', field = '', scale = '', page = 1, pageSize = 10, sortBy = '', sortOrder = 'asc' } = {}) {
+      try {
+        this.loading = true
+        const params = new URLSearchParams({
+          ...(q && { q }),
+          ...(city && { city }),
+          ...(field && { field }),
+          ...(scale && { scale }),
+          page,
+          page_size: pageSize,
+          ...(sortBy && { sort_by: sortBy }),
+          ...(sortOrder && { sort_order: sortOrder })
+        })
+        
+        const response = await axios.get(`/api/enterprises/search/?${params.toString()}`)
+        return { success: true, data: response.data }
+      } catch (error) {
+        console.error('Error searching enterprises:', error)
+        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tìm kiếm công ty'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
     }
   }
 }) 

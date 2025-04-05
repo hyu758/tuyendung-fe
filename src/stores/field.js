@@ -12,7 +12,7 @@ export const useFieldStore = defineStore('field', {
   }),
 
   actions: {
-    async fetchFields(params = { page: 1, page_size: 10 }) {
+    async fetchFields(params = { page: 1, page_size: 5 }) {
       try {
         this.loading = true
         const response = await axios.get('/api/fields/', { params })
@@ -37,7 +37,6 @@ export const useFieldStore = defineStore('field', {
         this.loadingPositions = true
         const response = await axios.get(`/api/positions/field/${fieldId}/`)
         const positions = response.data.data
-        
         // Lưu vào cache
         this.positionsCache.set(fieldId, positions)
         this.positions = positions

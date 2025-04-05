@@ -44,7 +44,16 @@ const routes = [
     component: () => import('../views/ForgotPassword.vue'),
     meta: { guest: true }
   },
-
+  {
+    path: '/enterprises',
+    name: 'EnterpriseList',
+    component: () => import('../views/enterprise/EnterpriseList.vue')
+  },
+  {
+    path: '/enterprises/:id',
+    name: 'EnterpriseDetail',
+    component: () => import('../views/enterprise/EnterpriseDetail.vue')
+  },
   // Routes yêu cầu đăng nhập
   {
     path: '/profile',
@@ -62,7 +71,6 @@ const routes = [
     name: 'JobDetail',
     component: () => import('../views/JobDetail.vue')
   },
-
   // Employer routes with layout
   {
     path: '/employer',

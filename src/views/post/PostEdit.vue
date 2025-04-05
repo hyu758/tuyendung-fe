@@ -22,7 +22,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề tin <span
                       class="text-red-500">*</span></label>
-                  <input v-model="form.value.title" type="text" required
+                  <input v-model="form.title" type="text" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.title }">
                   <p v-if="errors.title" class="mt-1 text-sm text-red-500">{{ errors.title }}</p>
@@ -32,7 +32,7 @@
                   <label class="block text-sm font-medium text-gray-700 mb-1">Vị trí <span
                       class="text-red-500">*</span></label>
                   <div class="relative">
-                    <select v-model="form.value.position" required
+                    <select v-model="form.position" required
                       class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       :class="{ 'border-red-500': errors.position }">
                       <option value="">Chọn vị trí</option>
@@ -47,7 +47,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Hạn nộp hồ sơ <span
                       class="text-red-500">*</span></label>
-                  <input v-model="form.value.deadline" type="date" required
+                  <input v-model="form.deadline" type="date" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.deadline }" :min="new Date().toISOString().split('T')[0]">
                   <p v-if="errors.deadline" class="mt-1 text-sm text-red-500">{{ errors.deadline }}</p>
@@ -56,7 +56,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Số lượng <span
                       class="text-red-500">*</span></label>
-                  <input v-model="form.value.quantity" type="number" required min="1"
+                  <input v-model="form.quantity" type="number" required min="1"
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.quantity }">
                   <p v-if="errors.quantity" class="mt-1 text-sm text-red-500">{{ errors.quantity }}</p>
@@ -71,7 +71,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Thành phố <span
                       class="text-red-500">*</span></label>
-                  <input v-model="form.value.city" type="text" required
+                  <input v-model="form.city" type="text" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.city }">
                   <p v-if="errors.city" class="mt-1 text-sm text-red-500">{{ errors.city }}</p>
@@ -80,7 +80,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện <span
                       class="text-red-500">*</span></label>
-                  <input v-model="form.value.district" type="text" required
+                  <input v-model="form.district" type="text" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.district }">
                   <p v-if="errors.district" class="mt-1 text-sm text-red-500">{{ errors.district }}</p>
@@ -89,7 +89,7 @@
                 <div class="md:col-span-2">
                   <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết <span
                       class="text-red-500">*</span></label>
-                  <input v-model="form.value.detail_address" type="text" required
+                  <input v-model="form.detail_address" type="text" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.detail_address }">
                   <p v-if="errors.detail_address" class="mt-1 text-sm text-red-500">{{ errors.detail_address }}</p>
@@ -104,7 +104,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Kinh nghiệm <span
                       class="text-red-500">*</span></label>
-                  <select v-model="form.value.experience" required
+                  <select v-model="form.experience" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.experience }">
                     <option value="">Chọn kinh nghiệm</option>
@@ -123,7 +123,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Cấp bậc <span
                       class="text-red-500">*</span></label>
-                  <select v-model="form.value.level" required
+                  <select v-model="form.level" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.level }">
                     <option value="">Chọn cấp bậc</option>
@@ -142,7 +142,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian làm việc <span
                       class="text-red-500">*</span></label>
-                  <input v-model="form.value.time_working" type="text" required
+                  <input v-model="form.time_working" type="text" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.time_working }">
                   <p v-if="errors.time_working" class="mt-1 text-sm text-red-500">{{ errors.time_working }}</p>
@@ -151,7 +151,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Loại hình công việc <span
                       class="text-red-500">*</span></label>
-                  <select v-model="form.value.type_working" required
+                  <select v-model="form.type_working" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.type_working }">
                     <option value="">Chọn loại hình công việc</option>
@@ -168,7 +168,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Mức lương <span
                       class="text-red-500">*</span></label>
-                  <input v-model="form.value.salary_range" type="text" required
+                  <input v-model="form.salary_range" type="text" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.salary_range }">
                   <p v-if="errors.salary_range" class="mt-1 text-sm text-red-500">{{ errors.salary_range }}</p>
@@ -183,7 +183,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả công việc <span
                       class="text-red-500">*</span></label>
-                  <textarea v-model="form.value.description" rows="6" required
+                  <textarea v-model="form.description" rows="6" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.description }"
                     placeholder="Mô tả chi tiết về công việc, trách nhiệm..."></textarea>
@@ -193,7 +193,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Yêu cầu ứng viên <span
                       class="text-red-500">*</span></label>
-                  <textarea v-model="form.value.required" rows="6" required
+                  <textarea v-model="form.required" rows="6" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.required }"
                     placeholder="Các yêu cầu về kỹ năng, trình độ..."></textarea>
@@ -203,7 +203,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Quyền lợi ứng viên <span
                       class="text-red-500">*</span></label>
-                  <textarea v-model="form.value.interest" rows="6" required
+                  <textarea v-model="form.interest" rows="6" required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{ 'border-red-500': errors.interest }"
                     placeholder="Các quyền lợi, chế độ đãi ngộ..."></textarea>
@@ -247,25 +247,51 @@ const fieldStore = useFieldStore()
 const isSubmitting = ref(false)
 const errors = ref({})
 const positions = ref([])
-const form = reactive({})
+const form = ref({
+  title: '',
+  deadline: '',
+  district: '',
+  experience: '',
+  position: null,
+  interest: '',
+  level: '',
+  quantity: 1,
+  required: '',
+  salary_range: '',
+  time_working: '',
+  type_working: '',
+  city: '',
+  description: '',
+  detail_address: ''
+})
 
 const postId = router.currentRoute.value.params.id
 
 onMounted(async () => {
-  const result = await postStore.fetchPostById(postId)
-  if (!result.success) {
+  try {
+    // Fetch post data
+    const result = await postStore.fetchPostById(postId)
+    if (!result.success) {
+      router.push('/employer/posts')
+      return
+    }
+    
+    // Update form with fetched data
+    form.value = {
+      ...form.value,
+      ...result.data.data
+    }
+    console.log(form.value)
+    // Load positions
+    // const positionsResult = await fieldStore.fetchPositions()
+    // if (positionsResult.success) {
+    //   positions.value = positionsResult.data
+    // }
+  } catch (error) {
+    console.error('Error loading post data:', error)
     router.push('/employer/posts')
-    return
   }
-  form.value = result.data.data
-  // Load positions
-  // const tmp = await fieldStore.fetchPositions()
-  // if (tmp.success) {
-  //   positions.value = tmp.data
-  // }
 })
-
-
 
 // Submit form
 const handleSubmit = async () => {
@@ -273,7 +299,7 @@ const handleSubmit = async () => {
     isSubmitting.value = true
     errors.value = {}
 
-    const result = await postStore.updatePost(postData.id, form)
+    const result = await postStore.updatePost(postId, form.value)
     if (result.success) {
       router.push('/employer/posts')
     } else {

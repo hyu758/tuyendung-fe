@@ -26,11 +26,7 @@ export const useProfileStore = defineStore('profile', {
         const authStore = useAuthStore()
         const token = authStore.token
 
-        const response = await axios.get('/api/profile/', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+        const response = await axios.get('/api/profile/')
         console.log('Dữ liệu profile từ API:', response.data)
         if (response.data.status === 200) {
           this.profile = response.data.data;
@@ -65,11 +61,7 @@ export const useProfileStore = defineStore('profile', {
         const response = await axios.put('/api/profile/update/', {
           fullname: profileData.fullname,
           gender: profileData.gender,
-          user: this.profile.user // Thêm trường user ID từ profile hiện tại
-        }, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          user: this.profile.user
         })
 
         console.log('Kết quả cập nhật:', response.data)
@@ -120,10 +112,6 @@ export const useProfileStore = defineStore('profile', {
           current_password: passwordData.currentPassword,
           new_password: passwordData.newPassword,
           confirm_password: passwordData.confirmPassword
-        }, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         })
 
         if (response.data.status === 200) {

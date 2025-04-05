@@ -13,7 +13,7 @@
             <router-link to="/job-search" class="text-gray-700 hover:text-blue-600 font-medium">
               Tìm việc
             </router-link>
-            <router-link to="/companies" class="text-gray-700 hover:text-blue-600 font-medium">
+            <router-link to="/enterprises" class="text-gray-700 hover:text-blue-600 font-medium">
               Công ty
             </router-link>
             <router-link to="/blog" class="text-gray-700 hover:text-blue-600 font-medium">
