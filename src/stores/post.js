@@ -45,7 +45,7 @@ export const usePostStore = defineStore('post', {
     async updatePost(id, postData) {
       try {
         this.loading = true
-        const response = await axios.put(`/api/posts/${id}/`, postData)
+        const response = await axios.put(`/api/posts/update/${id}/`, postData)
         return { success: true, data: response.data }
       } catch (error) {
         this.error = error.response?.data?.errors || 'Có lỗi xảy ra khi cập nhật tin tuyển dụng'
@@ -57,7 +57,7 @@ export const usePostStore = defineStore('post', {
 
     async deletePost(id) {
       try {
-        const url = `/api/posts/${id}/delete/`;
+        const url = `/api/posts/delete/${id}/`;
         console.log("DELETE URL:", url);
         const response = await axios.delete(url);
         return {
@@ -84,6 +84,22 @@ export const usePostStore = defineStore('post', {
         return { success: false, error: this.error }
       } finally {
         this.loading = false
+      }
+    },
+
+    async togglePostStatus(postId) {
+      try {
+        const response = await axios.put(`/api/posts/${postId}/toggle-status/`)
+        return {
+          success: true,
+          data: response.data
+        }
+      } catch (error) {
+        console.error('Error toggling post status:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi thay đổi trạng thái bài đăng'
+        }
       }
     }
   }

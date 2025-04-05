@@ -48,6 +48,36 @@ export const useFieldStore = defineStore('field', {
       } finally {
         this.loadingPositions = false
       }
+    },
+    async getPositionById(positionId) {
+      try {
+        const response = await axios.get(`/api/position/${positionId}/`)
+        return { 
+          success: true, 
+          data: response.data
+        }
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tải thông tin vị trí'
+        return { 
+          success: false, 
+          error: this.error 
+        }
+      }
+    },
+    async getFieldById(fieldId) {
+      try {
+        const response = await axios.get(`/api/fields/${fieldId}/`)
+        return { 
+          success: true, 
+          data: response.data
+        }
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tải thông tin lĩnh vực'
+        return { 
+          success: false, 
+          error: this.error 
+        }
+      }
     }
   }
 }) 

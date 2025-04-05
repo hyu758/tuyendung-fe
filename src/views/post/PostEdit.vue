@@ -27,21 +27,26 @@
                     :class="{ 'border-red-500': errors.title }">
                   <p v-if="errors.title" class="mt-1 text-sm text-red-500">{{ errors.title }}</p>
                 </div>
-
+                <!-- Thêm một select box lấy thông tin lĩnh vực theo id, API là /api/fields/id. để readonly-->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Lĩnh vực <span
+                      class="text-red-500">*</span></label>
+                  <input 
+                    :value="currentField?.name || 'Đang tải...'" 
+                    type="text" 
+                    readonly
+                    class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 bg-gray-50 text-gray-500 cursor-not-allowed"
+                  >
+                </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Vị trí <span
                       class="text-red-500">*</span></label>
-                  <div class="relative">
-                    <select v-model="form.position" required
-                      class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      :class="{ 'border-red-500': errors.position }">
-                      <option value="">Chọn vị trí</option>
-                      <option v-for="position in positions" :key="position.id" :value="position.id">
-                        {{ position.name }}
-                      </option>
-                    </select>
-                  </div>
-                  <p v-if="errors.position" class="mt-1 text-sm text-red-500">{{ errors.position }}</p>
+                  <input 
+                    :value="currentPosition?.name || 'Đang tải...'" 
+                    type="text" 
+                    readonly
+                    class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 bg-gray-50 text-gray-500 cursor-not-allowed"
+                  >
                 </div>
 
                 <div>
@@ -239,6 +244,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePostStore } from '../../stores/post'
 import { useFieldStore } from '../../stores/field'
+import { showSuccess, showError, notificationTemplates } from '../../utils/notifications'
 
 const router = useRouter()
 const postStore = usePostStore()
@@ -246,13 +252,13 @@ const fieldStore = useFieldStore()
 
 const isSubmitting = ref(false)
 const errors = ref({})
-const positions = ref([])
+const currentField = ref(null)
+const currentPosition = ref(null)
 const form = ref({
   title: '',
   deadline: '',
   district: '',
   experience: '',
-  position: null,
   interest: '',
   level: '',
   quantity: 1,
@@ -262,7 +268,7 @@ const form = ref({
   type_working: '',
   city: '',
   description: '',
-  detail_address: ''
+  detail_address: '',
 })
 
 const postId = router.currentRoute.value.params.id
@@ -281,12 +287,24 @@ onMounted(async () => {
       ...form.value,
       ...result.data.data
     }
-    console.log(form.value)
-    // Load positions
-    // const positionsResult = await fieldStore.fetchPositions()
-    // if (positionsResult.success) {
-    //   positions.value = positionsResult.data
-    // }
+
+    // Load field data
+    if (form.value.field) {
+      const fieldResult = await fieldStore.getFieldById(form.value.field)
+      console.log(fieldResult)
+      if (fieldResult.success) {
+        currentField.value = fieldResult.data
+        console.log(currentField.value)
+      }
+    }
+
+    // Load position data
+    if (form.value.position) {
+      const positionResult = await fieldStore.getPositionById(form.value.position)
+      if (positionResult.success) {
+        currentPosition.value = positionResult.data
+      }
+    }
   } catch (error) {
     console.error('Error loading post data:', error)
     router.push('/employer/posts')
@@ -301,11 +319,17 @@ const handleSubmit = async () => {
 
     const result = await postStore.updatePost(postId, form.value)
     if (result.success) {
-      router.push('/employer/posts')
+      showSuccess(notificationTemplates.post.updateSuccess)
+      // Thêm delay 1 giây trước khi chuyển trang
+      setTimeout(() => {
+        router.push('/employer/posts')
+      }, 1000)
     } else {
+      showError(notificationTemplates.post.updateError + (result.error || notificationTemplates.common.error))
       errors.value = result.error
     }
   } catch (err) {
+    showError(notificationTemplates.post.updateError + (err.response?.data?.message || notificationTemplates.common.error))
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     } else {

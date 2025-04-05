@@ -5,7 +5,10 @@
         <!-- Logo -->
         <div class="flex items-center">
           <router-link to="/" class="text-2xl font-bold text-blue-600">
-            JobHub
+            <div class = "flex items-center py-0.5">
+              <img src="../../assets/logo.png" alt="JobHub" class="w-11 h-11 mr-1">
+              <p>JobHub</p>
+            </div>
           </router-link>
           
           <!-- Menu chính -->

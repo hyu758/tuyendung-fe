@@ -6,7 +6,7 @@
         <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
           <div class="flex-1">
             <input
-              v-model="searchQuery.keyword"
+              v-model="searchQuery.q"
               type="text"
               placeholder="Tiêu đề công việc, vị trí, kỹ năng..."
               class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -15,7 +15,7 @@
           </div>
           <div class="md:w-1/3">
             <select
-              v-model="searchQuery.location"
+              v-model="searchQuery.city"
               class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Tất cả địa điểm</option>
@@ -146,6 +146,7 @@ import { useRoute, useRouter } from 'vue-router'
 import JobCard from '../components/common/JobCard.vue'
 import JobFilter from '../components/common/JobFilter.vue'
 import { jobService } from '../services/api'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -170,9 +171,15 @@ const locations = [
 
 // Truy vấn tìm kiếm
 const searchQuery = reactive({
-  keyword: route.query.q || '',
-  location: route.query.location || '',
-  category: route.query.category || ''
+  q: route.query.q || '',
+  city: route.query.city || '',
+  position: route.query.position || '',
+  experience: route.query.experience || '',
+  type_working: route.query.type_working || '',
+  salary_min: route.query.salary_min || '',
+  salary_max: route.query.salary_max || '',
+  page: route.query.page || 1,
+  page_size: route.query.page_size || 10
 })
 
 // Tính tổng số trang
@@ -187,9 +194,15 @@ onMounted(async () => {
 
 // Watch route changes
 watch(() => route.query, (newQuery) => {
-  searchQuery.keyword = newQuery.q || ''
-  searchQuery.location = newQuery.location || ''
-  searchQuery.category = newQuery.category || ''
+  searchQuery.q = newQuery.q || ''
+  searchQuery.city = newQuery.city || ''
+  searchQuery.position = newQuery.position || ''
+  searchQuery.experience = newQuery.experience || ''
+  searchQuery.type_working = newQuery.type_working || ''
+  searchQuery.salary_min = newQuery.salary_min || ''
+  searchQuery.salary_max = newQuery.salary_max || ''
+  searchQuery.page = newQuery.page || 1
+  searchQuery.page_size = newQuery.page_size || 10
   loadJobsFromQuery()
 }, { deep: true })
 
@@ -198,139 +211,35 @@ const loadJobsFromQuery = async () => {
   loading.value = true
   
   try {
-    // Trong thực tế, sẽ gọi API để lấy danh sách việc làm
-    // const response = await jobService.getAllJobs({
-    //   keyword: searchQuery.keyword,
-    //   location: searchQuery.location,
-    //   category: searchQuery.category
-    // })
-    // allJobs.value = response.data
+    const response = await axios.get('/api/posts/search/', { params: searchQuery })
+    const data = response.data.data
     
-    // Dữ liệu mẫu
-    allJobs.value = [
-      {
-        id: 1,
-        title: 'Frontend Developer',
-        companyName: 'Tech Solutions',
-        companyLogo: '',
-        location: 'Hồ Chí Minh',
-        jobType: 'Toàn thời gian',
-        salaryMin: 15000000,
-        salaryMax: 25000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 2)),
-        tags: ['Vue.js', 'JavaScript', 'Tailwind CSS'],
-        isFeatured: true,
-        isSaved: false
-      },
-      {
-        id: 2,
-        title: 'UX/UI Designer',
-        companyName: 'Creative Design',
-        companyLogo: '',
-        location: 'Hà Nội',
-        jobType: 'Toàn thời gian',
-        salaryMin: 18000000,
-        salaryMax: 30000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 1)),
-        tags: ['Figma', 'Adobe XD', 'User Research'],
-        isFeatured: true,
-        isSaved: true
-      },
-      {
-        id: 3,
-        title: 'Backend Developer',
-        companyName: 'SoftTech',
-        companyLogo: '',
-        location: 'Đà Nẵng',
-        jobType: 'Toàn thời gian',
-        salaryMin: 20000000,
-        salaryMax: 35000000,
-        publishDate: new Date(),
-        tags: ['Node.js', 'Express', 'MongoDB'],
-        isFeatured: true,
-        isSaved: false
-      },
-      {
-        id: 4,
-        title: 'Mobile Developer',
-        companyName: 'App Innovators',
-        companyLogo: '',
-        location: 'Hồ Chí Minh',
-        jobType: 'Toàn thời gian',
-        salaryMin: 22000000,
-        salaryMax: 35000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 3)),
-        tags: ['React Native', 'Flutter', 'Mobile'],
-        isFeatured: false,
-        isSaved: false
-      },
-      {
-        id: 5,
-        title: 'DevOps Engineer',
-        companyName: 'Cloud Systems',
-        companyLogo: '',
-        location: 'Hà Nội',
-        jobType: 'Toàn thời gian',
-        salaryMin: 25000000,
-        salaryMax: 40000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 4)),
-        tags: ['AWS', 'Docker', 'Kubernetes'],
-        isFeatured: false,
-        isSaved: false
-      },
-      {
-        id: 6,
-        title: 'Product Manager',
-        companyName: 'Digital Solutions',
-        companyLogo: '',
-        location: 'Hồ Chí Minh',
-        jobType: 'Toàn thời gian',
-        salaryMin: 30000000,
-        salaryMax: 45000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 5)),
-        tags: ['Product Management', 'Agile', 'Scrum'],
-        isFeatured: false,
-        isSaved: false
-      },
-      {
-        id: 7,
-        title: 'Data Analyst',
-        companyName: 'Data Insights',
-        companyLogo: '',
-        location: 'Hà Nội',
-        jobType: 'Toàn thời gian',
-        salaryMin: 18000000,
-        salaryMax: 28000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 6)),
-        tags: ['SQL', 'Python', 'Data Visualization'],
-        isFeatured: false,
-        isSaved: false
-      },
-      {
-        id: 8,
-        title: 'Marketing Specialist',
-        companyName: 'Brand Builders',
-        companyLogo: '',
-        location: 'Đà Nẵng',
-        jobType: 'Toàn thời gian',
-        salaryMin: 15000000,
-        salaryMax: 22000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 7)),
-        tags: ['Digital Marketing', 'SEO', 'Content'],
-        isFeatured: false,
-        isSaved: false
-      }
-    ]
+    // Cập nhật danh sách công việc
+    jobs.value = data.results.map(job => ({
+      id: job.id,
+      title: job.title,
+      companyName: job.enterprise?.name || 'Chưa cập nhật',
+      companyLogo: job.enterprise?.logo || '',
+      location: `${job.city}${job.district ? `, ${job.district}` : ''}`,
+      jobType: job.type_working,
+      salaryMin: job.salary_min,
+      salaryMax: job.salary_max,
+      publishDate: new Date(job.created_at),
+      experience: job.experience,
+      description: job.description,
+      required: job.required,
+      interest: job.interest,
+      isFeatured: false, // Có thể thêm field này vào API nếu cần
+      isSaved: false // Có thể thêm field này vào API nếu cần
+    }))
+
+    // Cập nhật tổng số trang
+    totalPages.value = Math.ceil(data.total / searchQuery.page_size)
+    currentPage.value = searchQuery.page
     
-    // Lọc dữ liệu theo query
-    filterJobs()
-    
-    // Sắp xếp và phân trang
-    sortJobs()
-    
-    loading.value = false
   } catch (error) {
     console.error('Không thể lấy danh sách việc làm:', error)
+  } finally {
     loading.value = false
   }
 }
@@ -339,49 +248,31 @@ const searchJobs = () => {
   router.push({
     path: '/job-search',
     query: {
-      q: searchQuery.keyword,
-      location: searchQuery.location,
-      category: searchQuery.category
+      q: searchQuery.q,
+      city: searchQuery.city,
+      position: searchQuery.position,
+      experience: searchQuery.experience,
+      type_working: searchQuery.type_working,
+      salary_min: searchQuery.salary_min,
+      salary_max: searchQuery.salary_max,
+      page: 1, // Reset về trang 1 khi tìm kiếm mới
+      page_size: searchQuery.page_size
     }
   })
 }
 
 const applyFilters = (filters) => {
-  // Cập nhật query nếu cần
-  searchQuery.keyword = filters.keyword || searchQuery.keyword
-  searchQuery.location = filters.location || searchQuery.location
-  searchQuery.category = filters.category
+  // Cập nhật query với các bộ lọc mới
+  searchQuery.q = filters.q || searchQuery.q
+  searchQuery.city = filters.city || searchQuery.city
+  searchQuery.position = filters.position || searchQuery.position
+  searchQuery.experience = filters.experience || searchQuery.experience
+  searchQuery.type_working = filters.type_working || searchQuery.type_working
+  searchQuery.salary_min = filters.salary_min || searchQuery.salary_min
+  searchQuery.salary_max = filters.salary_max || searchQuery.salary_max
+  searchQuery.page = 1 // Reset về trang 1 khi áp dụng bộ lọc mới
   
-  filterJobs()
-  currentPage.value = 1
-}
-
-const filterJobs = () => {
-  // Lọc danh sách công việc dựa trên các bộ lọc
-  jobs.value = allJobs.value.filter(job => {
-    let matchKeyword = true
-    let matchLocation = true
-    let matchCategory = true
-    
-    if (searchQuery.keyword) {
-      const keyword = searchQuery.keyword.toLowerCase()
-      matchKeyword = job.title.toLowerCase().includes(keyword) ||
-                    job.companyName.toLowerCase().includes(keyword) ||
-                    job.tags.some(tag => tag.toLowerCase().includes(keyword))
-    }
-    
-    if (searchQuery.location) {
-      matchLocation = job.location === searchQuery.location
-    }
-    
-    if (searchQuery.category) {
-      matchCategory = job.tags.some(tag => tag.toLowerCase() === searchQuery.category.toLowerCase())
-    }
-    
-    return matchKeyword && matchLocation && matchCategory
-  })
-  
-  sortJobs()
+  searchJobs()
 }
 
 const sortJobs = () => {
@@ -408,15 +299,24 @@ const sortJobs = () => {
 }
 
 const resetFilters = () => {
-  searchQuery.keyword = ''
-  searchQuery.location = ''
-  searchQuery.category = ''
+  searchQuery.q = ''
+  searchQuery.city = ''
+  searchQuery.position = ''
+  searchQuery.experience = ''
+  searchQuery.type_working = ''
+  searchQuery.salary_min = ''
+  searchQuery.salary_max = ''
+  searchQuery.page = 1
   
   router.push({ path: '/job-search' })
 }
 
 const changePage = (page) => {
-  currentPage.value = page
+  searchQuery.page = page
+  router.push({
+    path: '/job-search',
+    query: { ...searchQuery }
+  })
 }
 
 const handleSaveJob = (jobId) => {
