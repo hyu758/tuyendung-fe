@@ -39,7 +39,7 @@
           <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
           </svg>
-          <span class="font-medium text-blue-600">{{ formatSalary(job.salaryMin, job.salaryMax) }}</span>
+          <span class="font-medium text-blue-600">{{ getSalaryDisplay(job) }}</span>
         </div>
       </div>
       
@@ -107,20 +107,33 @@ const props = defineProps({
 const emit = defineEmits(['saveJob'])
 
 // Định dạng mức lương
-const formatSalary = (min, max) => {
-  if (!min && !max) return 'Thỏa thuận'
-  if (min && !max) return `Từ ${formatCurrency(min)}`
-  if (!min && max) return `Đến ${formatCurrency(max)}`
-  return `${formatCurrency(min)} - ${formatCurrency(max)}`
-}
-
-// Định dạng tiền tệ
-const formatCurrency = (value) => {
+const formatSalary = (salary) => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
     maximumFractionDigits: 0
-  }).format(value)
+  }).format(salary)
+}
+
+const getSalaryDisplay = (job) => {
+  console.log(job)
+  if (job.is_salary_negotiable) {
+    return 'Thoả thuận'
+  }
+
+  if (job.salary_min === 0 && job.salary_max > 0) {
+    return `Tới ${formatSalary(job.salary_max)}`
+  }
+
+  if (job.salary_max === 0 && job.salary_min > 0) {
+    return `Từ ${formatSalary(job.salary_min)}`
+  }
+
+  if (job.salary_min > 0 && job.salary_max > 0) {
+    return `${formatSalary(job.salary_min)} - ${formatSalary(job.salary_max)}`
+  }
+
+  return 'Thoả thuận'
 }
 
 // Định dạng ngày

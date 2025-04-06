@@ -40,7 +40,7 @@ export const useJobStore = defineStore('job', {
     async fetchJobById(id) {
       try {
         this.loading = true
-        const response = await axios.get(`/api/posts/${id}`)
+        const response = await axios.get(`/api/post/${id}`)
         this.currentJob = response.data.data
         return { success: true, data: response.data }
       } catch (error) {

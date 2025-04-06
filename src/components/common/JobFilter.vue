@@ -8,7 +8,7 @@
         <label for="keyword" class="block text-sm font-medium text-gray-700 mb-1">Từ khóa</label>
         <input
           id="keyword"
-          v-model="filters.keyword"
+          v-model="filters.q"
           type="text"
           placeholder="Tiêu đề, kỹ năng, công ty..."
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -20,7 +20,7 @@
         <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Địa điểm</label>
         <select
           id="location"
-          v-model="filters.location"
+          v-model="filters.city"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Tất cả địa điểm</option>
@@ -35,7 +35,7 @@
         <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Ngành nghề</label>
         <select
           id="category"
-          v-model="filters.category"
+          v-model="filters.position"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Tất cả ngành nghề</option>
@@ -52,7 +52,7 @@
           <div v-for="jobType in jobTypes" :key="jobType" class="flex items-center">
             <input
               :id="jobType"
-              v-model="filters.jobTypes"
+              v-model="filters.type_working"
               :value="jobType"
               type="checkbox"
               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -66,28 +66,116 @@
       
       <!-- Lọc theo mức lương -->
       <div class="mb-4">
-        <label for="salaryRange" class="block text-sm font-medium text-gray-700 mb-1">
-          Mức lương ({{ formatCurrency(filters.salaryRange[0]) }} - {{ formatCurrency(filters.salaryRange[1]) }})
-        </label>
-        <div class="flex space-x-2">
-          <input
-            type="range"
-            id="salaryMin"
-            v-model.number="filters.salaryRange[0]"
-            :min="salaryMin"
-            :max="filters.salaryRange[1]"
-            step="1000000"
-            class="w-full"
-          />
-          <input
-            type="range"
-            id="salaryMax"
-            v-model.number="filters.salaryRange[1]"
-            :min="filters.salaryRange[0]"
-            :max="salaryMax"
-            step="1000000"
-            class="w-full"
-          />
+        <label class="block text-sm font-medium text-gray-700 mb-1">Mức lương</label>
+        <div class="space-y-2">
+          <div class="flex items-center">
+            <input
+              id="salary-all"
+              v-model="filters.salary_type"
+              value=""
+              type="radio"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-all" class="ml-2 block text-sm text-gray-700">
+              Tất cả
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="salary-under-10"
+              v-model="filters.salary_type" 
+              value="0-10"
+              type="radio"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-under-10" class="ml-2 block text-sm text-gray-700">
+              Dưới 10 triệu
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="salary-10-15"
+              v-model="filters.salary_type"
+              value="10-15"
+              type="radio" 
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-10-15" class="ml-2 block text-sm text-gray-700">
+              10 - 15 triệu
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="salary-15-20"
+              v-model="filters.salary_type"
+              value="15-20"
+              type="radio"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-15-20" class="ml-2 block text-sm text-gray-700">
+              15 - 20 triệu
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="salary-20-25"
+              v-model="filters.salary_type"
+              value="20-25"
+              type="radio"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-20-25" class="ml-2 block text-sm text-gray-700">
+              20 - 25 triệu
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="salary-25-30"
+              v-model="filters.salary_type"
+              value="25-30"
+              type="radio"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-25-30" class="ml-2 block text-sm text-gray-700">
+              25 - 30 triệu
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="salary-30-50"
+              v-model="filters.salary_type"
+              value="30-50"
+              type="radio"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-30-50" class="ml-2 block text-sm text-gray-700">
+              30 - 50 triệu
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="salary-above-50"
+              v-model="filters.salary_type"
+              value="50-999"
+              type="radio"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-above-50" class="ml-2 block text-sm text-gray-700">
+              Trên 50 triệu
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="salary-negotiable"
+              v-model="filters.salary_type"
+              value="negotiable"
+              type="radio"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <label for="salary-negotiable" class="ml-2 block text-sm text-gray-700">
+              Thỏa thuận
+            </label>
+          </div>
         </div>
       </div>
       
@@ -172,17 +260,13 @@ const experiences = [
   'Trên 5 năm'
 ]
 
-// Mức lương tối thiểu và tối đa
-const salaryMin = 0
-const salaryMax = 50000000
-
 // Filters state
 const filters = reactive({
-  keyword: '',
-  location: '',
-  category: '',
-  jobTypes: [],
-  salaryRange: [salaryMin, salaryMax],
+  q: '',
+  city: '',
+  position: '',
+  type_working: [],
+  salary_type: '',
   experience: ''
 })
 
@@ -197,18 +281,51 @@ const formatCurrency = (value) => {
 
 // Áp dụng bộ lọc
 const applyFilters = () => {
-  emit('filter', { ...filters })
+  let salary_min = ''
+  let salary_max = ''
+  let is_salary_negotiable = false
+
+  if (filters.salary_type) {
+    if (filters.salary_type === 'negotiable') {
+      is_salary_negotiable = true
+    } else {
+      const [min, max] = filters.salary_type.split('-').map(Number)
+      salary_min = min * 1000000
+      salary_max = max * 1000000
+    }
+  }
+
+  const filterParams = {
+    q: filters.q,
+    city: filters.city,
+    position: filters.position,
+    type_working: filters.type_working.join(','),
+    salary_min,
+    salary_max,
+    is_salary_negotiable,
+    experience: filters.experience
+  }
+  emit('filter', filterParams)
 }
 
 // Đặt lại bộ lọc về mặc định
 const resetFilters = () => {
-  filters.keyword = ''
-  filters.location = ''
-  filters.category = ''
-  filters.jobTypes = []
-  filters.salaryRange = [salaryMin, salaryMax]
+  filters.q = ''
+  filters.city = ''
+  filters.position = ''
+  filters.type_working = []
+  filters.salary_type = ''
   filters.experience = ''
   
-  emit('filter', { ...filters })
+  emit('filter', {
+    q: '',
+    city: '',
+    position: '',
+    type_working: '',
+    salary_min: '',
+    salary_max: '',
+    is_salary_negotiable: false,
+    experience: ''
+  })
 }
 </script> 

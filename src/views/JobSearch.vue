@@ -215,23 +215,26 @@ const loadJobsFromQuery = async () => {
     const data = response.data.data
     
     // Cập nhật danh sách công việc
-    jobs.value = data.results.map(job => ({
-      id: job.id,
-      title: job.title,
-      companyName: job.enterprise?.name || 'Chưa cập nhật',
-      companyLogo: job.enterprise?.logo || '',
-      location: `${job.city}${job.district ? `, ${job.district}` : ''}`,
-      jobType: job.type_working,
-      salaryMin: job.salary_min,
-      salaryMax: job.salary_max,
-      publishDate: new Date(job.created_at),
-      experience: job.experience,
-      description: job.description,
-      required: job.required,
-      interest: job.interest,
-      isFeatured: false, // Có thể thêm field này vào API nếu cần
-      isSaved: false // Có thể thêm field này vào API nếu cần
-    }))
+    jobs.value = data.results.map(job => {
+
+      return {
+        id: job.id,
+        title: job.title,
+        companyName: job.enterprise?.name || 'Chưa cập nhật',
+        companyLogo: job.enterprise?.logo || '',
+        location: `${job.city}${job.district ? `, ${job.district}` : ''}`,
+        jobType: job.type_working,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        publishDate: new Date(job.created_at),
+        experience: job.experience,
+        description: job.description,
+        required: job.required,
+        interest: job.interest,
+        isFeatured: false,
+        isSaved: false
+      }
+    })
 
     // Cập nhật tổng số trang
     totalPages.value = Math.ceil(data.total / searchQuery.page_size)
@@ -255,7 +258,7 @@ const searchJobs = () => {
       type_working: searchQuery.type_working,
       salary_min: searchQuery.salary_min,
       salary_max: searchQuery.salary_max,
-      page: 1, // Reset về trang 1 khi tìm kiếm mới
+      page: 1,
       page_size: searchQuery.page_size
     }
   })
@@ -272,7 +275,8 @@ const applyFilters = (filters) => {
   searchQuery.salary_max = filters.salary_max || searchQuery.salary_max
   searchQuery.page = 1 // Reset về trang 1 khi áp dụng bộ lọc mới
   
-  searchJobs()
+  // Gọi API tìm kiếm với bộ lọc mới
+  loadJobsFromQuery()
 }
 
 const sortJobs = () => {
