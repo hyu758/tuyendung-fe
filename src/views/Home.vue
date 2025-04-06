@@ -129,7 +129,7 @@
             </p>
             <div class="flex flex-wrap gap-4">
               <router-link 
-                to="/employer/create-job" 
+                to="/register" 
                 class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
               >
                 Đăng tin tuyển dụng

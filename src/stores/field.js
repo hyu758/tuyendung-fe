@@ -12,12 +12,12 @@ export const useFieldStore = defineStore('field', {
   }),
 
   actions: {
-    async fetchFields(params = { page: 1, page_size: 5 }) {
+    async fetchFields(params = { page: 1, page_size: 100 }) {
       try {
         this.loading = true
         const response = await axios.get('/api/fields/', { params })
         this.fields = response.data.data.results
-        return { success: true, data: response.data.data }
+        return { success: true, data: response.data.data.results }
       } catch (error) {
         this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách lĩnh vực'
         return { success: false, error: this.error }

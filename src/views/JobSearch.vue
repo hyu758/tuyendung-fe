@@ -13,17 +13,6 @@
               @keyup.enter="searchJobs"
             />
           </div>
-          <div class="md:w-1/3">
-            <select
-              v-model="searchQuery.city"
-              class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Tất cả địa điểm</option>
-              <option v-for="location in locations" :key="location" :value="location">
-                {{ location }}
-              </option>
-            </select>
-          </div>
           <div>
             <button
               @click="searchJobs"
@@ -53,14 +42,12 @@
                 <label for="sort" class="text-sm text-gray-600">Sắp xếp:</label>
                 <select
                   id="sort"
-                  v-model="sortOption"
+                  v-model="sortQuery.sort_by"
                   class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  @change="sortJobs"
                 >
-                  <option value="recent">Mới nhất</option>
                   <option value="relevant">Phù hợp nhất</option>
-                  <option value="salary_high">Lương cao nhất</option>
-                  <option value="salary_low">Lương thấp nhất</option>
+                  <option value="created_at">Mới nhất</option>
+                  <option value="salary_max">Lương cao đến thấp</option>
                 </select>
               </div>
             </div>
@@ -145,7 +132,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import JobCard from '../components/common/JobCard.vue'
 import JobFilter from '../components/common/JobFilter.vue'
-import { jobService } from '../services/api'
+import { useAddressStore } from '../stores/address'
 import axios from 'axios'
 
 const route = useRoute()
@@ -153,21 +140,16 @@ const router = useRouter()
 
 // State
 const loading = ref(false)
-const allJobs = ref([])
 const jobs = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 6
-const sortOption = ref('recent')
+const sortQuery = reactive({
+  sort_by: route.query.sort_by || 'relevant',
+  sort_order: 'desc'
+})
 
-// Dữ liệu mẫu (thường sẽ được lấy từ API)
-const locations = [
-  'Hà Nội', 
-  'Hồ Chí Minh', 
-  'Đà Nẵng', 
-  'Hải Phòng', 
-  'Cần Thơ', 
-  'Khác'
-]
+const locations = ref([])
+
 
 // Truy vấn tìm kiếm
 const searchQuery = reactive({
@@ -179,7 +161,9 @@ const searchQuery = reactive({
   salary_min: route.query.salary_min || '',
   salary_max: route.query.salary_max || '',
   page: route.query.page || 1,
-  page_size: route.query.page_size || 10
+  page_size: route.query.page_size || 10,
+  sort_by: route.query.sort_by || 'relevant',
+  sort_order: 'desc'
 })
 
 // Tính tổng số trang
@@ -187,7 +171,6 @@ const totalPages = computed(() => {
   return Math.ceil(jobs.value.length / itemsPerPage)
 })
 
-// Lifecycle hooks
 onMounted(async () => {
   loadJobsFromQuery()
 })
@@ -203,8 +186,20 @@ watch(() => route.query, (newQuery) => {
   searchQuery.salary_max = newQuery.salary_max || ''
   searchQuery.page = newQuery.page || 1
   searchQuery.page_size = newQuery.page_size || 10
+  searchQuery.sort_by = newQuery.sort_by || 'relevant'
+  searchQuery.sort_order = newQuery.sort_order || 'desc'
   loadJobsFromQuery()
 }, { deep: true })
+
+// Watch chỉ cần theo dõi sort_by
+watch(() => sortQuery.sort_by, () => {
+  searchQuery.sort_by = sortQuery.sort_by
+  searchQuery.page = 1 // Reset về trang 1 khi thay đổi sort
+  router.push({
+    path: '/job-search',
+    query: { ...searchQuery }
+  })
+})
 
 // Methods
 const loadJobsFromQuery = async () => {
@@ -220,8 +215,6 @@ const loadJobsFromQuery = async () => {
       return {
         id: job.id,
         title: job.title,
-        companyName: job.enterprise?.name || 'Chưa cập nhật',
-        companyLogo: job.enterprise?.logo || '',
         location: `${job.city}${job.district ? `, ${job.district}` : ''}`,
         jobType: job.type_working,
         salary_min: job.salary_min,
@@ -232,7 +225,9 @@ const loadJobsFromQuery = async () => {
         required: job.required,
         interest: job.interest,
         isFeatured: false,
-        isSaved: false
+        isSaved: false,
+        enterprise_name: job.enterprise_name || '',
+        enterprise_logo: job.enterprise_logo || '',
       }
     })
 
@@ -259,7 +254,9 @@ const searchJobs = () => {
       salary_min: searchQuery.salary_min,
       salary_max: searchQuery.salary_max,
       page: 1,
-      page_size: searchQuery.page_size
+      page_size: searchQuery.page_size,
+      sort_by: searchQuery.sort_by,
+      sort_order: searchQuery.sort_order
     }
   })
 }
@@ -279,29 +276,6 @@ const applyFilters = (filters) => {
   loadJobsFromQuery()
 }
 
-const sortJobs = () => {
-  // Sắp xếp danh sách công việc dựa trên lựa chọn
-  const sortedJobs = [...jobs.value]
-  
-  switch (sortOption.value) {
-    case 'recent':
-      sortedJobs.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate))
-      break
-    case 'relevant':
-      // Giả định: Các công việc nổi bật được đặt lên đầu
-      sortedJobs.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0))
-      break
-    case 'salary_high':
-      sortedJobs.sort((a, b) => b.salaryMax - a.salaryMax)
-      break
-    case 'salary_low':
-      sortedJobs.sort((a, b) => a.salaryMin - b.salaryMin)
-      break
-  }
-  
-  jobs.value = sortedJobs
-}
-
 const resetFilters = () => {
   searchQuery.q = ''
   searchQuery.city = ''
@@ -311,6 +285,9 @@ const resetFilters = () => {
   searchQuery.salary_min = ''
   searchQuery.salary_max = ''
   searchQuery.page = 1
+  searchQuery.sort_by = 'relevant'
+  
+  sortQuery.sort_by = 'relevant'
   
   router.push({ path: '/job-search' })
 }

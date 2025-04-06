@@ -219,30 +219,42 @@
 </template>
 
 <script setup>
-import { ref, reactive, defineEmits } from 'vue'
+import { ref, reactive, defineEmits, onMounted } from 'vue'
+import { useAddressStore } from '@/stores/address'
+import { useFieldStore } from '@/stores/field'
 
 const emit = defineEmits(['filter'])
 
-// Các dữ liệu cho bộ lọc (thường sẽ được lấy từ API)
-const locations = [
-  'Hà Nội', 
-  'Hồ Chí Minh', 
-  'Đà Nẵng', 
-  'Hải Phòng', 
-  'Cần Thơ', 
-  'Khác'
-]
+// Các dữ liệu cho bộ lọc
+const locations = ref([])
+const categories = ref([])
 
-const categories = [
-  'Công nghệ thông tin', 
-  'Kế toán', 
-  'Marketing', 
-  'Nhân sự', 
-  'Kinh doanh', 
-  'Kỹ thuật', 
-  'Giáo dục', 
-  'Y tế'
-]
+// Load dữ liệu từ API
+async function loadData() {
+  try {
+    // Load locations
+    const addressStore = useAddressStore()
+    const provinces = await addressStore.fetchProvinces()
+    if (provinces?.data) {
+      locations.value = provinces.data.map(province => province.name)
+    }
+
+    // Load categories
+    const fieldStore = useFieldStore()
+    const fields = await fieldStore.fetchFields()
+    console.log(fields)
+    if (fields?.data) {
+      categories.value = fields.data.map(field => field.name)
+    }
+  } catch (error) {
+    console.error('Lỗi khi tải dữ liệu:', error)
+  }
+}
+
+// Gọi hàm load dữ liệu khi component được mount
+onMounted(() => {
+  loadData()
+})
 
 const jobTypes = [
   'Toàn thời gian', 

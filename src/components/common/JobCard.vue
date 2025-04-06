@@ -4,11 +4,11 @@
       <div class="flex justify-between items-start">
         <div class="flex items-center">
           <div class="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden mr-4">
-            <img v-if="job.companyLogo" :src="job.companyLogo" :alt="job.companyName" class="w-full h-full object-cover" />
-            <span v-else class="text-gray-500 text-xl font-bold">{{ job.companyName?.charAt(0) || 'J' }}</span>
+            <img v-if="job.enterprise_logo" :src="job.enterprise_logo" :alt="job.enterprise_name" class="w-full h-full object-cover" />
+            <span v-else class="text-gray-500 text-xl font-bold">{{ job.enterprise_name?.charAt(0) || 'J' }}</span>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-gray-800 hover:text-blue-600 truncate max-w-xs">
+            <h3 class="text-lg font-semibold text-gray-800 hover:text-blue-600 truncate max-w-s">
               <router-link :to="{ name: 'JobDetail', params: { id: job.id } }">
                 {{ job.title }}
               </router-link>
