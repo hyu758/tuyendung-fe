@@ -129,15 +129,6 @@ const routes = [
     ]
   },
 
-  // Admin routes
-  {
-    path: '/admin',
-    name: 'AdminDashboard',
-    component: () => import('../views/admin/Dashboard.vue'),
-    meta: { requiresAuth: true, role: 'admin' }
-  },
-
-  // Not found
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
