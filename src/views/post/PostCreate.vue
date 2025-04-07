@@ -402,7 +402,7 @@ onMounted(async () => {
   ])
   
   if (fieldsResult.success) {
-    fields.value = fieldsResult.data.results
+    fields.value = fieldsResult.data
   }
   
   if (provincesResult.success) {

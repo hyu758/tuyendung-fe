@@ -90,15 +90,6 @@
               <h2 class="text-lg font-medium text-gray-900 mb-6">Thông tin bổ sung</h2>
               <div class="space-y-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <BaseInput
-                    v-model="form.business_certificate"
-                    label="Giấy phép kinh doanh"
-                    placeholder="VD: 0123456789"
-                    required
-                    prefixIcon="file-invoice"
-                    :error="errors.business_certificate"
-                    class="shadow-sm"
-                  />
                   
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Lĩnh vực hoạt động</label>
@@ -182,7 +173,7 @@
                     <span class="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100">
                       <img 
                         v-if="form.logo" 
-                        :src="typeof form.logo === 'string' ? form.logo : URL.createObjectURL(form.logo)" 
+                        :src="previewImage(form.logo)" 
                         class="h-full w-full object-cover"
                         alt="Logo preview"
                       />
@@ -193,12 +184,68 @@
                     <input
                       type="file"
                       accept="image/*"
-                      @change="handleFileUpload"
+                      @change="e => handleFileUpload(e, 'logo')"
                       class="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     />
                   </div>
                   <div v-if="errors.logo" class="mt-2 text-sm text-red-600">
                     {{ errors.logo }}
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <label class="block text-sm font-medium text-gray-700">Ảnh nền doanh nghiệp</label>
+                  <div class="mt-1 flex flex-col space-y-2">
+                    <div class="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
+                      <img 
+                        v-if="form.background_image" 
+                        :src="previewImage(form.background_image)" 
+                        class="w-full h-full object-cover"
+                        alt="Background preview"
+                      />
+                      <div v-else class="w-full h-full flex items-center justify-center">
+                        <svg class="h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      @change="e => handleFileUpload(e, 'background_image')"
+                      class="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div v-if="errors.background_image" class="mt-2 text-sm text-red-600">
+                    {{ errors.background_image }}
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <label class="block text-sm font-medium text-gray-700">Giấy phép kinh doanh (Ảnh)</label>
+                  <div class="mt-1 flex flex-col space-y-2">
+                    <div class="w-full h-48 rounded-lg overflow-hidden bg-gray-100">
+                      <img 
+                        v-if="form.business_certificate" 
+                        :src="previewImage(form.business_certificate)"
+                        class="w-full h-full object-contain"
+                        alt="Business certificate preview"
+                      />
+                      <div v-else class="w-full h-full flex items-center justify-center">
+                        <svg class="h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      @change="e => handleFileUpload(e, 'business_certificate')"
+                      class="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div v-if="errors.business_certificate" class="mt-2 text-sm text-red-600">
+                    {{ errors.business_certificate }}
                   </div>
                 </div>
 
@@ -254,13 +301,14 @@ const form = reactive({
   address: '',
   phone_number: '',
   email_company: '',
-  business_certificate: '',
+  business_certificate: null,
   field_of_activity: '',
   scale: '',
   description: '',
   city: '',
   link_web_site: '',
-  logo: ''
+  logo: null,
+  background_image: null
 })
 
 const cities = ref([])
@@ -291,11 +339,13 @@ const handleSubmit = async () => {
   if (!form.address) errors.value.address = 'Vui lòng nhập địa chỉ'
   if (!form.phone_number) errors.value.phone_number = 'Vui lòng nhập số điện thoại'
   if (!form.email_company) errors.value.email_company = 'Vui lòng nhập email'
-  if (!form.business_certificate) errors.value.business_certificate = 'Vui lòng nhập giấy phép kinh doanh'
+  if (!form.business_certificate) errors.value.business_certificate = 'Vui lòng tải lên ảnh giấy phép kinh doanh'
   if (!form.field_of_activity) errors.value.field_of_activity = 'Vui lòng chọn lĩnh vực hoạt động'
   if (!form.scale) errors.value.scale = 'Vui lòng chọn quy mô công ty'
   if (!form.description) errors.value.description = 'Vui lòng nhập mô tả công ty'
   if (!form.city) errors.value.city = 'Vui lòng nhập thành phố'
+  if (!form.logo) errors.value.logo = 'Vui lòng tải lên logo công ty'
+  if (!form.background_image) errors.value.background_image = 'Vui lòng tải lên ảnh nền doanh nghiệp'
 
   if (Object.keys(errors.value).length > 0) return
 
@@ -315,21 +365,21 @@ const handleSubmit = async () => {
   }
 }
 
-const handleFileUpload = (event) => {
+const handleFileUpload = (event, type) => {
   const file = event.target.files[0]
   if (file) {
-    // Kiểm tra kích thước file (ví dụ: giới hạn 5MB)
+    // Kiểm tra kích thước file (giới hạn 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      errors.value.logo = 'Kích thước file không được vượt quá 5MB'
+      errors.value[type] = 'Kích thước file không được vượt quá 5MB'
       return
     }
     // Kiểm tra loại file
     if (!file.type.match('image.*')) {
-      errors.value.logo = 'Vui lòng chọn file hình ảnh'
+      errors.value[type] = 'Vui lòng chọn file hình ảnh'
       return
     }
-    form.logo = file
-    errors.value.logo = ''
+    form[type] = file
+    errors.value[type] = ''
   }
 }
 
@@ -343,5 +393,10 @@ const validateUrl = (url) => {
     errors.value.link_web_site = 'URL không hợp lệ. Vui lòng nhập đúng định dạng (ví dụ: https://example.com)'
     return false
   }
+}
+
+const previewImage = (image) => {
+  if (!image) return ''
+  return image instanceof File ? URL.createObjectURL(image) : image
 }
 </script> 
