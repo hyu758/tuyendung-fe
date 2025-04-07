@@ -301,7 +301,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
 import { useJobStore } from '@/stores/job'
 
 const route = useRoute()

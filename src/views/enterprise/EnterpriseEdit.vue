@@ -177,14 +177,14 @@
                       :class="{'border-red-500': errors.field_of_activity}"
                     >
                       <option value="">Chọn lĩnh vực</option>
-                      <option value="it">Công nghệ thông tin</option>
-                      <option value="finance">Tài chính - Ngân hàng</option>
-                      <option value="marketing">Marketing - Truyền thông</option>
-                      <option value="education">Giáo dục</option>
-                      <option value="healthcare">Y tế - Chăm sóc sức khỏe</option>
-                      <option value="manufacturing">Sản xuất - Công nghiệp</option>
-                      <option value="retail">Bán lẻ - Thương mại</option>
-                      <option value="other">Khác</option>
+                      <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+                      <option value="Tài chính - Ngân hàng">Tài chính - Ngân hàng</option>
+                      <option value="Marketing - Truyền thông">Marketing - Truyền thông</option>
+                      <option value="Giáo dục">Giáo dục</option>
+                      <option value="Y tế - Chăm sóc sức khỏe">Y tế - Chăm sóc sức khỏe</option>
+                      <option value="Sản xuất - Công nghiệp">Sản xuất - Công nghiệp</option>
+                      <option value="Bán lẻ - Thương mại">Bán lẻ - Thương mại</option>
+                      <option value="Khác">Khác</option>
                     </select>
                     <p v-if="errors.field_of_activity" class="mt-1 text-sm text-red-500">{{ errors.field_of_activity }}</p>
                   </div>
@@ -252,14 +252,18 @@
                   </div>
 
                   <div v-memo="[form.city, errors.city]">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Thành phố <span class="text-red-500">*</span></label>
-                    <input
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Thành phố / Tỉnh <span class="text-red-500">*</span></label>
+                    <select
                       v-model="form.city"
-                      type="text"
                       required
                       class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       :class="{'border-red-500': errors.city}"
                     >
+                      <option value="">Chọn thành phố/tỉnh</option>
+                      <option v-for="city in cities" :key="city.code" :value="city.name">
+                        {{ city.name }}
+                      </option>
+                    </select>
                     <p v-if="errors.city" class="mt-1 text-sm text-red-500">{{ errors.city }}</p>
                   </div>
 
@@ -335,6 +339,7 @@ const logoPreview = ref(null)
 const backgroundPreview = ref(null)
 const certificatePreview = ref(null)
 const errors = ref({})
+const cities = ref([])
 
 const form = reactive({
   company_name: '',
@@ -354,6 +359,17 @@ const form = reactive({
   background_image: null,
   background_image_public_id: null
 })
+
+// Hàm lấy danh sách tỉnh thành
+const fetchCities = async () => {
+  try {
+    const response = await fetch('https://provinces.open-api.vn/api/?depth=1')
+    const data = await response.json()
+    cities.value = data
+  } catch (err) {
+    console.error('Lỗi khi lấy danh sách tỉnh thành:', err)
+  }
+}
 
 // Xử lý upload logo
 const handleLogoUpload = (event) => {
@@ -468,6 +484,10 @@ const handleSubmit = async () => {
 // Load dữ liệu khi mount component
 onMounted(async () => {
   try {
+    // Lấy danh sách tỉnh thành
+    await fetchCities()
+    
+    // Lấy thông tin doanh nghiệp
     const result = await enterpriseStore.fetchUserEnterprise()
     if (result.success) {
       const enterprise = result.data[0]

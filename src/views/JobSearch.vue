@@ -270,6 +270,7 @@ const applyFilters = (filters) => {
   searchQuery.type_working = filters.type_working || searchQuery.type_working
   searchQuery.salary_min = filters.salary_min || searchQuery.salary_min
   searchQuery.salary_max = filters.salary_max || searchQuery.salary_max
+  searchQuery.negotiable = filters.is_salary_negotiable || searchQuery.negotiable
   searchQuery.page = 1 // Reset về trang 1 khi áp dụng bộ lọc mới
   
   // Gọi API tìm kiếm với bộ lọc mới
@@ -285,9 +286,9 @@ const resetFilters = () => {
   searchQuery.salary_min = ''
   searchQuery.salary_max = ''
   searchQuery.page = 1
-  searchQuery.sort_by = 'relevant'
+  searchQuery.sort_by = 'created_at'
   
-  sortQuery.sort_by = 'relevant'
+  sortQuery.sort_by = ''
   
   router.push({ path: '/job-search' })
 }

@@ -17,7 +17,9 @@ import {
   faArrowLeft, faCheckCircle, faInfoCircle, faExclamationCircle, faTimesCircle,
   faKey, faVenusMars, faUserCircle, faBullhorn, faBell, faCog,
   faPaperPlane, faHeart, faGlobe, faGraduationCap, faBook, faExternalLinkAlt,
-  faComments
+  faComments,
+  faFileInvoice,
+  faPhone
 } from '@fortawesome/free-solid-svg-icons'
 import { 
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle 
@@ -33,7 +35,9 @@ library.add(
   faArrowLeft, faCheckCircle, faInfoCircle, faExclamationCircle, faTimesCircle,
   faKey, faVenusMars, faUserCircle, faBullhorn, faBell, faCog,
   faPaperPlane, faHeart, faGlobe, faGraduationCap, faBook, faExternalLinkAlt,
-  faComments
+  faComments,
+  faFileInvoice,
+  faPhone
 )
 
 // Cấu hình Axios

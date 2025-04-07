@@ -48,10 +48,10 @@
               class="block w-full border border-gray-300 rounded-lg py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Tất cả lĩnh vực</option>
-              <option value="IT">Công nghệ thông tin</option>
-              <option value="FINANCE">Tài chính - Ngân hàng</option>
-              <option value="EDUCATION">Giáo dục</option>
-              <option value="HEALTHCARE">Y tế</option>
+              <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+              <option value="Tài chính - Ngân hàng">Tài chính - Ngân hàng</option>
+              <option value="Giáo dục">Giáo dục</option>
+              <option value="Y tế">Y tế</option>
             </select>
           </div>
 
@@ -100,8 +100,8 @@
       <!-- Enterprises grid -->
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div v-for="enterprise in enterprises" :key="enterprise.id" 
-          class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-          <div class="p-6">
+          class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 p-4">
+          <router-link :to="{ name: 'EnterpriseDetail', params: { id: enterprise.id }}" class="p-2">
             <div class="flex items-center mb-4">
               <img v-if="enterprise.logo_url" :src="enterprise.logo_url" :alt="enterprise.company_name"
                 class="h-12 w-12 rounded-full object-cover">
@@ -125,13 +125,7 @@
               <i class="fas fa-industry mr-2"></i>
               <span>{{ enterprise.field_of_activity }}</span>
             </div>
-
-            <router-link :to="{ name: 'EnterpriseDetail', params: { id: enterprise.id }}"
-              class="inline-flex items-center text-blue-600 hover:text-blue-700">
-              <span>Xem chi tiết</span>
-              <i class="fas fa-arrow-right ml-2"></i>
-            </router-link>
-          </div>
+          </router-link>
         </div>
       </div>
 

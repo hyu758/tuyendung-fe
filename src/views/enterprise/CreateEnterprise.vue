@@ -30,7 +30,7 @@
                   label="Tên công ty"
                   placeholder="VD: Công ty TNHH ABC"
                   required
-                  prefixIcon="building"
+                  prefix-icon="building"
                   :error="errors.company_name"
                   class="shadow-sm"
                 />
@@ -40,7 +40,7 @@
                   label="Mã số thuế"
                   placeholder="VD: 0123456789"
                   required
-                  prefixIcon="file-invoice"
+                  prefix-icon="file-invoice"
                   :error="errors.tax"
                   class="shadow-sm"
                 />
@@ -56,7 +56,7 @@
                   label="Địa chỉ"
                   placeholder="VD: Số 123, Đường ABC, Quận XYZ"
                   required
-                  prefixIcon="map-marker-alt"
+                  prefix-icon="map-marker-alt"
                   :error="errors.address"
                   class="shadow-sm"
                 />
@@ -67,7 +67,7 @@
                     label="Số điện thoại"
                     placeholder="VD: 0912345678"
                     required
-                    prefixIcon="phone"
+                    prefix-icon="phone"
                     :error="errors.phone_number"
                     class="shadow-sm"
                   />
@@ -77,7 +77,7 @@
                     label="Email công ty"
                     placeholder="VD: contact@company.com"
                     required
-                    prefixIcon="envelope"
+                    prefix-icon="envelope"
                     :error="errors.email_company"
                     class="shadow-sm"
                   />
@@ -253,7 +253,7 @@
                   v-model="form.link_web_site"
                   label="Website công ty"
                   placeholder="VD: https://company.com"
-                  prefixIcon="globe"
+                  prefix-icon="globe"
                   :error="errors.link_web_site"
                   class="shadow-sm"
                   @blur="validateUrl(form.link_web_site)"
@@ -281,7 +281,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEnterpriseStore } from '../../stores/enterprise'
 import BaseInput from '../../components/common/BaseInput.vue'
@@ -354,7 +354,7 @@ const handleSubmit = async () => {
     const result = await enterpriseStore.createEnterprise(form)
     
     if (result.success) {
-      router.push('/employer/dashboard')
+      router.push('/employer')
     } else {
       error.value = 'Có lỗi xảy ra khi tạo thông tin doanh nghiệp'
     }
