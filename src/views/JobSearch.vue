@@ -45,7 +45,6 @@
                   v-model="sortQuery.sort_by"
                   class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="relevant">Phù hợp nhất</option>
                   <option value="created_at">Mới nhất</option>
                   <option value="salary_max">Lương cao đến thấp</option>
                 </select>
@@ -144,7 +143,7 @@ const jobs = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 6
 const sortQuery = reactive({
-  sort_by: route.query.sort_by || 'relevant',
+  sort_by: route.query.sort_by || 'created_at',
   sort_order: 'desc'
 })
 
@@ -194,7 +193,7 @@ watch(() => route.query, (newQuery) => {
 // Watch chỉ cần theo dõi sort_by
 watch(() => sortQuery.sort_by, () => {
   searchQuery.sort_by = sortQuery.sort_by
-  searchQuery.page = 1 // Reset về trang 1 khi thay đổi sort
+  searchQuery.page = 1 
   router.push({
     path: '/job-search',
     query: { ...searchQuery }

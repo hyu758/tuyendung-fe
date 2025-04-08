@@ -103,7 +103,6 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vị trí</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tin tuyển dụng</th>
               <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng CV</th>
               <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
@@ -111,7 +110,6 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="post in posts" :key="post.id">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ post.position }}</td>
               <td class="px-6 py-4">
                 <div class="text-sm text-gray-900 font-medium">{{ post.title }}</div>
                 <div class="text-sm text-gray-500">

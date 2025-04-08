@@ -174,7 +174,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import JobCard from '../components/common/JobCard.vue'
-import { jobService } from '../services/api'
+import { usePostStore } from '../stores/post'
 import { useFieldStore } from '../stores/field'
 const router = useRouter()
 
@@ -205,6 +205,14 @@ const popularTags = [
 
 const categories = ref([]);
 
+const fetchPosts = async () =>{
+  const postStore = usePostStore();
+  const result = await postStore.fetchPosts(1,9,"-salary-max");
+  console.log(result);
+  if (result.success){
+  featuredJobs.value = result.data.data.results;
+  }
+}
 // Lifecycle hooks
 onMounted(async () => {
   const fieldStore = useFieldStore();
@@ -214,52 +222,7 @@ onMounted(async () => {
     if (result.success) {
       categories.value = result.data.results;
     }
-    console.log(categories.value);
-    // Dữ liệu mẫu
-    featuredJobs.value = [
-      {
-        id: 1,
-        title: 'Frontend Developer',
-        companyName: 'Tech Solutions',
-        companyLogo: '',
-        location: 'Hồ Chí Minh',
-        jobType: 'Toàn thời gian',
-        salaryMin: 15000000,
-        salaryMax: 25000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 2)),
-        tags: ['Vue.js', 'JavaScript', 'Tailwind CSS'],
-        isFeatured: true,
-        isSaved: false
-      },
-      {
-        id: 2,
-        title: 'UX/UI Designer',
-        companyName: 'Creative Design',
-        companyLogo: '',
-        location: 'Hà Nội',
-        jobType: 'Toàn thời gian',
-        salaryMin: 18000000,
-        salaryMax: 30000000,
-        publishDate: new Date(new Date().setDate(new Date().getDate() - 1)),
-        tags: ['Figma', 'Adobe XD', 'User Research'],
-        isFeatured: true,
-        isSaved: true
-      },
-      {
-        id: 3,
-        title: 'Backend Developer',
-        companyName: 'SoftTech',
-        companyLogo: '',
-        location: 'Đà Nẵng',
-        jobType: 'Toàn thời gian',
-        salaryMin: 20000000,
-        salaryMax: 35000000,
-        publishDate: new Date(),
-        tags: ['Node.js', 'Express', 'MongoDB'],
-        isFeatured: true,
-        isSaved: false
-      }
-    ]
+    await fetchPosts();
     
     loading.value = false
   } catch (error) {
