@@ -114,12 +114,15 @@ const routes = [
         component: () => import('../views/post/PostCreate.vue'),
         meta: { requiresAuth: true, role: 'employer' }
       },
-      // {
-      //   path: 'posts/:id',
-      //   name: 'PostDetail',
-      //   component: () => import('../views/post/PostDetail.vue'),
-      //   meta: { requiresAuth: true, role: 'employer' }
-      // },
+      {
+        path: '/employer/posts/:id',
+        name: 'PostDetail',
+        component: () => import('../views/post/PostDetail.vue'),
+        meta: {
+          requiresAuth: true,
+          role: 'employer'
+        }
+      },
       {
         path: 'posts/:id/edit',
         name: 'EditPost',

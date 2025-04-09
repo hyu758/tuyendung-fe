@@ -118,7 +118,7 @@
                   <span class="text-xs text-gray-500">{{ post.city }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4 text-center text-sm text-gray-500">0</td>
+              <td class="px-6 py-4 text-center text-sm text-gray-500">{{ post.total_cvs }}</td>
               <td class="px-6 py-4 text-center text-sm">
                 <div class="flex justify-center space-x-3">
                   <button
@@ -144,6 +144,7 @@
                   <button
                     class="text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer"
                     title="Xem chi tiết"
+                    @click="viewCVList(post)"
                   >
                     <i class="fas fa-file-alt"></i>
                   </button>
@@ -243,6 +244,14 @@ const editPost = (post) => {
   })
 }
 
+// View CV list
+const viewCVList = (post) => {
+  router.push({
+    name: 'PostDetail',
+    params: { id: post.id }
+  })
+}
+
 // Delete post
 const confirmDelete = (post) => {
   selectedPost.value = post
@@ -286,7 +295,6 @@ const confirmToggleStatus = async () => {
   try {
     const result = await postStore.togglePostStatus(selectedPost.value.id)
     if (result.success) {
-      // Cập nhật lại trạng thái trong danh sách
       const index = posts.value.findIndex(p => p.id === selectedPost.value.id)
       if (index !== -1) {
         posts.value[index].is_active = !posts.value[index].is_active

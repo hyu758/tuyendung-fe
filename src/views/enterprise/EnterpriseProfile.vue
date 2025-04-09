@@ -1,9 +1,121 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500"></div>
-      </div>
+      <template v-if="loading">
+        <!-- Skeleton loading -->
+        <!-- Header card skeleton -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden mb-8">
+          <!-- Banner skeleton -->
+          <div class="relative h-56 bg-gray-300 animate-pulse"></div>
+          
+          <div class="relative px-8 pb-6">
+            <div class="flex flex-col md:flex-row">
+              <!-- Logo skeleton -->
+              <div class="flex-shrink-0 -mt-20">
+                <div class="w-32 h-32 rounded-lg border-4 border-white bg-gray-300 animate-pulse"></div>
+              </div>
+              <div class="mt-4 md:mt-4 md:ml-8 flex-grow">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <!-- Company name skeleton -->
+                    <div class="h-8 bg-gray-300 rounded w-64 animate-pulse"></div>
+                    <!-- City skeleton -->
+                    <div class="h-4 bg-gray-300 rounded w-40 animate-pulse mt-2"></div>
+                  </div>
+                  <div class="mt-4 md:mt-0 flex items-center space-x-4">
+                    <!-- Status skeleton -->
+                    <div class="h-8 bg-gray-300 rounded-full w-32 animate-pulse"></div>
+                    <!-- Button skeleton -->
+                    <div class="h-10 bg-gray-300 rounded-md w-40 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid layout skeleton -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Cột trái: Thông tin cơ bản skeleton -->
+          <div class="space-y-8">
+            <!-- Giới thiệu công ty skeleton -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+              <div class="h-6 bg-gray-300 rounded w-48 animate-pulse mb-4"></div>
+              <div class="space-y-2">
+                <div class="h-4 bg-gray-300 rounded w-full animate-pulse"></div>
+                <div class="h-4 bg-gray-300 rounded w-full animate-pulse"></div>
+                <div class="h-4 bg-gray-300 rounded w-3/4 animate-pulse"></div>
+              </div>
+            </div>
+
+            <!-- Thông tin liên hệ skeleton -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+              <div class="h-6 bg-gray-300 rounded w-48 animate-pulse mb-4"></div>
+              <div class="space-y-4">
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-64 animate-pulse"></div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-48 animate-pulse"></div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-72 animate-pulse"></div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-56 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột phải: Thông tin doanh nghiệp skeleton -->
+          <div class="space-y-8">
+            <!-- Thông tin doanh nghiệp skeleton -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+              <div class="h-6 bg-gray-300 rounded w-56 animate-pulse mb-4"></div>
+              <div class="space-y-4">
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-48 animate-pulse"></div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-40 animate-pulse"></div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-60 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Giấy phép kinh doanh skeleton -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+              <div class="h-6 bg-gray-300 rounded w-56 animate-pulse mb-4"></div>
+              <div class="h-48 bg-gray-300 rounded w-full animate-pulse"></div>
+            </div>
+
+            <!-- Thông tin thời gian skeleton -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+              <div class="h-6 bg-gray-300 rounded w-56 animate-pulse mb-4"></div>
+              <div class="space-y-4">
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-48 animate-pulse"></div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-6 h-6 bg-gray-300 rounded-full animate-pulse mr-3"></div>
+                  <div class="h-4 bg-gray-300 rounded w-56 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
 
       <template v-else-if="enterprise">
         <!-- Header card với banner và logo -->
@@ -231,4 +343,19 @@ onMounted(async () => {
     loading.value = false
   }
 })
-</script> 
+</script>
+
+<style scoped>
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style> 

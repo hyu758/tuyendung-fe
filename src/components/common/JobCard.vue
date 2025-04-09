@@ -1,5 +1,54 @@
 <template>
-  <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+  <!-- Skeleton Loading -->
+  <div v-if="loading" class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div class="p-5">
+      <div class="flex justify-between items-start">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-gray-300 rounded-md animate-pulse"></div>
+          <div class="ml-4">
+            <div class="h-5 bg-gray-300 rounded w-48 animate-pulse"></div>
+            <div class="h-4 bg-gray-300 rounded w-32 mt-2 animate-pulse"></div>
+          </div>
+        </div>
+        <div class="w-16 h-6 bg-gray-300 rounded-full animate-pulse"></div>
+      </div>
+
+      <div class="mt-4 space-y-2">
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-gray-300 rounded-full mr-2 animate-pulse"></div>
+          <div class="h-4 bg-gray-300 rounded w-32 animate-pulse"></div>
+        </div>
+        
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-gray-300 rounded-full mr-2 animate-pulse"></div>
+          <div class="h-4 bg-gray-300 rounded w-24 animate-pulse"></div>
+        </div>
+        
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-gray-300 rounded-full mr-2 animate-pulse"></div>
+          <div class="h-4 bg-gray-300 rounded w-36 animate-pulse"></div>
+        </div>
+      </div>
+      
+      <div class="mt-4 flex justify-between items-center">
+        <div class="flex flex-wrap gap-2">
+          <div class="w-16 h-6 bg-gray-300 rounded-full animate-pulse"></div>
+          <div class="w-20 h-6 bg-gray-300 rounded-full animate-pulse"></div>
+          <div class="w-14 h-6 bg-gray-300 rounded-full animate-pulse"></div>
+        </div>
+        
+        <div class="w-20 h-4 bg-gray-300 rounded animate-pulse"></div>
+      </div>
+      
+      <div class="mt-5 flex space-x-2">
+        <div class="flex-1 h-10 bg-gray-300 rounded-md animate-pulse"></div>
+        <div class="w-10 h-10 bg-gray-300 rounded-md animate-pulse"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actual content -->
+  <div v-else class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
     <div class="p-5">
       <div class="flex justify-between items-start">
         <div class="flex items-center">
@@ -100,6 +149,10 @@ const props = defineProps({
   showSaveButton: {
     type: Boolean,
     default: true
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -158,4 +211,19 @@ const formatDate = (dateString) => {
 const toggleSave = () => {
   emit('saveJob', props.job.id)
 }
-</script> 
+</script>
+
+<style scoped>
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style> 

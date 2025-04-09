@@ -1,0 +1,432 @@
+<template>
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header with back button -->
+      <div class="flex items-center mb-6">
+        <button 
+          @click="router.back()" 
+          class="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
+          title="Quay lại"
+        >
+          <i class="fas fa-arrow-left text-gray-600"></i>
+        </button>
+        <h1 class="text-2xl font-bold text-gray-900">Thông tin bài đăng</h1>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div v-if="loading" class="space-y-6">
+        <!-- Post information skeleton -->
+        <div class="bg-white shadow rounded-lg overflow-hidden mb-6">
+          <div class="p-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between">
+              <div class="flex-1">
+                <div class="h-7 bg-gray-200 rounded w-3/5 animate-pulse"></div>
+                <div class="flex mt-2 items-center">
+                  <div class="h-5 bg-gray-200 rounded w-24 animate-pulse"></div>
+                  <div class="mx-2 h-5 bg-gray-200 rounded w-1 animate-pulse"></div>
+                  <div class="h-5 bg-gray-200 rounded w-24 animate-pulse"></div>
+                </div>
+              </div>
+              <div class="mt-4 md:mt-0">
+                <div class="h-6 bg-gray-200 rounded-full w-24 animate-pulse"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div class="flex flex-col">
+                <div class="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div class="h-6 bg-gray-200 rounded w-40 mt-1 animate-pulse"></div>
+              </div>
+              <div class="flex flex-col">
+                <div class="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div class="h-6 bg-gray-200 rounded w-40 mt-1 animate-pulse"></div>
+              </div>
+              <div class="flex flex-col">
+                <div class="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div class="h-6 bg-gray-200 rounded w-16 mt-1 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CV List Title skeleton -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
+          <div class="h-6 bg-gray-200 rounded-full w-24 animate-pulse"></div>
+        </div>
+
+        <!-- CV List skeleton -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ứng viên</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thông tin liên hệ</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="i in 3" :key="i" class="animate-pulse">
+                <td class="px-6 py-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200"></div>
+                    <div class="ml-4">
+                      <div class="h-5 bg-gray-200 rounded w-40 mb-2"></div>
+                      <div class="h-4 bg-gray-200 rounded w-32"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center mb-2">
+                    <div class="w-5 h-5 bg-gray-200 rounded-full mr-3"></div>
+                    <div class="h-5 bg-gray-200 rounded w-32"></div>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-5 h-5 bg-gray-200 rounded-full mr-3"></div>
+                    <div class="h-5 bg-gray-200 rounded w-24"></div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <div class="h-6 bg-gray-200 rounded-full w-24 mx-auto"></div>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <div class="flex justify-center space-x-3">
+                    <div class="w-5 h-5 bg-gray-200 rounded-full"></div>
+                    <div class="w-5 h-5 bg-gray-200 rounded-full"></div>
+                    <div class="w-5 h-5 bg-gray-200 rounded-full"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Actual content -->
+      <div v-else>
+        <!-- Post information -->
+        <div class="bg-white shadow rounded-lg overflow-hidden mb-6">
+          <div class="p-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between">
+              <div>
+                <h2 class="text-xl font-bold text-gray-900">{{ post.title }}</h2>
+                <div class="text-sm text-gray-500 mt-1">
+                  <span>{{ formatDate(post.created_at) }}</span>
+                  <span class="mx-1">•</span>
+                  <span>{{ post.city }}</span>
+                </div>
+              </div>
+              <div class="mt-4 md:mt-0">
+                <span
+                  :class="[
+                    'px-3 py-1 text-xs font-medium rounded-full',
+                    post.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  ]"
+                >
+                  {{ post.is_active ? 'Đang hiển thị' : 'Đã ẩn' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Tiêu đề tin đăng</span>
+                <span class="text-base text-gray-900">{{ post.title }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Vị trí</span>
+                <span class="text-base text-gray-900">{{ post.position_name }}</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-500">Số lượng</span>
+                <span class="text-base text-gray-900">{{ post.quantity }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Title for CV list -->
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">Danh sách ứng viên</h2>
+          <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+            {{ cvList.length }} ứng viên
+          </span>
+        </div>
+
+        <!-- CV List -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ứng viên</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thông tin liên hệ</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="(cv, index) in cvList" :key="index" class="hover:bg-gray-50">
+                <td class="px-6 py-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                      <i class="fas fa-user text-gray-500"></i>
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">{{ cv.name }}</div>
+                      <div class="text-sm text-gray-500 mt-1">{{ cv.description }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-900">
+                    <div class="flex items-center">
+                      <i class="fas fa-envelope text-gray-400 w-5"></i>
+                      <span>{{ cv.email }}</span>
+                    </div>
+                  </div>
+                  <div class="text-sm text-gray-900 mt-1">
+                    <div class="flex items-center">
+                      <i class="fas fa-phone text-gray-400 w-5"></i>
+                      <span>{{ cv.phone_number }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span
+                    :class="[
+                      'px-3 py-1 text-xs font-medium rounded-full',
+                      getStatusClass(cv)
+                    ]"
+                  >
+                    {{ getStatusText(cv) }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <div class="flex justify-center space-x-3">
+                    <a
+                      :href="cv.cv_file_url"
+                      target="_blank"
+                      class="text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer"
+                      title="Xem CV"
+                      @click="markAsViewed(cv.id)"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a
+                      :href="cv.cv_file_url"
+                      download
+                      class="text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer"
+                      title="Tải xuống CV"
+                    >
+                      <i class="fas fa-download"></i>
+                    </a>
+                    
+                    <div class="relative inline-block">
+                      <button
+                        @click="toggleDropdown(index)"
+                        class="text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer"
+                        title="Thay đổi trạng thái"
+                      >
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                      
+                      <!-- Dropdown menu -->
+                      <div
+                        v-if="activeDropdownIndex === index"
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20"
+                      >
+                        <div class="py-1">
+                          <button
+                            @click="updateCVStatus(cv.id, 'pending')"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Chưa xử lý
+                          </button>
+                          <button
+                            @click="updateCVStatus(cv.id, 'approved')"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Tiếp nhận
+                          </button>
+                          <button
+                            @click="updateCVStatus(cv.id, 'rejected')"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Từ chối
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- Empty state -->
+              <tr v-if="cvList.length === 0">
+                <td colspan="4" class="px-6 py-10 text-center">
+                  <div class="flex flex-col items-center">
+                    <i class="fas fa-file-alt text-4xl text-gray-300 mb-3"></i>
+                    <h3 class="text-lg font-medium text-gray-900">Chưa có ứng viên nào</h3>
+                    <p class="mt-1 text-sm text-gray-500">Bài đăng chưa nhận được CV ứng tuyển</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { usePostStore } from '../../stores/post'
+import { useCVStore } from '../../stores/cv'
+
+const route = useRoute()
+const router = useRouter()
+const postStore = usePostStore()
+const cvStore = useCVStore()
+const loading = ref(true)
+const post = ref({})
+const cvList = computed(() => cvStore.cvs)
+const activeDropdownIndex = ref(null)
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event) => {
+  if (activeDropdownIndex.value !== null) {
+    activeDropdownIndex.value = null
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+const toggleDropdown = (index) => {
+  // Stop event propagation to prevent immediate closing
+  event.stopPropagation()
+  
+  if (activeDropdownIndex.value === index) {
+    activeDropdownIndex.value = null
+  } else {
+    activeDropdownIndex.value = index
+  }
+}
+
+// Format date
+const formatDate = (dateString) => {
+  try {
+    if (!dateString) return '';
+    
+    // Xử lý timezone
+    const date = new Date(dateString.replace('+07:00', 'Z'));
+    
+    if (isNaN(date.getTime())) {
+      return '';
+    }
+
+    return new Intl.DateTimeFormat('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(date);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return '';
+  }
+}
+
+const getStatusClass = (cv) => {
+  if (cv.status === 'approved') {
+    return 'bg-green-100 text-green-800'
+  } else if (cv.status === 'rejected') {
+    return 'bg-red-100 text-red-800'
+  } 
+  else if (cv.is_viewed) {
+    return 'bg-blue-100 text-blue-800'
+  } else {
+    return 'bg-yellow-100 text-yellow-800'
+  }
+}
+
+const getStatusText = (cv) => {
+  if (cv.status === 'approved') {
+    return 'Đã tiếp nhận'
+  } else if (cv.status === 'rejected') {
+    return 'Đã từ chối'
+  } 
+  else if (cv.is_viewed) {
+    return 'Đã xem'
+  } else {
+    return 'Chưa xem'
+  }
+}
+
+// Load post details and CV list
+const loadData = async () => {
+  try {
+    loading.value = true
+    
+    // Load post details
+    const postId = route.params.id
+    const postResult = await postStore.fetchPostById(postId)
+    if (postResult && postResult.data && postResult.data.data) {
+      post.value = postResult.data.data
+    }
+    
+    await cvStore.fetchCVsByPostId(postId)
+    
+  } catch (err) {
+    console.error('Error loading data:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Đánh dấu CV đã xem
+const markAsViewed = async (cvId) => {
+  try {
+    await cvStore.markCVAsViewed(cvId)
+  } catch (err) {
+    console.error('Error marking CV as viewed:', err)
+  }
+}
+
+// Cập nhật trạng thái CV
+const updateCVStatus = async (cvId, status) => {
+  try {
+    activeDropdownIndex.value = null
+    await cvStore.updateCVStatus(cvId, status)
+  } catch (err) {
+    console.error('Error updating CV status:', err)
+  }
+}
+
+// Load data when component is mounted
+onMounted(loadData)
+</script>
+
+<style scoped>
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+</style> 

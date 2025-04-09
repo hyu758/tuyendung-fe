@@ -85,9 +85,34 @@
         </div>
       </div>
 
-      <!-- Loading -->
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <!-- Skeleton loading -->
+      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="i in 9" :key="`skeleton-${i}`" class="bg-white rounded-lg shadow-md overflow-hidden p-4">
+          <div class="p-2">
+            <div class="flex items-center mb-4">
+              <div class="h-12 w-12 rounded-full bg-gray-300 animate-pulse"></div>
+              <div class="ml-4">
+                <div class="h-5 bg-gray-300 rounded w-32 animate-pulse"></div>
+                <div class="h-4 bg-gray-300 rounded w-20 mt-2 animate-pulse"></div>
+              </div>
+            </div>
+            
+            <div class="space-y-2 mb-4">
+              <div class="h-4 bg-gray-300 rounded w-full animate-pulse"></div>
+              <div class="h-4 bg-gray-300 rounded w-2/3 animate-pulse"></div>
+            </div>
+            
+            <div class="flex items-center mb-4">
+              <div class="w-5 h-5 bg-gray-300 rounded-full mr-2 animate-pulse"></div>
+              <div class="h-4 bg-gray-300 rounded w-20 animate-pulse"></div>
+            </div>
+
+            <div class="flex items-center mb-4">
+              <div class="w-5 h-5 bg-gray-300 rounded-full mr-2 animate-pulse"></div>
+              <div class="h-4 bg-gray-300 rounded w-32 animate-pulse"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Empty state -->
@@ -235,4 +260,26 @@ watch([
 onMounted(() => {
   loadEnterprises()
 })
-</script> 
+</script>
+
+<style scoped>
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style> 

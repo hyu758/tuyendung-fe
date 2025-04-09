@@ -36,7 +36,12 @@
           <div class="bg-white rounded-lg shadow-md p-5 mb-6">
             <div class="flex justify-between items-center">
               <h2 class="text-xl font-semibold text-gray-800">
-                {{ jobs.length === 0 ? 'Không có kết quả' : `Tìm thấy ${jobs.length} việc làm` }}
+                <template v-if="loading">
+                  <div class="h-7 bg-gray-300 rounded w-48 animate-pulse"></div>
+                </template>
+                <template v-else>
+                  {{ jobs.length === 0 ? 'Không có kết quả' : `Tìm thấy ${jobs.length} việc làm` }}
+                </template>
               </h2>
               <div class="flex items-center space-x-2">
                 <label for="sort" class="text-sm text-gray-600">Sắp xếp:</label>
@@ -52,9 +57,9 @@
             </div>
           </div>
           
-          <!-- Hiển thị trạng thái loading -->
-          <div v-if="loading" class="flex justify-center py-10">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+          <!-- Skeleton loading -->
+          <div v-if="loading" class="space-y-6">
+            <JobCard v-for="i in 6" :key="`skeleton-${i}`" :loading="true" />
           </div>
           
           <!-- Hiển thị khi không có kết quả -->
@@ -148,7 +153,6 @@ const sortQuery = reactive({
 })
 
 const locations = ref([])
-
 
 // Truy vấn tìm kiếm
 const searchQuery = reactive({
