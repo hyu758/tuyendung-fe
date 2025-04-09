@@ -1,93 +1,299 @@
 <template>
-  <div class="max-w-5xl mx-auto">
-    <!-- Loading skeleton -->
-    <div v-if="loading" class="space-y-6">
-      <!-- Header skeleton -->
-      <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
-        <div class="p-6">
-          <div class="h-8 bg-gray-200 rounded w-2/3 mb-4 animate-pulse"></div>
-          
-          <div class="grid grid-cols-3 gap-6 mb-6">
-            <div v-for="i in 3" :key="i" class="flex items-center animate-pulse">
-              <div class="w-12 h-12 bg-gray-200 rounded-full mr-3"></div>
-              <div class="flex-1">
-                <div class="h-4 bg-gray-200 rounded w-20 mb-2"></div>
-                <div class="h-5 bg-gray-200 rounded w-32"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between animate-pulse">
-            <div class="flex items-center gap-4">
-              <div class="h-10 w-32 bg-gray-200 rounded-lg"></div>
-              <div class="h-10 w-24 bg-gray-200 rounded-lg"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content skeleton -->
-      <div class="grid grid-cols-3 gap-6">
-        <div class="col-span-2 space-y-6">
-          <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div class="p-6">
-              <div class="flex gap-2 mb-4 animate-pulse">
-                <div class="h-6 w-24 bg-gray-200 rounded-full"></div>
-                <div class="h-6 w-24 bg-gray-200 rounded-full"></div>
-              </div>
-
-              <div v-for="i in 3" :key="i" class="mb-8 animate-pulse">
-                <div class="h-7 bg-gray-200 rounded w-48 mb-4"></div>
-                <div class="space-y-2">
-                  <div class="h-4 bg-gray-200 rounded w-full"></div>
-                  <div class="h-4 bg-gray-200 rounded w-5/6"></div>
-                  <div class="h-4 bg-gray-200 rounded w-4/6"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-6">
-          <!-- Company info skeleton -->
-          <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div class="p-6 animate-pulse">
-              <div class="flex items-center mb-6">
-                <div class="w-16 h-16 bg-gray-200 rounded mr-4"></div>
+  <div class="job-detail-container">
+    <div class="max-w-5xl mx-auto">
+      <!-- Loading skeleton -->
+      <div v-if="loading" class="space-y-6">
+        <!-- Header skeleton -->
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
+          <div class="p-6">
+            <div class="h-8 bg-gray-200 rounded w-2/3 mb-4 animate-pulse"></div>
+            
+            <div class="grid grid-cols-3 gap-6 mb-6">
+              <div v-for="i in 3" :key="i" class="flex items-center animate-pulse">
+                <div class="w-12 h-12 bg-gray-200 rounded-full mr-3"></div>
                 <div class="flex-1">
-                  <div class="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div class="h-4 bg-gray-200 rounded w-20 mb-2"></div>
+                  <div class="h-5 bg-gray-200 rounded w-32"></div>
                 </div>
               </div>
-              <div class="space-y-4">
-                <div class="h-4 bg-gray-200 rounded w-full"></div>
-                <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+            </div>
+
+            <div class="flex items-center justify-between animate-pulse">
+              <div class="flex items-center gap-4">
+                <div class="h-10 w-32 bg-gray-200 rounded-lg"></div>
+                <div class="h-10 w-24 bg-gray-200 rounded-lg"></div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Additional info skeleton -->
-          <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div class="p-6">
-              <div class="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
-              <div class="space-y-4">
-                <div v-for="i in 5" :key="i" class="flex items-center animate-pulse">
-                  <div class="w-10 h-10 bg-gray-200 rounded-full mr-3"></div>
-                  <div class="flex-1">
-                    <div class="h-4 bg-gray-200 rounded w-20 mb-1"></div>
-                    <div class="h-5 bg-gray-200 rounded w-32"></div>
+        <!-- Content skeleton -->
+        <div class="grid grid-cols-3 gap-6">
+          <div class="col-span-2 space-y-6">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div class="p-6">
+                <div class="flex gap-2 mb-4 animate-pulse">
+                  <div class="h-6 w-24 bg-gray-200 rounded-full"></div>
+                  <div class="h-6 w-24 bg-gray-200 rounded-full"></div>
+                </div>
+
+                <div v-for="i in 3" :key="i" class="mb-8 animate-pulse">
+                  <div class="h-7 bg-gray-200 rounded w-48 mb-4"></div>
+                  <div class="space-y-2">
+                    <div class="h-4 bg-gray-200 rounded w-full"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                    <div class="h-4 bg-gray-200 rounded w-4/6"></div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Skills skeleton -->
-          <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div class="p-6">
-              <div class="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
-              <div class="flex flex-wrap gap-2">
-                <div v-for="i in 5" :key="i" class="h-6 bg-gray-200 rounded-full w-24 animate-pulse"></div>
+          <div class="space-y-6">
+            <!-- Company info skeleton -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div class="p-6 animate-pulse">
+                <div class="flex items-center mb-6">
+                  <div class="w-16 h-16 bg-gray-200 rounded mr-4"></div>
+                  <div class="flex-1">
+                    <div class="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+                <div class="space-y-4">
+                  <div class="h-4 bg-gray-200 rounded w-full"></div>
+                  <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional info skeleton -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div class="p-6">
+                <div class="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
+                <div class="space-y-4">
+                  <div v-for="i in 5" :key="i" class="flex items-center animate-pulse">
+                    <div class="w-10 h-10 bg-gray-200 rounded-full mr-3"></div>
+                    <div class="flex-1">
+                      <div class="h-4 bg-gray-200 rounded w-20 mb-1"></div>
+                      <div class="h-5 bg-gray-200 rounded w-32"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Skills skeleton -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div class="p-6">
+                <div class="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
+                <div class="flex flex-wrap gap-2">
+                  <div v-for="i in 5" :key="i" class="h-6 bg-gray-200 rounded-full w-24 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actual content -->
+      <div v-else>
+        <!-- Header section -->
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
+          <div class="p-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">{{ job.title }}</h1>
+            
+            <div class="grid grid-cols-3 gap-6 mb-6">
+              <div class="flex items-center transform hover:scale-105 transition-transform">
+                <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                  <font-awesome-icon icon="money-bill" class="text-emerald-500 text-xl" />
+                </div>
+                <div>
+                  <div class="text-gray-500 text-sm">Mức lương</div>
+                  <div class="font-medium">{{ getSalaryDisplay(job) }}</div>
+                </div>
+              </div>
+
+              <div class="flex items-center transform hover:scale-105 transition-transform">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <font-awesome-icon icon="map-marker-alt" class="text-blue-500 text-xl" />
+                </div>
+                <div>
+                  <div class="text-gray-500 text-sm">Địa điểm</div>
+                  <div class="font-medium">{{ job.city }}{{ job.district ? `, ${job.district}` : '' }}</div>
+                </div>
+              </div>
+
+              <div class="flex items-center transform hover:scale-105 transition-transform">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                  <font-awesome-icon icon="briefcase" class="text-purple-500 text-xl" />
+                </div>
+                <div>
+                  <div class="text-gray-500 text-sm">Kinh nghiệm</div>
+                  <div class="font-medium">{{ job.experience }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <button 
+                  @click="handleApplyClick" 
+                  class="bg-emerald-500 text-white px-8 py-2.5 rounded-lg hover:bg-emerald-600 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center"
+                >
+                  <font-awesome-icon icon="paper-plane" class="mr-2" />
+                  Ứng tuyển ngay
+                </button>
+                <button class="border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-md">
+                  Nhắn tin
+                </button>
+              </div>
+              <div v-if="job.appliedDate" class="text-gray-500 text-sm">
+                <span>Bạn đã gửi CV cho vị trí này vào ngày: {{ job.appliedDate }}</span>
+                <a href="#" class="text-blue-600 hover:underline ml-2">Xem CV đã nộp</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Left column -->
+          <div class="col-span-2 space-y-6">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
+              <div class="p-6">
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors">
+                    {{ job.position_name }}
+                  </span>
+                  <span class="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors">
+                    {{ job.field_name }}
+                  </span>
+                </div>
+
+                <section class="mb-8">
+                  <h2 class="text-xl font-bold text-gray-900 mb-4">Mô tả công việc</h2>
+                  <div class="prose text-gray-600 whitespace-pre-line">{{ job.description }}</div>
+                </section>
+
+                <section class="mb-8">
+                  <h2 class="text-xl font-bold text-gray-900 mb-4">Yêu cầu ứng viên</h2>
+                  <div class="prose text-gray-600 whitespace-pre-line">{{ job.required }}</div>
+                </section>
+
+                <section>
+                  <h2 class="text-xl font-bold text-gray-900 mb-4">Quyền lợi</h2>
+                  <div class="prose text-gray-600 whitespace-pre-line">{{ job.interest }}</div>
+                </section>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right column -->
+          <div class="space-y-6">
+            <!-- Company info -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
+              <div class="p-6">
+                <div class="flex items-center mb-6">
+                  <img 
+                    :src="job.enterprise_logo" 
+                    alt="Company logo" 
+                    class="w-16 h-16 object-contain bg-white rounded p-1" 
+                    @error="handleImageError"
+                  />
+                  <div>
+                    <h3 class="font-bold text-gray-900">{{ job.enterprise_name }}</h3>
+                    <div class="text-gray-600 text-sm mt-1">{{ job.field_name }}</div>
+                  </div>
+                </div>
+
+                <div class="space-y-4 text-gray-600">
+                  <div class="flex items-start">
+                    <font-awesome-icon icon="map-marker-alt" class="w-5 h-5 mr-3 mt-1" />
+                    <span>{{ job.detail_address }}</span>
+                  </div>
+                  <router-link 
+                    :to="{ name: 'EnterpriseDetail', params: { id: job.enterprise } }" 
+                    class="text-blue-600 hover:underline flex items-center group"
+                  >
+                    <font-awesome-icon icon="external-link-alt" class="w-5 h-5 mr-3 transition-transform group-hover:translate-x-1" />
+                    Xem trang công ty
+                  </router-link>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional info -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
+              <div class="p-6">
+                <h3 class="font-bold text-gray-900 mb-4">Thông tin chung</h3>
+                <div class="space-y-4">
+                  <div class="flex items-center transform hover:scale-105 transition-transform">
+                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                      <font-awesome-icon icon="graduation-cap" class="text-emerald-500" />
+                    </div>
+                    <div>
+                      <div class="text-gray-500 text-sm">Cấp bậc</div>
+                      <div class="font-medium">{{ job.level }}</div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center transform hover:scale-105 transition-transform">
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                      <font-awesome-icon icon="users" class="text-purple-500" />
+                    </div>
+                    <div>
+                      <div class="text-gray-500 text-sm">Số lượng tuyển</div>
+                      <div class="font-medium">{{ job.quantity }} người</div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center transform hover:scale-105 transition-transform">
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                      <font-awesome-icon icon="clock" class="text-orange-500" />
+                    </div>
+                    <div>
+                      <div class="text-gray-500 text-sm">Thời gian làm việc</div>
+                      <div class="font-medium">{{ job.time_working }}</div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center transform hover:scale-105 transition-transform">
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                      <font-awesome-icon icon="briefcase" class="text-orange-500" />
+                    </div>
+                    <div>
+                      <div class="text-gray-500 text-sm">Hình thức làm việc</div>
+                      <div class="font-medium">{{ job.type_working }}</div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center transform hover:scale-105 transition-transform">
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                      <font-awesome-icon icon="calendar" class="text-orange-500" />
+                    </div>
+                    <div>
+                      <div class="text-gray-500 text-sm">Hạn nộp hồ sơ</div>
+                      <div class="font-medium">{{ new Date(job.deadline).toLocaleDateString('vi-VN') }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Skills -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
+              <div class="p-6">
+                <h3 class="font-bold text-gray-900 mb-4">Kỹ năng cần có</h3>
+                <div class="flex flex-wrap gap-2">
+                  <span 
+                    v-for="skill in job.skills" 
+                    :key="skill"
+                    class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors cursor-pointer"
+                  >
+                    {{ skill }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -95,202 +301,168 @@
       </div>
     </div>
 
-    <!-- Actual content -->
-    <div v-else>
-      <!-- Header section -->
-      <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
-        <div class="p-6">
-          <h1 class="text-2xl font-bold text-gray-900 mb-4">{{ job.title }}</h1>
+    <!-- Modal Ứng tuyển -->
+    <div v-if="showApplyModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="closeApplyModal"></div>
+      <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+        :class="{'translate-y-0 opacity-100 scale-100': showApplyModal, 'translate-y-4 opacity-0 scale-95': !showApplyModal}">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b">
+          <h3 class="text-xl font-bold text-gray-900">Ứng tuyển vị trí: {{ job.title }}</h3>
+          <button @click="closeApplyModal" class="text-gray-400 hover:text-gray-600">
+            <font-awesome-icon icon="times" class="text-xl" />
+          </button>
+        </div>
+        
+        <!-- Form -->
+        <form @submit.prevent="submitApplication" class="p-6">
+          <div class="space-y-4">
+            <!-- Tên -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span class="text-red-500">*</span></label>
+              <input 
+                v-model="applyForm.name" 
+                type="text" 
+                required
+                class="w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                :class="{'border-red-500': applyErrors.name}"
+              >
+              <p v-if="applyErrors.name" class="mt-1 text-sm text-red-500">{{ applyErrors.name }}</p>
+            </div>
+            
+            <!-- Email -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+              <input 
+                v-model="applyForm.email" 
+                type="email" 
+                required
+                class="w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                :class="{'border-red-500': applyErrors.email}"
+              >
+              <p v-if="applyErrors.email" class="mt-1 text-sm text-red-500">{{ applyErrors.email }}</p>
+            </div>
+            
+            <!-- Số điện thoại -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span class="text-red-500">*</span></label>
+              <input 
+                v-model="applyForm.phone_number" 
+                type="tel" 
+                required
+                class="w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                :class="{'border-red-500': applyErrors.phone_number}"
+              >
+              <p v-if="applyErrors.phone_number" class="mt-1 text-sm text-red-500">{{ applyErrors.phone_number }}</p>
+            </div>
+            
+            <!-- Mô tả -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Giới thiệu bản thân <span class="text-red-500">*</span></label>
+              <textarea 
+                v-model="applyForm.description" 
+                rows="3"
+                required
+                class="w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                :class="{'border-red-500': applyErrors.description}"
+                placeholder="Giới thiệu ngắn gọn về bản thân bạn, kinh nghiệm và lý do muốn ứng tuyển vị trí này..."
+              ></textarea>
+              <p v-if="applyErrors.description" class="mt-1 text-sm text-red-500">{{ applyErrors.description }}</p>
+            </div>
+            
+            <!-- Upload CV -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">CV của bạn <span class="text-red-500">*</span></label>
+              <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 transition-all"
+                :class="{'border-blue-500 bg-blue-50': isDragging, 'border-red-300': applyErrors.cv}"
+                @dragover.prevent="isDragging = true"
+                @dragleave.prevent="isDragging = false"
+                @drop.prevent="handleFileDrop"
+              >
+                <div v-if="cvFile" class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <font-awesome-icon icon="file-pdf" class="text-red-500 text-2xl mr-3" />
+                    <div>
+                      <p class="font-medium text-gray-900">{{ cvFile.name }}</p>
+                      <p class="text-sm text-gray-500">{{ formatFileSize(cvFile.size) }}</p>
+                    </div>
+                  </div>
+                  <button type="button" @click="removeCvFile" class="text-gray-400 hover:text-red-500">
+                    <font-awesome-icon icon="times" />
+                  </button>
+                </div>
+                
+                <div v-else class="flex flex-col items-center justify-center">
+                  <font-awesome-icon icon="cloud-upload-alt" class="text-gray-400 text-3xl mb-3" />
+                  <p class="text-center text-gray-500">Kéo thả file CV của bạn vào đây hoặc
+                    <label class="text-blue-600 cursor-pointer hover:underline">
+                      tải lên từ máy tính
+                      <input 
+                        type="file" 
+                        class="hidden" 
+                        @change="handleFileChange" 
+                        accept=".pdf,.doc,.docx"
+                      >
+                    </label>
+                  </p>
+                  <p class="text-sm text-gray-400 mt-1">Chấp nhận PDF, DOCX (Tối đa 5MB)</p>
+                </div>
+              </div>
+              <p v-if="applyErrors.cv" class="mt-1 text-sm text-red-500">{{ applyErrors.cv }}</p>
+            </div>
+          </div>
           
-          <div class="grid grid-cols-3 gap-6 mb-6">
-            <div class="flex items-center transform hover:scale-105 transition-transform">
-              <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-                <font-awesome-icon icon="money-bill" class="text-emerald-500 text-xl" />
-              </div>
-              <div>
-                <div class="text-gray-500 text-sm">Mức lương</div>
-                <div class="font-medium">{{ getSalaryDisplay(job) }}</div>
-              </div>
-            </div>
-
-            <div class="flex items-center transform hover:scale-105 transition-transform">
-              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <font-awesome-icon icon="map-marker-alt" class="text-blue-500 text-xl" />
-              </div>
-              <div>
-                <div class="text-gray-500 text-sm">Địa điểm</div>
-                <div class="font-medium">{{ job.city }}{{ job.district ? `, ${job.district}` : '' }}</div>
-              </div>
-            </div>
-
-            <div class="flex items-center transform hover:scale-105 transition-transform">
-              <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                <font-awesome-icon icon="briefcase" class="text-purple-500 text-xl" />
-              </div>
-              <div>
-                <div class="text-gray-500 text-sm">Kinh nghiệm</div>
-                <div class="font-medium">{{ job.experience }}</div>
-              </div>
-            </div>
+          <!-- Submit button -->
+          <div class="mt-6 flex justify-end">
+            <button 
+              type="button" 
+              @click="closeApplyModal" 
+              class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3"
+            >
+              Hủy
+            </button>
+            <button 
+              type="submit" 
+              class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="isSubmitting"
+            >
+              <span v-if="isSubmitting" class="flex items-center">
+                <font-awesome-icon icon="circle-notch" class="fa-spin mr-2" />
+                Đang gửi...
+              </span>
+              <span v-else>Gửi ứng tuyển</span>
+            </button>
           </div>
-
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <button class="bg-emerald-500 text-white px-8 py-2.5 rounded-lg hover:bg-emerald-600 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center">
-                <font-awesome-icon icon="paper-plane" class="mr-2" />
-                Ứng tuyển ngay
-              </button>
-              <button class="border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-md">
-                Nhắn tin
-              </button>
-            </div>
-            <div v-if="job.appliedDate" class="text-gray-500 text-sm">
-              <span>Bạn đã gửi CV cho vị trí này vào ngày: {{ job.appliedDate }}</span>
-              <a href="#" class="text-blue-600 hover:underline ml-2">Xem CV đã nộp</a>
-            </div>
-          </div>
-        </div>
+        </form>
       </div>
+    </div>
 
-      <!-- Main content -->
-      <div class="grid grid-cols-3 gap-6">
-        <!-- Left column -->
-        <div class="col-span-2 space-y-6">
-          <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-            <div class="p-6">
-              <div class="flex items-center gap-2 mb-4">
-                <span class="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors">
-                  {{ job.position_name }}
-                </span>
-                <span class="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors">
-                  {{ job.field_name }}
-                </span>
-              </div>
-
-              <section class="mb-8">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Mô tả công việc</h2>
-                <div class="prose text-gray-600 whitespace-pre-line">{{ job.description }}</div>
-              </section>
-
-              <section class="mb-8">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Yêu cầu ứng viên</h2>
-                <div class="prose text-gray-600 whitespace-pre-line">{{ job.required }}</div>
-              </section>
-
-              <section>
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Quyền lợi</h2>
-                <div class="prose text-gray-600 whitespace-pre-line">{{ job.interest }}</div>
-              </section>
+    <!-- Modal thông báo cần đăng nhập -->
+    <div v-if="showLoginRequiredModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showLoginRequiredModal = false"></div>
+      <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300"
+        :class="{'translate-y-0 opacity-100 scale-100': showLoginRequiredModal, 'translate-y-4 opacity-0 scale-95': !showLoginRequiredModal}">
+        <div class="p-6">
+          <div class="flex items-center justify-center mb-4">
+            <div class="bg-yellow-100 p-3 rounded-full">
+              <font-awesome-icon icon="exclamation-triangle" class="text-yellow-500 text-2xl" />
             </div>
           </div>
-        </div>
-
-        <!-- Right column -->
-        <div class="space-y-6">
-          <!-- Company info -->
-          <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-            <div class="p-6">
-              <div class="flex items-center mb-6">
-                <img 
-                  :src="job.enterprise_logo" 
-                  alt="Company logo" 
-                  class="w-16 h-16 object-contain bg-white rounded p-1" 
-                  @error="handleImageError"
-                />
-                <div>
-                  <h3 class="font-bold text-gray-900">{{ job.enterprise_name }}</h3>
-                  <div class="text-gray-600 text-sm mt-1">{{ job.field_name }}</div>
-                </div>
-              </div>
-
-              <div class="space-y-4 text-gray-600">
-                <div class="flex items-start">
-                  <font-awesome-icon icon="map-marker-alt" class="w-5 h-5 mr-3 mt-1" />
-                  <span>{{ job.detail_address }}</span>
-                </div>
-                <router-link 
-                  :to="{ name: 'EnterpriseDetail', params: { id: job.enterprise } }" 
-                  class="text-blue-600 hover:underline flex items-center group"
-                >
-                  <font-awesome-icon icon="external-link-alt" class="w-5 h-5 mr-3 transition-transform group-hover:translate-x-1" />
-                  Xem trang công ty
-                </router-link>
-              </div>
-            </div>
-          </div>
-
-          <!-- Additional info -->
-          <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-            <div class="p-6">
-              <h3 class="font-bold text-gray-900 mb-4">Thông tin chung</h3>
-              <div class="space-y-4">
-                <div class="flex items-center transform hover:scale-105 transition-transform">
-                  <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-                    <font-awesome-icon icon="graduation-cap" class="text-emerald-500" />
-                  </div>
-                  <div>
-                    <div class="text-gray-500 text-sm">Cấp bậc</div>
-                    <div class="font-medium">{{ job.level }}</div>
-                  </div>
-                </div>
-
-                <div class="flex items-center transform hover:scale-105 transition-transform">
-                  <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                    <font-awesome-icon icon="users" class="text-purple-500" />
-                  </div>
-                  <div>
-                    <div class="text-gray-500 text-sm">Số lượng tuyển</div>
-                    <div class="font-medium">{{ job.quantity }} người</div>
-                  </div>
-                </div>
-
-                <div class="flex items-center transform hover:scale-105 transition-transform">
-                  <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                    <font-awesome-icon icon="clock" class="text-orange-500" />
-                  </div>
-                  <div>
-                    <div class="text-gray-500 text-sm">Thời gian làm việc</div>
-                    <div class="font-medium">{{ job.time_working }}</div>
-                  </div>
-                </div>
-
-                <div class="flex items-center transform hover:scale-105 transition-transform">
-                  <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                    <font-awesome-icon icon="briefcase" class="text-orange-500" />
-                  </div>
-                  <div>
-                    <div class="text-gray-500 text-sm">Hình thức làm việc</div>
-                    <div class="font-medium">{{ job.type_working }}</div>
-                  </div>
-                </div>
-
-                <div class="flex items-center transform hover:scale-105 transition-transform">
-                  <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                    <font-awesome-icon icon="calendar" class="text-orange-500" />
-                  </div>
-                  <div>
-                    <div class="text-gray-500 text-sm">Hạn nộp hồ sơ</div>
-                    <div class="font-medium">{{ new Date(job.deadline).toLocaleDateString('vi-VN') }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Skills -->
-          <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-            <div class="p-6">
-              <h3 class="font-bold text-gray-900 mb-4">Kỹ năng cần có</h3>
-              <div class="flex flex-wrap gap-2">
-                <span 
-                  v-for="skill in job.skills" 
-                  :key="skill"
-                  class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors cursor-pointer"
-                >
-                  {{ skill }}
-                </span>
-              </div>
-            </div>
+          <h3 class="text-lg font-medium text-center text-gray-900 mb-2">Yêu cầu đăng nhập</h3>
+          <p class="text-gray-500 text-center mb-6">Bạn cần đăng nhập để có thể ứng tuyển vào vị trí này</p>
+          <div class="flex justify-center space-x-4">
+            <button
+              @click="showLoginRequiredModal = false"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Để sau
+            </button>
+            <button
+              @click="redirectToLogin"
+              class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Đăng nhập ngay
+            </button>
           </div>
         </div>
       </div>
@@ -299,13 +471,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useJobStore } from '@/stores/job'
+import { ref, onMounted, reactive } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { usePostStore } from '@/stores/post'
+import { useAuthStore } from '@/stores/auth'
+import axios from 'axios'
 
 const route = useRoute()
+const router = useRouter()
 const job = ref({})
 const loading = ref(true)
+const showApplyModal = ref(false)
+const showLoginRequiredModal = ref(false)
+const isDragging = ref(false)
+const cvFile = ref(null)
+const isSubmitting = ref(false)
+const authStore = useAuthStore()
+
+const applyForm = reactive({
+  name: '',
+  email: '',
+  phone_number: '',
+  description: ''
+})
+
+const applyErrors = reactive({
+  name: '',
+  email: '',
+  phone_number: '',
+  description: '',
+  cv: ''
+})
 
 const handleImageError = (e) => {
   e.target.src = '/default-company-logo.png'
@@ -342,14 +538,183 @@ const getSalaryDisplay = (job) => {
 const fetchJobDetail = async () => {
   try {
     loading.value = true
-    const jobStore = useJobStore()
-    const response = await jobStore.fetchJobById(route.params.id)
+    const postStore = usePostStore()
+    const response = await postStore.fetchPostById(route.params.id)
     job.value = response.data.data
   } catch (error) {
     console.error('Error fetching job details:', error)
   } finally {
     loading.value = false
   }
+}
+
+const closeApplyModal = () => {
+  showApplyModal.value = false
+  // Reset form and errors
+  Object.keys(applyForm).forEach(key => {
+    applyForm[key] = ''
+  })
+  Object.keys(applyErrors).forEach(key => {
+    applyErrors[key] = ''
+  })
+  cvFile.value = null
+  isDragging.value = false
+}
+
+const handleFileChange = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    validateCvFile(file)
+  }
+}
+
+const handleFileDrop = (event) => {
+  isDragging.value = false
+  const file = event.dataTransfer.files[0]
+  if (file) {
+    validateCvFile(file)
+  }
+}
+
+const validateCvFile = (file) => {
+  applyErrors.cv = ''
+  
+  // Kiểm tra loại file
+  const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+  if (!allowedTypes.includes(file.type)) {
+    applyErrors.cv = 'Chỉ chấp nhận file PDF, DOC hoặc DOCX'
+    return
+  }
+  
+  // Kiểm tra kích thước file (tối đa 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    applyErrors.cv = 'Kích thước file không được vượt quá 5MB'
+    return
+  }
+  
+  cvFile.value = file
+}
+
+const removeCvFile = () => {
+  cvFile.value = null
+}
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+const validateForm = () => {
+  let isValid = true
+  
+  // Reset errors
+  Object.keys(applyErrors).forEach(key => {
+    applyErrors[key] = ''
+  })
+  
+  // Validate name
+  if (!applyForm.name.trim()) {
+    applyErrors.name = 'Vui lòng nhập họ và tên'
+    isValid = false
+  }
+  
+  // Validate email
+  if (!applyForm.email.trim()) {
+    applyErrors.email = 'Vui lòng nhập email'
+    isValid = false
+  } else if (!/^\S+@\S+\.\S+$/.test(applyForm.email)) {
+    applyErrors.email = 'Email không hợp lệ'
+    isValid = false
+  }
+  
+  // Validate phone number
+  if (!applyForm.phone_number.trim()) {
+    applyErrors.phone_number = 'Vui lòng nhập số điện thoại'
+    isValid = false
+  } else if (!/^[0-9]{10}$/.test(applyForm.phone_number.replace(/\s/g, ''))) {
+    applyErrors.phone_number = 'Số điện thoại không hợp lệ'
+    isValid = false
+  }
+  
+  // Validate description
+  if (!applyForm.description.trim()) {
+    applyErrors.description = 'Vui lòng nhập giới thiệu bản thân'
+    isValid = false
+  }
+  
+  // Validate CV
+  if (!cvFile.value) {
+    applyErrors.cv = 'Vui lòng tải lên CV của bạn'
+    isValid = false
+  }
+  
+  return isValid
+}
+
+const submitApplication = async () => {
+  if (!validateForm()) return
+  
+  try {
+    isSubmitting.value = true
+    
+    const formData = new FormData()
+    formData.append('post', job.value.id)
+    formData.append('name', applyForm.name)
+    formData.append('email', applyForm.email)
+    formData.append('phone_number', applyForm.phone_number)
+    formData.append('description', applyForm.description)
+    formData.append('cv', cvFile.value)
+    
+    const response = await axios.post('/api/cv/create/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    
+    if (response.data.success) {
+      // Hiển thị thông báo thành công
+      alert('Ứng tuyển thành công!')
+      closeApplyModal()
+      
+      // Cập nhật trạng thái đã ứng tuyển
+      job.value.appliedDate = new Date().toLocaleDateString('vi-VN')
+    }
+  } catch (error) {
+    console.error('Error submitting application:', error)
+    
+    if (error.response?.data?.errors) {
+      // Map server errors to form errors
+      const serverErrors = error.response.data.errors
+      Object.keys(serverErrors).forEach(key => {
+        if (applyErrors.hasOwnProperty(key)) {
+          applyErrors[key] = serverErrors[key]
+        }
+      })
+    } else {
+      alert('Có lỗi xảy ra khi gửi ứng tuyển. Vui lòng thử lại sau.')
+    }
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const handleApplyClick = () => {
+  if (!authStore.isAuthenticated) {
+    showLoginRequiredModal.value = true
+  } else {
+    showApplyModal.value = true
+  }
+}
+
+const redirectToLogin = () => {
+  showLoginRequiredModal.value = false
+  router.push({
+    name: 'Login',
+    query: { redirect: route.fullPath }
+  })
 }
 
 onMounted(() => {

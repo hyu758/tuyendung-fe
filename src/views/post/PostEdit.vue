@@ -170,13 +170,52 @@
                   <p v-if="errors.type_working" class="mt-1 text-sm text-red-500">{{ errors.type_working }}</p>
                 </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Mức lương <span
-                      class="text-red-500">*</span></label>
-                  <input v-model="form.salary_range" type="text" required
-                    class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    :class="{ 'border-red-500': errors.salary_range }">
-                  <p v-if="errors.salary_range" class="mt-1 text-sm text-red-500">{{ errors.salary_range }}</p>
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Mức lương <span class="text-red-500">*</span></label>
+                  <div class="space-y-3">
+                    <div class="flex items-center">
+                      <input
+                        type="checkbox"
+                        v-model="form.is_salary_negotiable"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      >
+                      <label class="ml-2 block text-sm text-gray-700">
+                        Thỏa thuận
+                      </label>
+                    </div>
+                    
+                    <div v-if="!form.is_salary_negotiable" class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm text-gray-600 mb-1">Tối thiểu</label>
+                        <input
+                          v-model.number="form.salary_min"
+                          type="number"
+                          min="0"
+                          step="1000000"
+                          :required="!form.is_salary_negotiable"
+                          class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          :class="{'border-red-500': errors.salary_min}"
+                          :disabled="form.is_salary_negotiable"
+                        >
+                        <p v-if="errors.salary_min" class="mt-1 text-sm text-red-500">{{ errors.salary_min }}</p>
+                      </div>
+                      
+                      <div>
+                        <label class="block text-sm text-gray-600 mb-1">Tối đa</label>
+                        <input
+                          v-model.number="form.salary_max"
+                          type="number"
+                          :min="form.salary_min || 0"
+                          step="1000000"
+                          :required="!form.is_salary_negotiable"
+                          class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          :class="{'border-red-500': errors.salary_max}"
+                          :disabled="form.is_salary_negotiable"
+                        >
+                        <p v-if="errors.salary_max" class="mt-1 text-sm text-red-500">{{ errors.salary_max }}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -263,7 +302,9 @@ const form = ref({
   level: '',
   quantity: 1,
   required: '',
-  salary_range: '',
+  salary_min: 0,
+  salary_max: 0,
+  is_salary_negotiable: false,
   time_working: '',
   type_working: '',
   city: '',

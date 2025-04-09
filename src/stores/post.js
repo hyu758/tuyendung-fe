@@ -28,6 +28,26 @@ export const usePostStore = defineStore('post', {
         this.loading = false
       }
     },
+    async fetchPostByEmployer(page = 1, pageSize = 10) {
+      try {
+        this.loading = true
+        const response = await axios.get(`/api/posts/enterprise?page=${page}&page_size=${pageSize}`)
+        return {
+          success: true,
+          data: response.data
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách tin tuyển dụng'
+        }
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    
 
     async createPost(postData) {
       try {
@@ -76,7 +96,7 @@ export const usePostStore = defineStore('post', {
     async fetchPostById(id) {
       try {
         this.loading = true
-        const response = await axios.get(`/api/posts/${id}`)
+        const response = await axios.get(`/api/post/${id}`)
         this.currentPost = response.data
         return { success: true, data: response.data }
       } catch (error) {
@@ -89,7 +109,7 @@ export const usePostStore = defineStore('post', {
 
     async togglePostStatus(postId) {
       try {
-        const response = await axios.put(`/api/posts/${postId}/toggle-status/`)
+        const response = await axios.put(`/api/post/${postId}/toggle-status/`)
         return {
           success: true,
           data: response.data

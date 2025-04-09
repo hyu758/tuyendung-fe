@@ -153,7 +153,6 @@ router.beforeEach(async (to, from, next) => {
   const enterpriseStore = useEnterpriseStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const guestOnly = to.matched.some(record => record.meta.guest)
-  
   // Nếu route cần xác thực
   if (requiresAuth) {
     // Kiểm tra nếu có token
@@ -162,7 +161,7 @@ router.beforeEach(async (to, from, next) => {
       if (!authStore.isActivated && to.name !== 'Activate') {
         // Nếu chưa kích hoạt, cập nhật thông tin từ token
         if (!authStore.user) {
-          authStore.updateUserFromToken()
+          await authStore.updateUserFromToken()
         }
         
         // Kiểm tra lại sau khi cập nhật

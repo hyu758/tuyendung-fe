@@ -184,6 +184,12 @@ const notificationType = ref('')
 const notificationMessage = ref('')
 const showStatusPopup = ref(false)
 
+const pagination = ref({
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+  pageSize: 10
+})
 // Format date
 const formatDate = (dateString) => {
   try {
@@ -211,7 +217,7 @@ const formatDate = (dateString) => {
 const loadPosts = async () => {
   try {
     loading.value = true
-    const result = await postStore.fetchPosts()
+    const result = await postStore.fetchPostByEmployer(pagination.value.currentPage, pagination.value.pageSize)
     if (result.success) {
       posts.value = result.data.data.results || []
       pagination.value = {
@@ -268,13 +274,6 @@ const deletePost = async (post) => {
   }
 }
 
-// Thêm state pagination
-const pagination = ref({
-  currentPage: 1,
-  totalPages: 1,
-  totalItems: 0,
-  pageSize: 10
-})
 
 const togglePostStatus = (post) => {
   selectedPost.value = post

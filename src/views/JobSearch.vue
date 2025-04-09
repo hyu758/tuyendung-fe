@@ -161,7 +161,7 @@ const searchQuery = reactive({
   salary_max: route.query.salary_max || '',
   page: route.query.page || 1,
   page_size: route.query.page_size || 10,
-  sort_by: route.query.sort_by || 'relevant',
+  sort_by: route.query.sort_by || 'created_at',
   sort_order: 'desc'
 })
 
@@ -185,7 +185,7 @@ watch(() => route.query, (newQuery) => {
   searchQuery.salary_max = newQuery.salary_max || ''
   searchQuery.page = newQuery.page || 1
   searchQuery.page_size = newQuery.page_size || 10
-  searchQuery.sort_by = newQuery.sort_by || 'relevant'
+  searchQuery.sort_by = newQuery.sort_by || 'created-at'
   searchQuery.sort_order = newQuery.sort_order || 'desc'
   loadJobsFromQuery()
 }, { deep: true })
@@ -215,7 +215,7 @@ const loadJobsFromQuery = async () => {
         id: job.id,
         title: job.title,
         location: `${job.city}${job.district ? `, ${job.district}` : ''}`,
-        jobType: job.type_working,
+        type_working: job.type_working,
         salary_min: job.salary_min,
         salary_max: job.salary_max,
         publishDate: new Date(job.created_at),

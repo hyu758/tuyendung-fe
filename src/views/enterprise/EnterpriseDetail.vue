@@ -52,7 +52,7 @@
           <div class="bg-white rounded-lg p-6">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-semibold">Tin tuyển dụng</h2>
-              <div class="text-gray-500">Tìm thấy {{ jobs.total || 0 }} việc làm</div>
+              <div class="text-gray-500">Tìm thấy {{ jobs.length || 0 }} việc làm</div>
             </div>
 
             <!-- Loading skeleton -->
@@ -77,11 +77,11 @@
 
             <!-- Job list -->
             <div v-else class="space-y-4">
-              <div v-if="jobs.results?.length === 0" class="text-center py-8">
+              <div v-if="jobs?.length === 0" class="text-center py-8">
                 <div class="text-gray-500">Chưa có tin tuyển dụng nào</div>
               </div>
               
-              <div v-else v-for="job in jobs.results" :key="job.id" 
+              <div v-else v-for="job in jobs" :key="job.id" 
                 class="group border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
                 <router-link :to="{ name: 'JobDetail', params: { id: job.id }}" 
                   class="flex items-center p-4">
@@ -212,7 +212,7 @@ const loadJobs = async () => {
         page_size: jobs.value.page_size
       }
     })
-    jobs.value = response.data.data
+    jobs.value = response.data
   } catch (error) {
     console.error('Error loading jobs:', error)
   }
