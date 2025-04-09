@@ -316,6 +316,14 @@
         
         <!-- Form -->
         <form @submit.prevent="submitApplication" class="p-6">
+          <!-- Thông báo lỗi -->
+          <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
+            <div class="flex items-center">
+              <font-awesome-icon icon="exclamation-circle" class="mr-2" />
+              <span>{{ errorMessage }}</span>
+            </div>
+          </div>
+          
           <div class="space-y-4">
             <!-- Tên -->
             <div>
@@ -467,6 +475,53 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div 
+      v-if="showNotification" 
+      class="fixed bottom-4 right-4 z-50 max-w-md shadow-xl rounded-lg overflow-hidden transform transition-all duration-300"
+      :class="{
+        'translate-y-0 opacity-100': showNotification,
+        'translate-y-4 opacity-0': !showNotification,
+        'bg-green-50 border border-green-200': notificationType === 'success',
+        'bg-red-50 border border-red-200': notificationType === 'error'
+      }"
+    >
+      <div class="p-4 flex items-center">
+        <div 
+          class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mr-3"
+          :class="{
+            'bg-green-100': notificationType === 'success',
+            'bg-red-100': notificationType === 'error'
+          }"
+        >
+          <font-awesome-icon 
+            :icon="notificationType === 'success' ? 'check-circle' : 'exclamation-circle'" 
+            :class="{
+              'text-green-500': notificationType === 'success',
+              'text-red-500': notificationType === 'error'
+            }" 
+          />
+        </div>
+        <div class="flex-1">
+          <p 
+            class="font-medium"
+            :class="{
+              'text-green-800': notificationType === 'success',
+              'text-red-800': notificationType === 'error'
+            }"
+          >
+            {{ notificationType === 'success' ? successMessage : errorMessage }}
+          </p>
+        </div>
+        <button 
+          @click="showNotification = false" 
+          class="ml-3 flex-shrink-0 text-gray-400 hover:text-gray-600"
+        >
+          <font-awesome-icon icon="times" />
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -476,6 +531,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { usePostStore } from '@/stores/post'
 import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const route = useRoute()
 const router = useRouter()
@@ -502,6 +558,11 @@ const applyErrors = reactive({
   description: '',
   cv: ''
 })
+
+const successMessage = ref('')
+const errorMessage = ref('')
+const showNotification = ref(false)
+const notificationType = ref('success') // success or error
 
 const handleImageError = (e) => {
   e.target.src = '/default-company-logo.png'
@@ -559,6 +620,7 @@ const closeApplyModal = () => {
   })
   cvFile.value = null
   isDragging.value = false
+  errorMessage.value = ''
 }
 
 const handleFileChange = (event) => {
@@ -659,6 +721,7 @@ const submitApplication = async () => {
   
   try {
     isSubmitting.value = true
+    errorMessage.value = ''
     
     const formData = new FormData()
     formData.append('post', job.value.id)
@@ -673,28 +736,24 @@ const submitApplication = async () => {
         'Content-Type': 'multipart/form-data'
       }
     })
-    
-    if (response.data.success) {
-      // Hiển thị thông báo thành công
-      alert('Ứng tuyển thành công!')
+    if (response.data.status === 201) {
       closeApplyModal()
-      
-      // Cập nhật trạng thái đã ứng tuyển
+      showToast('Ứng tuyển thành công! CV của bạn đã được gửi đến nhà tuyển dụng.', 'success')
       job.value.appliedDate = new Date().toLocaleDateString('vi-VN')
     }
   } catch (error) {
     console.error('Error submitting application:', error)
     
     if (error.response?.data?.errors) {
-      // Map server errors to form errors
       const serverErrors = error.response.data.errors
       Object.keys(serverErrors).forEach(key => {
         if (applyErrors.hasOwnProperty(key)) {
           applyErrors[key] = serverErrors[key]
         }
       })
+      errorMessage.value = 'Vui lòng kiểm tra lại thông tin đã nhập.'
     } else {
-      alert('Có lỗi xảy ra khi gửi ứng tuyển. Vui lòng thử lại sau.')
+      errorMessage.value = 'Có lỗi xảy ra khi gửi ứng tuyển. Vui lòng thử lại sau.'
     }
   } finally {
     isSubmitting.value = false
@@ -715,6 +774,23 @@ const redirectToLogin = () => {
     name: 'Login',
     query: { redirect: route.fullPath }
   })
+}
+
+const showToast = (message, type = 'success') => {
+  localStorage.setItem('notification', JSON.stringify({
+    message,
+    type,
+    timestamp: new Date().getTime()
+  }))
+
+  successMessage.value = type === 'success' ? message : ''
+  errorMessage.value = type === 'error' ? message : ''
+  notificationType.value = type
+  showNotification.value = true
+
+  setTimeout(() => {
+    showNotification.value = false
+  }, 5000)
 }
 
 onMounted(() => {

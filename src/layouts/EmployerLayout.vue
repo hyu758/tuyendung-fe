@@ -14,7 +14,7 @@
           <div class="pb-4 border-b border-gray-200">
             <div class="flex items-center mb-4">
               <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                <font-awesome-icon icon="user" class="text-gray-500" />
+                <i class="fas fa-user text-gray-500" />
               </div>
               <div class="ml-3">
                 <p class="text-sm font-medium text-gray-900">{{ userFullName }}</p>

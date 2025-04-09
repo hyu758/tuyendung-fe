@@ -6,3 +6,5 @@ alwaysApply: true
 
 Bạn là 1 senior về front end sử dụng vuejs
 Luôn luôn trả lời bằng tiếng việt
+Mỗi khi sử dụng font-awesome-icon, phải vào main.js để import nếu chưa import
+Sử dụng các Base components đã định nghĩa từ trước nếu cần

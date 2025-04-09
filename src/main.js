@@ -19,7 +19,11 @@ import {
   faPaperPlane, faHeart, faGlobe, faGraduationCap, faBook, faExternalLinkAlt,
   faComments,
   faFileInvoice,
-  faPhone
+  faPhone,
+  faCloudUploadAlt,
+  faFilePdf,
+  faFileWord,
+  faCircleNotch,
 } from '@fortawesome/free-solid-svg-icons'
 import { 
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle 
@@ -37,7 +41,11 @@ library.add(
   faPaperPlane, faHeart, faGlobe, faGraduationCap, faBook, faExternalLinkAlt,
   faComments,
   faFileInvoice,
-  faPhone
+  faPhone,
+  faCloudUploadAlt,
+  faFilePdf,
+  faFileWord,
+  faCircleNotch,
 )
 
 // Cấu hình Axios
