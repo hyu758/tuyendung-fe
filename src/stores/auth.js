@@ -144,6 +144,21 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
+    async googleLogin() {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        // Redirect to backend Google OAuth endpoint
+        // The backend is configured to use social-django for Google OAuth
+        window.location.href = 'http://localhost:8000/api/auth/google/login/';
+      } catch (error) {
+        console.error('Lỗi đăng nhập với Google:', error);
+        this.error = 'Có lỗi xảy ra khi đăng nhập với Google';
+        this.loading = false;
+      }
+    },
+    
     async register(userData) {
       this.loading = true
       this.error = null

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import EmployerLayout from '../layouts/EmployerLayout.vue'
 import { useEnterpriseStore } from '../stores/enterprise'
+import GoogleCallback from '../views/auth/GoogleCallback.vue'
 
 const routes = [
   // Public routes
@@ -131,7 +132,12 @@ const routes = [
       },
     ]
   },
-
+  {
+    path: '/auth/google/callback',
+    name: 'GoogleCallback',
+    component: GoogleCallback,
+    meta: { requiresAuth: false }
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

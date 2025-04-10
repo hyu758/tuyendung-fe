@@ -119,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import BaseInput from '../components/common/BaseInput.vue'
@@ -128,6 +128,14 @@ import BaseAlert from '../components/common/BaseAlert.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+// Remove auth message listener when component unmounts
+let removeAuthListener = null;
+onUnmounted(() => {
+  if (removeAuthListener) {
+    removeAuthListener();
+  }
+});
 
 // Form fields
 const username = ref('')
@@ -193,7 +201,13 @@ const isValidEmail = (email) => {
 
 // Social login methods
 const loginWithGoogle = () => {
-  alert('Đăng nhập với Google chưa được triển khai')
+  try {
+    // Redirect trực tiếp đến endpoint xác thực của backend
+    window.location.href = 'http://localhost:8000/api/auth/login/google-oauth2/';
+  } catch (error) {
+    console.error('Lỗi khi bắt đầu đăng nhập với Google:', error);
+    authStore.error = 'Có lỗi xảy ra khi bắt đầu đăng nhập Google';
+  }
 }
 
 const loginWithFacebook = () => {
