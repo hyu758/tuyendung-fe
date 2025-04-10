@@ -76,7 +76,7 @@ onMounted(async () => {
 
     } catch (e) {
         console.error('GoogleCallback: Error during token processing or redirect:', e);
-        error.value = 'Lỗi xử lý thông tin đăng nhập.';
+        error.value = '';
         setTimeout(() => router.push('/login'), 3000);
     }
   } else {
