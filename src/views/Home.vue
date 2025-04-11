@@ -1,7 +1,5 @@
 <template>
   <div>
-    <!-- Header (Giữ nguyên nếu có) -->
-    <AppHeader /> 
 
     <!-- Phần hiển thị Chọn Role nếu cần -->
     <div v-if="authStore.isAuthenticated && !authStore.userRole" class="select-role-container py-10 bg-gray-100">
@@ -178,9 +176,6 @@
         </div>
       </section>
     </div>
-    
-    <!-- Footer (Giữ nguyên nếu có) -->
-    <AppFooter />
 
   </div>
 </template>
@@ -193,11 +188,6 @@ import { usePostStore } from '../stores/post'
 import { useFieldStore } from '../stores/field'
 import { useAuthStore } from '../stores/auth'
 import SelectRole from './auth/SelectRole.vue'
-import AppHeader from '../components/layout/AppHeader.vue'
-import AppFooter from '../components/layout/AppFooter.vue'
-import JobSearchForm from '../components/jobs/JobSearchForm.vue'
-import JobList from '../components/jobs/JobList.vue'
-import CategoryList from '../components/common/CategoryList.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

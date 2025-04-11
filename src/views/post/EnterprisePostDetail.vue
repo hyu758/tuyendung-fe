@@ -206,15 +206,13 @@
                 </td>
                 <td class="px-6 py-4 text-center">
                   <div class="flex justify-center space-x-3">
-                    <a
-                      :href="cv.cv_file_url"
-                      target="_blank"
+                    <router-link
+                      :to="{ name: 'CVDetail', params: { id: cv.id }}"
                       class="text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer"
-                      title="Xem CV"
-                      @click="markAsViewed(cv.id)"
+                      title="Xem chi tiết CV"
                     >
                       <i class="fas fa-eye"></i>
-                    </a>
+                    </router-link>
                     <a
                       :href="cv.cv_file_url"
                       download

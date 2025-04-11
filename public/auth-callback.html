@@ -73,14 +73,12 @@
           refresh_token: refreshToken,
           role: role,
           email: email
-        }, 'http://localhost:5173'); // Your frontend URL
+        }, 'http://localhost:5173');
         
-        // Close this window after a short delay
         setTimeout(() => {
           window.close();
         }, 1000);
       } else {
-        // If opened directly (not as popup), redirect to main app
         window.location.href = '/';
       }
     } else {

@@ -87,20 +87,13 @@
             </div>
           </div>
           
-          <div class="mt-6 grid grid-cols-2 gap-3">
+          <div class="mt-6">
             <BaseButton
               variant="light"
               class="w-full"
               :icon="['fab', 'google']"
               label="Google"
               @click="loginWithGoogle"
-            />
-            <BaseButton
-              variant="light"
-              class="w-full"
-              :icon="['fab', 'facebook']"
-              label="Facebook"
-              @click="loginWithFacebook"
             />
           </div>
         </div>
@@ -181,7 +174,6 @@ const handleSubmit = async () => {
   if (!isValid) return
   
   try {
-    // Submit form
     const result = await authStore.login({
       email: username.value,
       password: password.value,
@@ -193,24 +185,14 @@ const handleSubmit = async () => {
   }
 }
 
-// Email validation
-const isValidEmail = (email) => {
-  const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-  return re.test(String(email).toLowerCase())
-}
 
 // Social login methods
 const loginWithGoogle = () => {
   try {
-    // Redirect trực tiếp đến endpoint xác thực của backend
     window.location.href = 'http://localhost:8000/api/auth/login/google-oauth2/';
   } catch (error) {
     console.error('Lỗi khi bắt đầu đăng nhập với Google:', error);
     authStore.error = 'Có lỗi xảy ra khi bắt đầu đăng nhập Google';
   }
-}
-
-const loginWithFacebook = () => {
-  alert('Đăng nhập với Facebook chưa được triển khai')
 }
 </script> 

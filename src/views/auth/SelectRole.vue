@@ -59,21 +59,19 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
-import BaseButton from '../../components/common/BaseButton.vue'; // Điều chỉnh đường dẫn nếu cần
-import BaseAlert from '../../components/common/BaseAlert.vue';   // Điều chỉnh đường dẫn nếu cần
-import api from '../../services/api'; // Sử dụng default import
+import BaseButton from '../../components/common/BaseButton.vue';
+import BaseAlert from '../../components/common/BaseAlert.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const loading = ref(null); // employer | candidate | null
+const loading = ref(null);
 const error = ref(null);
 
 onMounted(() => {
-  // Nếu chưa đăng nhập hoặc đã có role, redirect đi
   if (!authStore.isAuthenticated) {
     router.push('/login');
   } else if (authStore.userRole) {
-    router.push('/'); // Hoặc dashboard tương ứng
+    router.push('/');
   }
 });
 
@@ -81,17 +79,14 @@ async function selectRole(role) {
   loading.value = role;
   error.value = null;
   try {
-    // Gọi API backend để set role
-    await api.post('/accounts/set-role/', { role }); // Sử dụng endpoint mới
+    await axios.post('/api/accounts/set-role/', { role });
 
-    // Cập nhật role trong store
     authStore.userRole = role;
 
-    // Redirect đến trang chủ hoặc dashboard
     if (role === 'employer') {
-      router.push('/employer/dashboard'); // Hoặc trang employer tương ứng
+      router.push('/employer/dashboard');
     } else {
-      router.push('/'); // Hoặc trang candidate tương ứng
+      router.push('/');
     }
 
   } catch (err) {
