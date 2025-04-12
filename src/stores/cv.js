@@ -42,6 +42,49 @@ export const useCVStore = defineStore('cv', {
       }
     },
     
+    // Lấy danh sách CV theo trạng thái
+    async fetchCVsByStatus(status = null, isMarked = null) {
+      try {
+        this.loading = true
+        this.error = null
+        
+        let url = '/api/cv/status/'
+        const params = {}
+        
+        if (status) {
+          params.status = status
+        }
+        
+        if (isMarked !== null) {
+          params.is_marked = isMarked
+        }
+        
+        const response = await axios.get(url, { params })
+        
+        if (response.data) {
+          this.cvs = response.data.data
+          return {
+            success: true,
+            data: response.data
+          }
+        }
+        
+        return {
+          success: false,
+          error: 'Không thể lấy danh sách CV theo trạng thái'
+        }
+      } catch (error) {
+        console.error('Error fetching CVs by status:', error)
+        this.error = error.message || 'Đã xảy ra lỗi khi lấy danh sách CV theo trạng thái'
+        return {
+          success: false,
+          error: this.error
+        }
+      } finally {
+        this.loading = false
+      }
+    },
+    
     // Lấy thông tin chi tiết CV theo ID
     async fetchCVById(cvId) {
       try {

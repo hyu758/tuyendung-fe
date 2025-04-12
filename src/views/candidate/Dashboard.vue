@@ -57,7 +57,7 @@
       <div class="bg-white rounded-md border border-gray-200 p-4 shadow-sm">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-medium text-gray-800">Đơn ứng tuyển gần đây</h3>
-          <a href="/candidate/applications" class="text-sm text-blue-600 hover:underline">Xem tất cả</a>
+          <router-link to="/candidate/applications" class="text-sm text-blue-600 hover:underline">Xem tất cả</router-link>
         </div>
         
         <div class="space-y-3">

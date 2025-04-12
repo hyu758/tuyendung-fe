@@ -35,13 +35,13 @@ export const jobService = {
 
 export const candidateService = {
   getProfile() {
-    return axios.get('/candidates/profile')
+    return axios.get('/profile/')
   },
   updateProfile(profileData) {
-    return axios.put('/candidates/profile', profileData)
+    return axios.put('/profile/update/', profileData)
   },
   getApplications() {
-    return axios.get('/candidates/applications')
+    return axios.get('/api/cv/')
   }
 }
 

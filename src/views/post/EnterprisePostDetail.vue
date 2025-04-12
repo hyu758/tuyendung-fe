@@ -152,8 +152,87 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-gray-900">Danh sách ứng viên</h2>
           <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-            {{ cvList.length }} ứng viên
+            {{ filteredCVs.length }} ứng viên
           </span>
+        </div>
+
+        <!-- Filter options -->
+        <div class="bg-white shadow rounded-lg p-4 mb-4">
+          <div class="mb-4 border-b border-gray-200">
+            <nav class="-mb-px flex space-x-4">
+              <button
+                @click="activeTab = 'all'"
+                :class="[
+                  'py-2 px-1 border-b-2 font-medium text-sm',
+                  activeTab === 'all'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ]"
+              >
+                Tất cả ứng viên
+              </button>
+              <button
+                @click="activeTab = 'filter'; loadFilteredCVs()"
+                :class="[
+                  'py-2 px-1 border-b-2 font-medium text-sm',
+                  activeTab === 'filter'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ]"
+              >
+                Lọc ứng viên
+              </button>
+            </nav>
+          </div>
+
+          <div v-if="activeTab === 'filter'" class="flex flex-wrap items-center">
+            <div class="mr-4 mb-2">
+              <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+              <select 
+                id="statusFilter" 
+                v-model="statusFilter" 
+                class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              >
+                <option value="all">Tất cả</option>
+                <option value="pending">Chưa xử lý</option>
+                <option value="approved">Đã tiếp nhận</option>
+                <option value="rejected">Đã từ chối</option>
+              </select>
+            </div>
+            
+            <div class="mr-4 mb-2">
+              <label for="viewFilter" class="block text-sm font-medium text-gray-700 mb-1">Đã xem</label>
+              <select 
+                id="viewFilter" 
+                v-model="viewedFilter" 
+                class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              >
+                <option value="all">Tất cả</option>
+                <option value="viewed">Đã xem</option>
+                <option value="not_viewed">Chưa xem</option>
+              </select>
+            </div>
+            
+            <div class="mr-4 mb-2">
+              <button 
+                @click="applyFilters"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <i class="fas fa-search mr-2"></i>
+                Lọc
+              </button>
+            </div>
+            
+            <div class="mb-2">
+              <button 
+                @click="resetFilters" 
+                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <i class="fas fa-redo-alt mr-2"></i>
+                Đặt lại
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- CV List -->
@@ -168,7 +247,7 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="(cv, index) in cvList" :key="index" class="hover:bg-gray-50">
+              <tr v-for="(cv, index) in filteredCVs" :key="index" class="hover:bg-gray-50">
                 <td class="px-6 py-4">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -263,7 +342,7 @@
               </tr>
               
               <!-- Empty state -->
-              <tr v-if="cvList.length === 0">
+              <tr v-if="filteredCVs.length === 0">
                 <td colspan="4" class="px-6 py-10 text-center">
                   <div class="flex flex-col items-center">
                     <i class="fas fa-file-alt text-4xl text-gray-300 mb-3"></i>
@@ -294,6 +373,9 @@ const loading = ref(true)
 const post = ref({})
 const cvList = computed(() => cvStore.cvs)
 const activeDropdownIndex = ref(null)
+const statusFilter = ref('all')
+const viewedFilter = ref('all')
+const activeTab = ref('all')
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event) => {
@@ -408,6 +490,63 @@ const updateCVStatus = async (cvId, status) => {
   } catch (err) {
     console.error('Error updating CV status:', err)
   }
+}
+
+// Filter CVs based on activeTab
+const filteredCVs = computed(() => {
+  // If tab is 'all', show all CVs
+  if (activeTab.value === 'all') {
+    return cvList.value;
+  }
+  
+  // If tab is 'filter', apply local filtering
+  let filtered = cvList.value
+  
+  if (statusFilter.value !== 'all') {
+    filtered = filtered.filter(cv => cv.status === statusFilter.value)
+  }
+  
+  if (viewedFilter.value !== 'all') {
+    filtered = filtered.filter(cv => cv.is_viewed === (viewedFilter.value === 'viewed'))
+  }
+  
+  return filtered
+})
+
+// Apply filters by fetching from API
+const applyFilters = async () => {
+  try {
+    loading.value = true
+    
+    if (activeTab.value === 'filter') {
+      const status = statusFilter.value !== 'all' ? statusFilter.value : null
+      const isViewed = viewedFilter.value !== 'all' ? (viewedFilter.value === 'viewed') : null
+      
+      // Điều kiện tổng hợp với postId
+      const postId = route.params.id
+      await cvStore.fetchCVsByPostId(postId)
+      
+      // Apply local filtering after fetching data
+      // (Backend doesn't have combined filtering for both status and post_id)
+    }
+    
+  } catch (err) {
+    console.error('Error applying filters:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Load CVs with filters
+const loadFilteredCVs = async () => {
+  await applyFilters()
+}
+
+// Reset filters
+const resetFilters = () => {
+  statusFilter.value = 'all'
+  viewedFilter.value = 'all'
+  applyFilters()
 }
 
 // Load data when component is mounted

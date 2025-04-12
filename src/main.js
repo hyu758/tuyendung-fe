@@ -70,7 +70,11 @@ const processQueue = (error, token = null) => {
 axios.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
   if (token) {
+    // Thêm log để debug
+    console.log('Gửi yêu cầu với token');
     config.headers.Authorization = `Bearer ${token}`
+  } else {
+    console.log('Không có token trong localStorage');
   }
   return config
 })
