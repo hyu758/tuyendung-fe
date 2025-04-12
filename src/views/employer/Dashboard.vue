@@ -97,7 +97,7 @@
     </div>
 
     <!-- Tin tuyển dụng gần đây và ứng viên mới nhất -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
       <!-- Tin tuyển dụng gần đây -->
       <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <div class="flex justify-between items-center mb-6">
@@ -183,11 +183,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Thông báo -->
+    <div class="mb-8">
+      <NotificationList />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import NotificationList from '../../components/employer/NotificationList.vue'
 
 // Dữ liệu giả định cho thống kê
 const stats = ref({

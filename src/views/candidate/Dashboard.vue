@@ -91,47 +91,8 @@
         </div>
       </div>
       
-      <!-- Việc làm phù hợp -->
-      <div class="bg-white rounded-md border border-gray-200 p-4 shadow-sm">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium text-gray-800">Việc làm phù hợp</h3>
-          <a href="/candidate/job-matches" class="text-sm text-blue-600 hover:underline">Xem thêm</a>
-        </div>
-        
-        <div class="space-y-3">
-          <div v-for="(job, index) in matchedJobs" :key="index" 
-               class="p-3 border border-gray-100 rounded-md hover:border-blue-300 hover:shadow-sm transition-all">
-            <div class="flex justify-between items-start mb-2">
-              <h4 class="text-sm font-medium text-gray-800">{{ job.title }}</h4>
-              <span class="text-xs text-blue-600 font-medium">{{ job.matchPercentage }}% phù hợp</span>
-            </div>
-            <div class="flex items-center mb-2">
-              <div class="flex items-center flex-grow">
-                <i class="fas fa-building text-gray-400 mr-1"></i>
-                <p class="text-xs text-gray-700 truncate">{{ job.company }}</p>
-              </div>
-              <div class="flex items-center ml-4">
-                <i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>
-                <p class="text-xs text-gray-700">{{ job.location }}</p>
-              </div>
-            </div>
-            <div class="flex flex-wrap gap-2 mb-2">
-              <span v-for="(skill, idx) in job.skills" :key="idx" 
-                    class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                {{ skill }}
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <p class="text-xs text-gray-500">
-                <i class="fas fa-clock mr-1"></i> Đăng {{ job.postedAt }}
-              </p>
-              <button class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors">
-                Ứng tuyển ngay
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Thông báo -->
+      <NotificationList />
     </div>
     
     <!-- Biểu đồ hoạt động và Kỹ năng nổi bật -->
@@ -236,6 +197,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import NotificationList from '../../components/candidate/NotificationList.vue'
 
 // Dữ liệu mẫu cho bảng điều khiển (có thể thay thế bằng API thực tế sau)
 const stats = ref({

@@ -78,22 +78,10 @@
       <header class="bg-white h-16 border-b border-gray-200">
         <div class="flex justify-end items-center h-full px-6">
           <!-- Notifications -->
-          <button 
-            class="text-gray-500 hover:text-gray-600 relative mr-4"
-            aria-label="Thông báo"
-            title="Thông báo"
-          >
-            <font-awesome-icon icon="bell" class="text-xl" />
-            <span v-if="unreadNotifications > 0" 
-              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
-              aria-label="Số thông báo chưa đọc"
-            >
-              {{ unreadNotifications }}
-            </span>
-          </button>
+          <NotificationDropdown />
 
           <!-- User Menu -->
-          <div class="relative" ref="profileDropdown">
+          <div class="relative ml-4" ref="profileDropdown">
             <button 
               @click="toggleDropdown"
               class="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
@@ -138,14 +126,16 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useNotificationStore } from '../stores/notification'
+import NotificationDropdown from '../components/employer/NotificationDropdown.vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 
 const showDropdown = ref(false)
 const profileDropdown = ref(null)
-const unreadNotifications = ref(2) // Temporary hardcoded value
 
 const userFullName = computed(() => authStore.userFullName || 'Người dùng')
 

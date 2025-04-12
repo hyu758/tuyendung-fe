@@ -9,7 +9,9 @@ export const useNotificationStore = defineStore('notification', {
     error: null,
     page: 1,
     pageSize: 10,
-    hasMore: true
+    hasMore: true,
+    totalPages: 0,
+    total: 0
   }),
 
   getters: {
@@ -34,24 +36,29 @@ export const useNotificationStore = defineStore('notification', {
         // Chỉ thực hiện khi còn dữ liệu để tải
         if (!this.hasMore) return { success: true, data: this.notifications }
 
-        const response = await axios.get('/notifications', {
+        const response = await axios.get('/api/notifications', {
           params: {
             page: this.page,
             page_size: this.pageSize
           }
         })
 
-        const { data } = response.data
+        const { results, total, page, total_pages, page_size } = response.data.data
 
         // Cập nhật danh sách thông báo
         if (reset) {
-          this.notifications = data
+          this.notifications = results
         } else {
-          this.notifications = [...this.notifications, ...data]
+          this.notifications = [...this.notifications, ...results]
         }
 
+        // Cập nhật metadata
+        this.total = total
+        this.totalPages = total_pages
+        this.pageSize = page_size
+
         // Kiểm tra xem còn dữ liệu để tải không
-        this.hasMore = data.length === this.pageSize
+        this.hasMore = page < total_pages
         
         // Tăng số trang nếu còn dữ liệu
         if (this.hasMore) {
@@ -74,7 +81,7 @@ export const useNotificationStore = defineStore('notification', {
         this.loading = true
         this.error = null
 
-        const response = await axios.get('/notifications/unread-count')
+        const response = await axios.get('/api/notifications/unread-count')
         this.unreadCount = response.data.unread_count
 
         return { success: true, count: this.unreadCount }
@@ -93,12 +100,12 @@ export const useNotificationStore = defineStore('notification', {
         this.loading = true
         this.error = null
 
-        const response = await axios.post(`/notifications/${notificationId}/read/`)
+        const response = await axios.post(`/api/notifications/${notificationId}/read/`)
         
         // Cập nhật trạng thái của thông báo trong danh sách
         const index = this.notifications.findIndex(n => n.id === notificationId)
         if (index !== -1) {
-          this.notifications[index].read = true
+          this.notifications[index].is_read = true
           
           // Giảm số lượng thông báo chưa đọc nếu thông báo trước đó chưa đọc
           if (this.unreadCount > 0) {
@@ -116,6 +123,32 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
+    // Đánh dấu tất cả thông báo đã đọc
+    async markAllAsRead() {
+      try {
+        this.loading = true
+        this.error = null
+
+        const response = await axios.post('/api/notifications/mark-all-read/')
+        
+        // Cập nhật trạng thái của tất cả thông báo trong danh sách
+        this.notifications.forEach(notification => {
+          notification.is_read = true
+        })
+        
+        // Đặt số lượng thông báo chưa đọc về 0
+        this.unreadCount = 0
+
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        console.error('Error marking all notifications as read:', error)
+        this.error = error.response?.data?.message || 'Không thể đánh dấu tất cả thông báo đã đọc'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Reset store
     resetStore() {
       this.notifications = []
@@ -124,6 +157,8 @@ export const useNotificationStore = defineStore('notification', {
       this.error = null
       this.page = 1
       this.hasMore = true
+      this.totalPages = 0
+      this.total = 0
     }
   }
 }) 
