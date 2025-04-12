@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import CandidateHeader from './components/layouts/CandidateHeader.vue'
 import BaseAlert from './components/common/BaseAlert.vue'
+import socketService from './services/socketService'
 
 
 const route = useRoute()
@@ -36,6 +37,7 @@ onMounted(() => {
 // Xóa sự kiện khi component bị hủy
 onUnmounted(() => {
   window.removeEventListener('popstate', checkNotification)
+  socketService.disconnect()
 })
 
 // Hàm kiểm tra thông báo trong localStorage

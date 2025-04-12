@@ -59,9 +59,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useNotificationStore } from '../../stores/notification';
 import NotificationItem from './NotificationItem.vue';
+import socketService from '../../services/socketService';
 
 const dropdown = ref(null);
 const isOpen = ref(false);
@@ -70,6 +71,9 @@ const notificationStore = useNotificationStore();
 // Toggle dropdown visibility
 const toggleDropdown = async () => {
   isOpen.value = !isOpen.value;
+  
+  // Cập nhật trạng thái dropdown trong store
+  notificationStore.setDropdownState(isOpen.value);
   
   // Fetch notifications when opening dropdown if not already loaded
   if (isOpen.value && !notificationStore.hasNotifications) {
@@ -86,11 +90,20 @@ const loadMoreNotifications = async () => {
 const handleClickOutside = (event) => {
   if (dropdown.value && !dropdown.value.contains(event.target)) {
     isOpen.value = false;
+    notificationStore.setDropdownState(false);
   }
 };
 
+// Watch for changes to isOpen
+watch(isOpen, (newValue) => {
+  notificationStore.setDropdownState(newValue);
+});
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  
+  // Khởi tạo kết nối WebSocket
+  socketService.init();
   
   // Lấy số lượng thông báo chưa đọc khi component được mounted
   notificationStore.fetchUnreadCount();

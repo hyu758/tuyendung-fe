@@ -50,6 +50,8 @@ const iconClass = computed(() => {
       return 'fas fa-user-times text-orange-500';
     case 'message_received':
       return 'fas fa-envelope text-purple-500';
+    case 'system':
+      return 'fas fa-bullhorn text-red-500';
     default:
       return 'fas fa-bell text-blue-500';
   }
@@ -67,6 +69,8 @@ const iconBackgroundClass = computed(() => {
       return 'bg-orange-100';
     case 'message_received':
       return 'bg-purple-100';
+    case 'system':
+      return 'bg-red-100';
     default:
       return 'bg-blue-100';
   }
@@ -105,7 +109,13 @@ const handleClick = async () => {
     await notificationStore.markAsRead(props.notification.id);
   }
   
-  // Xử lý chuyển hướng dựa vào loại thông báo
+  // Nếu có link trực tiếp, ưu tiên sử dụng
+  if (props.notification.link) {
+    router.push(props.notification.link);
+    return;
+  }
+  
+  // Xử lý chuyển hướng dựa vào loại thông báo nếu không có link
   switch (props.notification.notification_type) {
     case 'new_application':
       router.push(`/employer/applications?application_id=${props.notification.object_id}`);
@@ -121,6 +131,12 @@ const handleClick = async () => {
       break;
     case 'message_received':
       router.push(`/employer/messages?conversation_id=${props.notification.object_id}`);
+      break;
+    case 'system':
+      // Thông báo hệ thống có thể không có link
+      if (props.notification.object_id) {
+        router.push(`/employer/notifications/${props.notification.object_id}`);
+      }
       break;
     default:
       // Mặc định không làm gì

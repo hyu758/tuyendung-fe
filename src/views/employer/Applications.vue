@@ -137,7 +137,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useNotificationStore } from '../../stores/notification'
+
+// Add notification store
+const notificationStore = useNotificationStore()
 
 const candidates = ref([
   {
@@ -215,6 +219,24 @@ function getStatusText(status) {
     case 'hired': return 'Đã tuyển';
     case 'rejected': return 'Từ chối';
     default: return 'Không xác định';
+  }
+}
+
+// Xem CV
+const viewCV = async (application) => {
+  // Existing code for viewing CV...
+  
+  // Gửi thông báo đã xem CV cho ứng viên
+  try {
+    const jobLink = `/job-detail/${application.job_id}`;
+    await notificationStore.createCVViewedNotification(
+      application.id, 
+      application.candidate_id,
+      jobLink
+    )
+    console.log('Đã gửi thông báo xem CV');
+  } catch (error) {
+    console.error('Lỗi khi gửi thông báo xem CV:', error);
   }
 }
 </script>

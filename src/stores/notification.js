@@ -11,7 +11,8 @@ export const useNotificationStore = defineStore('notification', {
     pageSize: 10,
     hasMore: true,
     totalPages: 0,
-    total: 0
+    total: 0,
+    isDropdownOpen: false
   }),
 
   getters: {
@@ -149,6 +150,55 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
+    // Tạo một thông báo đã xem CV
+    async createCVViewedNotification(cvId, candidateId, link = null) {
+      try {
+        this.loading = true
+        this.error = null
+
+        const response = await axios.post('/api/notifications/create/', {
+          notification_type: 'cv_viewed',
+          recipient_id: candidateId,
+          object_id: cvId,
+          title: 'CV của bạn đã được xem',
+          message: 'Nhà tuyển dụng đã xem CV của bạn',
+          link: link || `/job-detail?cv_id=${cvId}`
+        })
+
+        return { success: true, data: response.data }
+      } catch (error) {
+        console.error('Error creating CV viewed notification:', error)
+        this.error = error.response?.data?.message || 'Không thể tạo thông báo đã xem CV'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Tạo một thông báo hệ thống cho tất cả người dùng
+    async createSystemNotification(title, message, link = null, objectId = null) {
+      try {
+        this.loading = true
+        this.error = null
+
+        const response = await axios.post('/api/notifications/create-system/', {
+          notification_type: 'system',
+          title: title,
+          message: message,
+          link: link,
+          object_id: objectId
+        })
+
+        return { success: true, data: response.data }
+      } catch (error) {
+        console.error('Error creating system notification:', error)
+        this.error = error.response?.data?.message || 'Không thể tạo thông báo hệ thống'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Reset store
     resetStore() {
       this.notifications = []
@@ -159,6 +209,11 @@ export const useNotificationStore = defineStore('notification', {
       this.hasMore = true
       this.totalPages = 0
       this.total = 0
+    },
+
+    // Thiết lập trạng thái dropdown
+    setDropdownState(isOpen) {
+      this.isDropdownOpen = isOpen;
     }
   }
 }) 

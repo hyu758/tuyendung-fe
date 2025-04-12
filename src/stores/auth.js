@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import router from '../router'
+import socketService from '../services/socketService'
 
 export const useAuthStore = defineStore('auth', {
   state: () => {
@@ -130,6 +131,9 @@ export const useAuthStore = defineStore('auth', {
           
           // Thông báo đăng nhập thành công
           this.createNotification('success', 'Đăng nhập thành công!')
+          
+          // Khởi tạo kết nối WebSocket
+          socketService.init();
           
           // Chuyển hướng tùy theo role của người dùng
           router.push('/')
@@ -323,14 +327,20 @@ export const useAuthStore = defineStore('auth', {
     },
     
     logout(redirect = true) {
-      this.user = null
-      this.token = null
+      // Đóng kết nối WebSocket khi đăng xuất
+      socketService.disconnect();
       
-      // Xóa dữ liệu từ localStorage
+      // Xóa thông tin người dùng
+      this.token = null
+      this.user = null
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('username')
       
+      // Tạo thông báo đăng xuất thành công
+      this.createNotification('success', 'Đăng xuất thành công!')
+      
+      // Chuyển hướng về trang đăng nhập
       if (redirect) {
         router.push('/login')
       }

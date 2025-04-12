@@ -5,6 +5,8 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import axios from 'axios'
+import socketService from './services/socketService'
+import { useAuthStore } from './stores/auth'
 
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -146,4 +148,14 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.component('font-awesome-icon', FontAwesomeIcon)
-app.mount('#app')
+
+// Khởi tạo WebSocket
+router.isReady().then(() => {
+    // Khởi tạo WebSocket chỉ khi đã đăng nhập
+    if (localStorage.getItem('token')) {
+        socketService.init();
+    }
+    
+    // Mount app
+    app.mount('#app')
+})
