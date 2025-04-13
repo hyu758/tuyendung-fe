@@ -90,6 +90,9 @@
             </div>
           </div>
 
+          <!-- Chat Messages -->
+          <chat-dropdown />
+
           <!-- User Menu -->
           <div class="relative" ref="profileDropdown">
             <button 
@@ -137,6 +140,23 @@
               </a>
             </div>
           </div>
+
+          <div class="hidden md:flex items-center space-x-3">
+            <!-- Tin nhắn -->
+            <router-link 
+              to="/employer/messages" 
+              class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
+              title="Tin nhắn"
+            >
+              <i class="fas fa-comment-dots text-xl"></i>
+            </router-link>
+            
+            <!-- Notifications -->
+            <notification-dropdown />
+
+            <!-- Chat Messages -->
+            <chat-dropdown />
+          </div>
         </div>
       </div>
     </div>
@@ -166,6 +186,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useNotificationStore } from '../../stores/notification'
+import ChatDropdown from '../common/ChatDropdown.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

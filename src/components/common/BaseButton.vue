@@ -1,6 +1,8 @@
 <template>
+  <!-- Regular button -->
   <button
-    :type="type"
+    v-if="type !== 'chat'"
+    :type="type === 'button' ? 'button' : type"
     :class="[
       'rounded-md font-medium focus:outline-none transition-colors',
       sizeClasses,
@@ -39,6 +41,29 @@
       <slot>{{ label }}</slot>
     </div>
   </button>
+
+  <!-- Chat Icon Button -->
+  <button 
+    v-else-if="type === 'chat'" 
+    type="button"
+    :class="`
+      ${sizeClasses} 
+      rounded-full flex items-center justify-center
+      ${variant === 'primary' 
+        ? 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500' 
+        : variant === 'secondary' 
+          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300' 
+          : variant === 'success' 
+            ? 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500'
+            : 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500'}
+      ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+      ${customClass}
+    `"
+    :disabled="disabled"
+    @click="$emit('click')"
+  >
+    <i class="fas fa-comment-dots"></i>
+  </button>
 </template>
 
 <script setup>
@@ -74,6 +99,10 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  customClass: {
+    type: String,
+    default: ''
   }
 })
 

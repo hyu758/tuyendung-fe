@@ -232,6 +232,18 @@ export const useNotificationStore = defineStore('notification', {
 
     setDropdownState(isOpen) {
       this.isDropdownOpen = isOpen;
+    },
+
+    showNewMessageNotification(messageData) {
+      // Tạo thông báo tin nhắn mới
+      this.createNotification({
+        title: 'Tin nhắn mới',
+        message: messageData.content.length > 30 
+          ? messageData.content.substring(0, 30) + '...' 
+          : messageData.content,
+        type: 'info',
+        link: `/messages?user=${messageData.sender_id}`
+      });
     }
   }
 }) 

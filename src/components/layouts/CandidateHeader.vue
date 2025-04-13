@@ -42,8 +42,22 @@
           
           <!-- Menu cho người dùng đã đăng nhập -->
           <template v-else>
-            <!-- Notifications -->
-            <NotificationDropdown />
+            <div class="hidden md:flex items-center space-x-3">
+              <!-- Tin nhắn -->
+              <router-link 
+                to="/candidate/messages" 
+                class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
+                title="Tin nhắn"
+              >
+                <i class="fas fa-comment-dots text-xl"></i>
+              </router-link>
+              
+              <!-- Notifications -->
+              <NotificationDropdown />
+
+              <!-- Chat Messages -->
+              <chat-dropdown />
+            </div>
             
             <!-- User profile dropdown -->
             <div class="relative" ref="profileDropdown">
@@ -123,6 +137,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useNotificationStore } from '../../stores/notification'
 import NotificationDropdown from '../common/NotificationDropdown.vue'
+import ChatDropdown from '../common/ChatDropdown.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

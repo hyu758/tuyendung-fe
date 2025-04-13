@@ -140,6 +140,15 @@ const routes = [
         name : 'NotificationView',
         component : () => import('../views/employer/NotificationView.vue'),
         meta : {requiresAuth : true, role : 'employer'}
+      },
+      {
+        path: '/employer/messages',
+        name: 'employer-messages',
+        component: () => import('../views/employer/MessageCenter.vue'),
+        meta: {
+          requiresAuth: true,
+          role: 'employer'
+        }
       }
     ]
   },
@@ -153,6 +162,15 @@ const routes = [
     path: '/my-applications',
     component: () => import('../views/candidate/MyApplications.vue'),
     meta: { requiresAuth: true, role: 'candidate' }
+  },
+  {
+    path: '/candidate/messages',
+    name: 'candidate-messages',
+    component: () => import('../views/candidate/MessageCenter.vue'),
+    meta: {
+      requiresAuth: true,
+      role: 'candidate'
+    }
   },
   {
     path: '/:pathMatch(.*)*',

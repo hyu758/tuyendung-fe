@@ -149,12 +149,24 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <router-link :to="`/job/${application.jobId}`" class="text-blue-600 hover:text-blue-900 mr-4">
-                    Xem công việc
-                  </router-link>
-                  <button @click="viewDetails(application)" class="text-indigo-600 hover:text-indigo-900">
-                    Chi tiết
-                  </button>
+                  <div class="flex space-x-2">
+                    <base-button
+                      type="chat"
+                      variant="secondary"
+                      size="sm"
+                      @click="chatWithEmployer(application.job.user_id)"
+                      class="p-2"
+                      title="Chat với nhà tuyển dụng"
+                    />
+                    <base-button
+                      type="link"
+                      variant="primary"
+                      size="sm"
+                      :to="{ name: 'job-detail', params: { id: application.job.id } }"
+                      class="p-2"
+                      title="Xem chi tiết công việc"
+                    />
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -485,6 +497,14 @@ const viewDetails = (application) => {
 // Đóng modal
 const closeModal = () => {
   selectedApplication.value = null;
+};
+
+// Chat với nhà tuyển dụng
+const chatWithEmployer = (employerId) => {
+  router.push({ 
+    name: 'candidate-messages',
+    query: { user: employerId }
+  });
 };
 
 onMounted(() => {

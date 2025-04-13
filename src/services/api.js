@@ -76,4 +76,58 @@ export const adminService = {
   getStatistics() {
     return axios.get('/admin/statistics')
   }
+}
+
+export const chatService = {
+  getConversations() {
+    return axios.get('/api/conversations/')
+  },
+  getMessages(userId, options = {}) {
+    console.log('Gọi API lấy tin nhắn với userId:', userId, 'options:', options);
+    const { page = 1, limit = 20 } = options;
+    
+    return axios.get(`/api/messages/`, { 
+      params: { 
+        user_id: userId,
+        page,
+        page_size: limit
+      } 
+    });
+  },
+  sendMessage(recipientId, content) {
+    console.log('Gửi tin nhắn đến recipientId:', recipientId);
+    
+    // Lấy token từ localStorage
+    const token = localStorage.getItem('token');
+    let userId = null;
+    
+    // Nếu có token, giải mã để lấy user_id
+    if (token) {
+      try {
+        // Giải mã phần payload của JWT token
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const decodedToken = JSON.parse(window.atob(base64));
+        
+        // Lấy user_id từ token đã giải mã
+        userId = decodedToken.user_id;
+        console.log('Đã lấy được user_id từ token:', userId);
+      } catch (error) {
+        console.error('Lỗi khi giải mã token:', error);
+      }
+    }
+    
+    // Thêm sender vào dữ liệu gửi đi
+    return axios.post('/api/messages/send/', { 
+      recipient: recipientId, 
+      content,
+      sender: userId 
+    });
+  },
+  getUnreadMessages() {
+    return axios.get('/api/messages/unread/')
+  },
+  markMessageAsRead(messageId) {
+    return axios.post(`/api/messages/${messageId}/read/`)
+  }
 } 

@@ -137,16 +137,27 @@
 
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-4">
-                <button 
-                  @click="handleApplyClick" 
-                  class="bg-emerald-500 text-white px-8 py-2.5 rounded-lg hover:bg-emerald-600 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg flex items-center"
+                <base-button
+                  text="Ứng tuyển ngay"
+                  variant="primary"
+                  size="md"
+                  class="w-full mt-4"
+                  :disabled="isApplied"
+                  @click="applyForJob"
+                />
+
+                <!-- Nút chat với nhà tuyển dụng - hiển thị rõ ràng hơn -->
+                <base-button
+                  v-if="isCandidate"
+                  type="button"
+                  variant="secondary" 
+                  size="md"
+                  class="w-full mt-2 flex items-center justify-center"
+                  @click="chatWithEmployer"
                 >
-                  <font-awesome-icon icon="paper-plane" class="mr-2" />
-                  Ứng tuyển ngay
-                </button>
-                <button class="border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-md">
+                  <i class="fas fa-comment-dots mr-2"></i>
                   Nhắn tin
-                </button>
+                </base-button>
               </div>
               <div v-if="job.appliedDate" class="text-gray-500 text-sm">
                 <span>Bạn đã gửi CV cho vị trí này vào ngày: {{ job.appliedDate }}</span>
@@ -526,12 +537,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePostStore } from '@/stores/post'
 import { useAuthStore } from '@/stores/auth'
 import axios from 'axios'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import BaseButton from '../components/common/BaseButton.vue'
+import BaseAlert from '../components/common/BaseAlert.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -792,6 +805,35 @@ const showToast = (message, type = 'success') => {
     showNotification.value = false
   }, 5000)
 }
+
+// Hàm kiểm tra trạng thái đăng nhập và vai trò
+const isCandidate = computed(() => {
+  console.log('Auth state:', {
+    isAuthenticated: authStore.isAuthenticated,
+    userRole: authStore.userRole
+  });
+  return authStore.isAuthenticated && authStore.userRole === 'candidate';
+});
+
+// Mở chat với nhà tuyển dụng
+const chatWithEmployer = () => {
+  console.log('chatWithEmployer called, job data:', job.value);
+  console.log('user_id:', job.value?.user_id);
+  console.log('Auth state when clicking:', isCandidate.value);
+  
+  if (!job.value?.user_id) {
+    console.error('Error: user_id is missing in job data');
+    // Hiển thị thông báo cho người dùng
+    showToast('Không thể chat với nhà tuyển dụng. Vui lòng thử lại sau.', 'error');
+    return;
+  }
+  
+  // Chuyển hướng đến trang chat với userId của nhà tuyển dụng
+  router.push({ 
+    name: 'candidate-messages',
+    query: { user: job.value.user_id }
+  });
+};
 
 onMounted(() => {
   fetchJobDetail()
