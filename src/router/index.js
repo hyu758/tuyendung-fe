@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import EmployerLayout from '../layouts/EmployerLayout.vue'
-import CandidateLayout from '../layouts/CandidateLayout.vue'
 import { useEnterpriseStore } from '../stores/enterprise'
 import GoogleCallback from '../views/auth/GoogleCallback.vue'
 
@@ -73,25 +72,6 @@ const routes = [
     name: 'JobDetail',
     component: () => import('../views/JobDetail.vue')
   },
-  // Ứng viên routes
-  {
-    path: '/candidate',
-    component: CandidateLayout,
-    meta: { requiresAuth: true, role: 'candidate' },
-    children: [
-      {
-        path: '',
-        name: 'CandidateDashboard',
-        component: () => import('../views/candidate/Dashboard.vue')
-      },
-      {
-        path: 'applications',
-        name: 'MyApplications',
-        component: () => import('../views/candidate/MyApplications.vue')
-      }
-    ]
-  },
-  // Employer routes with layout
   {
     path: '/employer',
     component: EmployerLayout,
@@ -155,6 +135,12 @@ const routes = [
         component: () => import('../views/cv/CVDetail.vue'),
         meta: { requiresAuth: true, role: 'employer' }
       },
+      {
+        path :'notifications',
+        name : 'NotificationView',
+        component : () => import('../views/employer/NotificationView.vue'),
+        meta : {requiresAuth : true, role : 'employer'}
+      }
     ]
   },
   {
@@ -163,10 +149,10 @@ const routes = [
     component: GoogleCallback,
     meta: { requiresAuth: false }
   },
-  // Redirect từ /my-applications đến /candidate/applications
   {
     path: '/my-applications',
-    redirect: '/candidate/applications'
+    component: () => import('../views/candidate/MyApplications.vue'),
+    meta: { requiresAuth: true, role: 'candidate' }
   },
   {
     path: '/:pathMatch(.*)*',

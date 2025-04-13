@@ -12,56 +12,84 @@ export const useNotificationStore = defineStore('notification', {
     hasMore: true,
     totalPages: 0,
     total: 0,
-    isDropdownOpen: false
+    isDropdownOpen: false,
+    currentFilter: 'all'
   }),
 
   getters: {
     hasNotifications: (state) => state.notifications.length > 0,
-    hasUnread: (state) => state.unreadCount > 0
+    hasUnread: (state) => state.unreadCount > 0,
+    filteredNotifications: (state) => {
+      if (state.currentFilter === 'all') {
+        return state.notifications;
+      } else if (state.currentFilter === 'unread') {
+        return state.notifications.filter(notification => !notification.is_read);
+      } else if (state.currentFilter === 'applications') {
+        return state.notifications.filter(notification => 
+          ['new_application', 'cv_viewed', 'application_withdrawn'].includes(notification.notification_type)
+        );
+      } else if (state.currentFilter === 'system') {
+        return state.notifications.filter(notification => 
+          notification.notification_type === 'system'
+        );
+      }
+      return state.notifications;
+    }
   },
 
   actions: {
-    // Lấy danh sách thông báo
+    setFilter(filter) {
+      this.currentFilter = filter;
+      this.page = 1;
+      this.hasMore = true;
+    },
+
     async fetchNotifications(reset = false) {
       try {
         this.loading = true
         this.error = null
         
-        // Reset danh sách nếu cần
         if (reset) {
           this.notifications = []
           this.page = 1
           this.hasMore = true
         }
 
-        // Chỉ thực hiện khi còn dữ liệu để tải
         if (!this.hasMore) return { success: true, data: this.notifications }
 
-        const response = await axios.get('/api/notifications', {
-          params: {
-            page: this.page,
-            page_size: this.pageSize
+        let params = {
+          page: this.page,
+          page_size: this.pageSize
+        };
+        
+        if (this.currentFilter !== 'all') {
+          if (this.currentFilter === 'unread') {
+            params.read = false;
+          } else if (this.currentFilter === 'applications') {
+            params.type = 'application';
+          } else if (this.currentFilter === 'system') {
+            params.type = 'system';
           }
+        }
+
+        const response = await axios.get('/api/notifications', {
+          params: params
         })
 
         const { results, total, page, total_pages, page_size } = response.data.data
 
-        // Cập nhật danh sách thông báo
         if (reset) {
           this.notifications = results
         } else {
           this.notifications = [...this.notifications, ...results]
         }
 
-        // Cập nhật metadata
         this.total = total
         this.totalPages = total_pages
         this.pageSize = page_size
 
-        // Kiểm tra xem còn dữ liệu để tải không
         this.hasMore = page < total_pages
         
-        // Tăng số trang nếu còn dữ liệu
         if (this.hasMore) {
           this.page += 1
         }
@@ -76,7 +104,6 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
-    // Lấy số lượng thông báo chưa đọc
     async fetchUnreadCount() {
       try {
         this.loading = true
@@ -95,7 +122,6 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
-    // Đánh dấu thông báo đã đọc
     async markAsRead(notificationId) {
       try {
         this.loading = true
@@ -103,12 +129,10 @@ export const useNotificationStore = defineStore('notification', {
 
         const response = await axios.post(`/api/notifications/${notificationId}/read/`)
         
-        // Cập nhật trạng thái của thông báo trong danh sách
         const index = this.notifications.findIndex(n => n.id === notificationId)
         if (index !== -1) {
           this.notifications[index].is_read = true
           
-          // Giảm số lượng thông báo chưa đọc nếu thông báo trước đó chưa đọc
           if (this.unreadCount > 0) {
             this.unreadCount -= 1
           }
@@ -124,20 +148,17 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
-    // Đánh dấu tất cả thông báo đã đọc
     async markAllAsRead() {
       try {
         this.loading = true
         this.error = null
 
-        const response = await axios.post('/api/notifications/mark-all-read/')
+        const response = await axios.post('/api/notifications/mark-all-as-read/')
         
-        // Cập nhật trạng thái của tất cả thông báo trong danh sách
         this.notifications.forEach(notification => {
           notification.is_read = true
         })
         
-        // Đặt số lượng thông báo chưa đọc về 0
         this.unreadCount = 0
 
         return { success: true, message: response.data.message }
@@ -150,7 +171,6 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
-    // Tạo một thông báo đã xem CV
     async createCVViewedNotification(cvId, candidateId, link = null) {
       try {
         this.loading = true
@@ -175,7 +195,6 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
-    // Tạo một thông báo hệ thống cho tất cả người dùng
     async createSystemNotification(title, message, link = null, objectId = null) {
       try {
         this.loading = true
@@ -199,7 +218,6 @@ export const useNotificationStore = defineStore('notification', {
       }
     },
 
-    // Reset store
     resetStore() {
       this.notifications = []
       this.unreadCount = 0
@@ -209,9 +227,9 @@ export const useNotificationStore = defineStore('notification', {
       this.hasMore = true
       this.totalPages = 0
       this.total = 0
+      this.currentFilter = 'all'
     },
 
-    // Thiết lập trạng thái dropdown
     setDropdownState(isOpen) {
       this.isDropdownOpen = isOpen;
     }
