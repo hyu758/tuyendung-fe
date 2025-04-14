@@ -70,10 +70,20 @@
         
         <!-- Khu vực tin nhắn -->
         <div 
-          class="flex-1 p-4 overflow-y-auto flex flex-col" 
+          class="flex-1 p-4 overflow-y-auto flex flex-col relative" 
           ref="messagesContainer"
           @scroll="handleScroll"
         >
+          <!-- Nút cuộn xuống -->
+          <button 
+            v-if="!isAtBottom && chatStore.messages.length > 5"
+            @click="scrollToBottom" 
+            class="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg z-10"
+            title="Cuộn xuống tin nhắn mới nhất"
+          >
+            <i class="fas fa-arrow-down"></i>
+          </button>
+          
           <div v-if="loadingOlderMessages" class="py-2 text-center mb-2">
             <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
             <p class="text-xs text-gray-500">Đang tải thêm tin nhắn cũ hơn...</p>
@@ -144,6 +154,7 @@ const searchQuery = ref('');
 const activeConversationId = ref(null);
 const messagesContainer = ref(null);
 const loadingOlderMessages = ref(false);
+const isAtBottom = ref(true);
 
 // Inject userId từ component cha nếu có
 const injectedUserId = inject('chatUserId', null);
@@ -255,7 +266,13 @@ const selectConversation = async (userId) => {
   // Đánh dấu các tin nhắn chưa đọc trong cuộc trò chuyện này là đã đọc
   markMessagesAsRead();
   
-  // Cuộn xuống tin nhắn cuối cùng
+  // Đảm bảo luôn cuộn xuống tin nhắn cuối cùng sau khi tải xong và DOM cập nhật
+  setTimeout(() => {
+    scrollToBottom();
+    console.log('Đã cuộn xuống tin nhắn mới nhất sau khi chọn cuộc trò chuyện');
+  }, 100);
+  
+  // Đợi DOM cập nhật và cuộn xuống một lần nữa để đảm bảo
   await nextTick();
   scrollToBottom();
 };
@@ -338,15 +355,27 @@ const sendMessage = async (content) => {
 // Cuộn xuống tin nhắn cuối cùng
 const scrollToBottom = () => {
   if (messagesContainer.value) {
+    console.log('Thực hiện cuộn xuống cuối cùng');
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    
+    // Thử cuộn xuống lần nữa sau một khoảng thời gian ngắn
+    setTimeout(() => {
+      if (messagesContainer.value) {
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        console.log('Đã cuộn xuống lần thứ hai để đảm bảo hiển thị tin nhắn mới nhất');
+      }
+    }, 100);
   }
 };
 
 // Xử lý sự kiện cuộn để tải thêm tin nhắn cũ
 const handleScroll = async () => {
-  if (!messagesContainer.value || !activeConversationId.value || !chatStore.hasMoreMessages) return;
+  if (!messagesContainer.value || !activeConversationId.value) return;
   
   const { scrollTop, clientHeight, scrollHeight } = messagesContainer.value;
+  
+  // Kiểm tra xem người dùng có đang ở cuối không
+  isAtBottom.value = scrollHeight - scrollTop - clientHeight < 100;
   
   // Khi người dùng cuộn lên gần đầu (20px từ đỉnh), tải thêm tin nhắn cũ hơn
   if (scrollTop <= 20 && !loadingOlderMessages.value && chatStore.hasMoreMessages) {
@@ -399,7 +428,8 @@ watch(() => JSON.stringify(chatStore.sortedMessages), () => {
   // Cuộn xuống khi người dùng đang ở gần cuối hoặc có tin nhắn mới 
   if (messagesContainer.value) {
     const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
+    // Tăng khoảng cách từ cuối lên 300px để dễ dàng cuộn xuống
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 300;
     
     // Nếu người dùng đang gần cuối hoặc nếu tin nhắn mới là từ người dùng hiện tại, cuộn xuống
     const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
@@ -407,9 +437,31 @@ watch(() => JSON.stringify(chatStore.sortedMessages), () => {
     
     if (isNearBottom || isFromCurrentUser) {
       console.log('Nội dung thay đổi và người dùng gần cuối hoặc gửi tin nhắn mới, đang cuộn xuống');
+      // Cuộn xuống ngay lập tức và thêm một lần nữa sau khi DOM cập nhật
+      scrollToBottom();
       nextTick(() => {
         scrollToBottom();
       });
+    }
+  }
+});
+
+// Cập nhật watcher cho tin nhắn - đảm bảo theo dõi tin nhắn cuối cùng
+watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
+  if (newLength > oldLength) {
+    console.log(`Số lượng tin nhắn đã tăng từ ${oldLength} lên ${newLength}`);
+    
+    // Nếu có tin nhắn mới và người dùng đang ở gần cuối hoặc tin nhắn là từ người dùng hiện tại, cuộn xuống
+    const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
+    if (latestMessage && messagesContainer.value) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 300;
+      const isFromCurrentUser = latestMessage.sender === currentUserId.value;
+      
+      if (isNearBottom || isFromCurrentUser) {
+        console.log('Có tin nhắn mới và người dùng gần cuối hoặc tin nhắn từ user hiện tại, cuộn xuống');
+        scrollToBottom();
+      }
     }
   }
 });

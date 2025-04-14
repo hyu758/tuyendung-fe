@@ -90,10 +90,10 @@
             </div>
           </div>
 
-          <!-- Tin nhắn -->
+          <!-- Nút Chat -->
           <router-link 
             to="/employer/messages" 
-            class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full relative"
+            class="text-gray-500 hover:text-gray-600 relative"
             title="Tin nhắn"
           >
             <i class="fas fa-comment-dots text-xl"></i>

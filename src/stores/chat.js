@@ -66,19 +66,19 @@ export const useChatStore = defineStore('chat', {
       this.activeConversation = userId
       
       try {
-        // Số trang cần tải ban đầu
+        // Số trang cần tải ban đầu khi refresh
         const initialPages = refresh ? 3 : 1
         let allNewMessages = []
         let totalPages = 0
         
-        // Tải nhiều trang nếu là refresh
+        // Tải nhiều trang nếu là refresh - luôn lấy tin nhắn mới nhất
         for (let i = 0; i < initialPages; i++) {
           const currentPage = refresh ? i + 1 : this.page
           
           console.log(`Tải tin nhắn trang ${currentPage} cho cuộc trò chuyện ${userId}`)
           const response = await chatService.getMessages(userId, {
             page: currentPage,
-            limit: 10 // Số lượng tin nhắn mỗi lần tải
+            limit: 20 // Tăng số lượng tin nhắn mỗi lần tải để đảm bảo đủ 30 tin nhắn mới nhất
           })
           
           console.log(`Phản hồi từ API messages page ${currentPage}:`, response.data)
@@ -191,38 +191,33 @@ export const useChatStore = defineStore('chat', {
     },
     
     async markMessageAsRead(messageId) {
-      console.log(`🔖 Đánh dấu tin nhắn #${messageId} là đã đọc`);
-      
       try {
+        console.log('Đánh dấu tin nhắn đã đọc:', messageId);
+        
         // Chuyển đổi messageId sang số nếu cần
-        const numericMessageId = typeof messageId === 'string' ? parseInt(messageId, 10) : messageId;
+        const numericMessageId = parseInt(messageId, 10);
+        
+        // Gọi API để đánh dấu tin nhắn là đã đọc trên server
+        await chatService.markMessageAsRead(numericMessageId);
+        console.log('Đã đánh dấu tin nhắn đã đọc trên server:', numericMessageId);
         
         // Tìm tin nhắn trong danh sách
-        const messageIndex = this.messages.findIndex(msg => Number(msg.id) === numericMessageId);
+        const messageIndex = this.messages.findIndex(message => message.id === numericMessageId);
+        console.log('Vị trí tin nhắn trong danh sách:', messageIndex);
         
         if (messageIndex !== -1) {
-          console.log(`Tìm thấy tin nhắn cần đánh dấu ở vị trí ${messageIndex}`);
-          
-          // Cập nhật tin nhắn thành đã đọc trong store
+          // Cập nhật tin nhắn là đã đọc trong store
           this.messages[messageIndex].is_read = true;
+          console.log('Đã cập nhật trạng thái tin nhắn trong store');
           
-          // Cập nhật lên server
-          const response = await chatService.markMessageAsRead(numericMessageId);
-          console.log('Kết quả đánh dấu đã đọc:', response);
-          
-          // Giảm số lượng tin nhắn chưa đọc nếu cần
+          // Giảm số lượng tin nhắn chưa đọc nếu tin nhắn chưa được đánh dấu là đã đọc trước đó
           if (this.unreadCount > 0) {
             this.unreadCount -= 1;
+            console.log('Đã giảm số lượng tin nhắn chưa đọc:', this.unreadCount);
           }
-          
-          return true;
-        } else {
-          console.log(`⚠️ Không tìm thấy tin nhắn với ID ${messageId} để đánh dấu đã đọc`);
-          return false;
         }
       } catch (error) {
-        console.error('❌ Lỗi khi đánh dấu tin nhắn đã đọc:', error);
-        return false;
+        console.error('Lỗi khi đánh dấu tin nhắn đã đọc:', error);
       }
     },
     

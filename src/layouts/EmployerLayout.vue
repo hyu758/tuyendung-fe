@@ -56,8 +56,29 @@
             class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
             :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/notifications') }"
           >
-            <font-awesome-icon icon="bell" class="w-5 h-5 mr-3" />
+            <i class="fas fa-bell w-5 h-5 mr-3"></i>
             <span>Thông báo</span>
+          </router-link>
+
+          <!-- Tin nhắn trong sidebar -->
+          <router-link 
+            to="/employer/messages"
+            class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition duration-200 relative"
+            :class="{ 
+              'bg-blue-50 text-blue-600 font-medium': isCurrentRoute('/employer/messages'), 
+              'bg-red-50': unreadMessageCount > 0 && !isCurrentRoute('/employer/messages') 
+            }"
+          >
+            <i class="fas fa-comment-dots w-5 h-5 mr-3" 
+              :class="{ 'text-red-500': unreadMessageCount > 0 && !isCurrentRoute('/employer/messages') }"
+            ></i>
+            <span>Tin nhắn</span>
+            <span 
+              v-if="unreadMessageCount > 0" 
+              class="ml-auto bg-red-500 text-white text-xs font-medium rounded-full px-2 py-1 min-w-[24px] text-center shadow-sm"
+            >
+              {{ unreadMessageCount > 99 ? '99+' : unreadMessageCount }}
+            </span>
           </router-link>
 
           <router-link 
@@ -79,6 +100,27 @@
         <div class="flex justify-end items-center h-full px-6">
           <!-- Notifications -->
           <NotificationDropdown />
+
+          <!-- Tin nhắn -->
+          <div class="ml-4 relative">
+            <router-link 
+              to="/employer/messages" 
+              class="flex items-center text-gray-600 hover:text-blue-600 transition duration-150 relative group"
+              :title="unreadMessageCount > 0 ? `Bạn có ${unreadMessageCount} tin nhắn chưa đọc` : 'Tin nhắn'"
+            >
+              <div class="w-10 h-10 rounded-full bg-gray-100 hover:bg-blue-50 flex items-center justify-center border border-gray-200 group-hover:border-blue-200 transition duration-200 shadow-sm relative">
+                <i class="fas fa-comment-dots text-xl text-gray-600 group-hover:text-blue-600 transition-colors duration-150"></i>
+                <transition name="pulse">
+                  <span 
+                    v-if="unreadMessageCount > 0" 
+                    class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border border-white animate-pulse"
+                  >
+                    {{ unreadMessageCount > 9 ? '9+' : unreadMessageCount }}
+                  </span>
+                </transition>
+              </div>
+            </router-link>
+          </div>
 
           <!-- User Menu -->
           <div class="relative ml-4" ref="profileDropdown">
@@ -122,36 +164,115 @@
   </div>
 </template>
 
+<style scoped>
+.notification-badge {
+  transition: all 0.3s ease;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+.pulse-enter-active, .pulse-leave-active {
+  transition: all 0.5s;
+}
+
+.pulse-enter-from, .pulse-leave-to {
+  opacity: 0;
+  transform: scale(0.5);
+}
+</style>
+
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useNotificationStore } from '../stores/notification'
+import { useChatStore } from '../stores/chat'
 import NotificationDropdown from '../components/employer/NotificationDropdown.vue'
+import ChatNotificationButton from '../components/chat/ChatNotificationButton.vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
+const chatStore = useChatStore()
 
 const showDropdown = ref(false)
 const profileDropdown = ref(null)
 
 const userFullName = computed(() => authStore.userFullName || 'Người dùng')
+const unreadMessageCount = computed(() => chatStore.unreadCount || 0)
+
+// Cập nhật đồng bộ số tin nhắn chưa đọc mỗi 30 giây
+let messageCheckInterval = null
 
 const isCurrentRoute = (path) => {
   return route.path.startsWith(path)
 }
 
-onMounted(() => {
+// Thiết lập cập nhật tin nhắn định kỳ
+const setupMessageCheck = () => {
+  messageCheckInterval = setInterval(async () => {
+    if (authStore.isAuthenticated) {
+      try {
+        await chatStore.fetchUnreadMessages()
+        console.log('Cập nhật số lượng tin nhắn chưa đọc:', chatStore.unreadCount)
+      } catch (error) {
+        console.error('Lỗi khi cập nhật số lượng tin nhắn chưa đọc:', error)
+      }
+    }
+  }, 30000) // Cập nhật mỗi 30 giây
+}
+
+onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
   if (!authStore.user) {
     authStore.updateUserFromToken()
+  }
+  
+  // Tải số lượng tin nhắn chưa đọc khi component được mounted
+  if (authStore.isAuthenticated) {
+    try {
+      await chatStore.fetchUnreadMessages()
+      console.log('Số lượng tin nhắn chưa đọc:', chatStore.unreadCount)
+      
+      // Thiết lập cập nhật tin nhắn định kỳ
+      setupMessageCheck()
+    } catch (error) {
+      console.error('Lỗi khi tải số lượng tin nhắn chưa đọc:', error)
+    }
   }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  
+  // Xóa interval khi component bị hủy
+  if (messageCheckInterval) {
+    clearInterval(messageCheckInterval)
+  }
+})
+
+// Theo dõi thay đổi trạng thái đăng nhập
+watch(() => authStore.isAuthenticated, (isAuthenticated) => {
+  if (isAuthenticated) {
+    chatStore.fetchUnreadMessages()
+    setupMessageCheck()
+  } else if (messageCheckInterval) {
+    clearInterval(messageCheckInterval)
+  }
 })
 
 const toggleDropdown = () => {

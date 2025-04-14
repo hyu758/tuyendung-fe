@@ -84,13 +84,14 @@ export const chatService = {
   },
   getMessages(userId, options = {}) {
     console.log('Gọi API lấy tin nhắn với userId:', userId, 'options:', options);
-    const { page = 1, limit = 20 } = options;
+    const { page = 1, limit = 30 } = options;
     
     return axios.get(`/api/messages/`, { 
       params: { 
         user_id: userId,
         page,
-        page_size: limit
+        page_size: limit,
+        ordering: '-created_at'
       } 
     });
   },
