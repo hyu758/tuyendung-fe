@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { onMounted, provide } from 'vue';
+import { onMounted, provide, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ChatContainer from '../chat/ChatContainer.vue';
 import { useChatStore } from '../../stores/chat';
@@ -36,6 +36,19 @@ onMounted(() => {
   
   // Reset store để tránh xung đột dữ liệu từ các màn hình khác
   chatStore.resetStore();
+  
+  // Tải số lượng tin nhắn chưa đọc ngay khi component mount
+  chatStore.fetchUnreadMessages();
+  
+  // Thiết lập cập nhật định kỳ
+  const intervalId = setInterval(async () => {
+    await chatStore.fetchUnreadMessages();
+  }, 30000); // Cập nhật mỗi 30 giây
+  
+  // Xóa interval khi component unmounted
+  onUnmounted(() => {
+    clearInterval(intervalId);
+  });
   
   // Log thông tin user_id từ URL nếu có
   if (route.query.user) {

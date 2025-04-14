@@ -19,12 +19,24 @@
       >
         <i class="fas fa-paper-plane"></i>
       </button>
+      
+      <!-- Nút debug WebSocket - chỉ hiển thị trong môi trường dev -->
+      <button 
+        v-if="isDevMode"
+        type="button" 
+        @click="checkSocketConnection"
+        class="text-xs text-gray-500 hover:text-gray-700 ml-1"
+        title="Kiểm tra kết nối WebSocket"
+      >
+        <i class="fas fa-plug" :class="{ 'text-green-500': socketConnected, 'text-red-500': !socketConnected }"></i>
+      </button>
     </form>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import socketService from '../../services/socketService';
 
 const props = defineProps({
   loading: {
@@ -38,6 +50,8 @@ const emit = defineEmits(['send-message']);
 const messageContent = ref('');
 const textarea = ref(null);
 const lineCount = ref(1);
+const socketConnected = ref(false);
+const isDevMode = ref(import.meta.env.DEV || true); // Hiển thị trong môi trường dev hoặc luôn hiển thị để debug
 
 const canSend = computed(() => {
   return messageContent.value.trim().length > 0 && !props.loading;
@@ -67,6 +81,43 @@ const updateLineCount = () => {
   // Đếm số dòng trong textarea
   const lines = messageContent.value.split('\n');
   lineCount.value = Math.min(lines.length, 5); // Giới hạn tối đa 5 dòng
+};
+
+// Kiểm tra kết nối WebSocket
+const checkSocketConnection = () => {
+  const status = socketService.connected;
+  socketConnected.value = status;
+  
+  console.log(`Trạng thái kết nối WebSocket: ${status ? 'Đã kết nối' : 'Đã ngắt kết nối'}`);
+  
+  if (!status) {
+    // Thử kết nối lại
+    console.log('Đang thử kết nối lại WebSocket...');
+    socketService.init();
+    
+    // Gửi tin nhắn kiểm tra
+    setTimeout(() => {
+      if (socketService.connected) {
+        console.log('Kết nối WebSocket thành công, đang gửi tin nhắn ping...');
+        socketService.sendMessage({
+          type: 'ping',
+          data: {
+            timestamp: new Date().toISOString()
+          }
+        });
+      } else {
+        console.log('Không thể kết nối WebSocket');
+      }
+    }, 1000);
+  } else {
+    // Gửi tin nhắn kiểm tra
+    socketService.sendMessage({
+      type: 'ping',
+      data: {
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
 };
 
 // Tự động resize textarea khi nội dung thay đổi

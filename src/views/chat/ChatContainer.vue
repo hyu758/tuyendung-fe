@@ -74,14 +74,15 @@
           ref="messagesContainer"
           @scroll="handleScroll"
         >
-          <div v-if="loadingOlderMessages" class="py-2 text-center">
+          <div v-if="loadingOlderMessages" class="py-2 text-center mb-2">
             <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
-            <p class="text-xs text-gray-500">Đang tải tin nhắn cũ...</p>
+            <p class="text-xs text-gray-500">Đang tải thêm tin nhắn cũ hơn...</p>
           </div>
           
           <div v-if="chatStore.loading && !chatStore.messages.length" class="my-auto text-center">
             <i class="fas fa-circle-notch fa-spin text-blue-500 text-xl"></i>
             <p class="mt-2 text-gray-500">Đang tải tin nhắn...</p>
+            <p class="text-xs text-gray-400 mt-1">Đang tải nhiều trang để hiển thị đầy đủ cuộc trò chuyện</p>
           </div>
           
           <div v-else-if="!chatStore.messages.length" class="my-auto text-center">
@@ -99,6 +100,11 @@
                 :is-read="message.is_read"
                 :created-at="message.created_at"
               />
+            </div>
+            
+            <div v-if="chatStore.loading && chatStore.messages.length" class="py-2 text-center">
+              <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
+              <p class="text-xs text-gray-500">Đang tải tin nhắn...</p>
             </div>
           </template>
         </div>
@@ -296,6 +302,31 @@ const sendMessage = async (content) => {
       currentConversation.lastMessageTime = new Date().toISOString();
     }
     
+    // Mô phỏng cập nhật ngay cả khi WebSocket không hoạt động
+    // Chờ 500ms để kiểm tra xem tin nhắn mới đã được thêm vào danh sách chưa
+    setTimeout(() => {
+      // Kiểm tra xem tin nhắn mới nhất có nội dung trùng với tin nhắn vừa gửi hay không
+      const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
+      
+      if (latestMessage && latestMessage.content === content) {
+        console.log('✅ Tin nhắn đã được thêm vào danh sách, không cần mô phỏng');
+      } else {
+        // Nếu chưa có trong danh sách, có thể do WebSocket không hoạt động, tạo tin nhắn mô phỏng
+        console.log('⚠️ Không tìm thấy tin nhắn mới trong danh sách, mô phỏng tin nhắn');
+        
+        // Thử thêm tin nhắn vào store một lần nữa để đảm bảo hiển thị
+        if (newMessage) {
+          chatStore.addMessage({
+            ...newMessage,
+            is_read: true // Tự động đánh dấu là đã đọc vì người gửi đã đọc tin nhắn của mình
+          });
+          
+          // Đưa cuộc trò chuyện này lên đầu danh sách
+          chatStore.sortConversationToTop(newMessage);
+        }
+      }
+    }, 500);
+    
     // Cuộn xuống tin nhắn cuối cùng
     await nextTick();
     scrollToBottom();
@@ -317,9 +348,9 @@ const handleScroll = async () => {
   
   const { scrollTop, clientHeight, scrollHeight } = messagesContainer.value;
   
-  // Nếu cuộn lên gần đầu (20px từ đỉnh), tải thêm tin nhắn cũ
+  // Khi người dùng cuộn lên gần đầu (20px từ đỉnh), tải thêm tin nhắn cũ hơn
   if (scrollTop <= 20 && !loadingOlderMessages.value && chatStore.hasMoreMessages) {
-    console.log('Đang tải thêm tin nhắn cũ...');
+    console.log('Đang tải thêm tin nhắn cũ hơn...');
     
     // Lưu lại vị trí cuộn và chiều cao trước khi tải
     const previousScrollHeight = scrollHeight;
@@ -328,7 +359,7 @@ const handleScroll = async () => {
     loadingOlderMessages.value = true;
     
     try {
-      // Tải thêm tin nhắn cũ
+      // Chỉ tải 1 trang khi cuộn lên vì đã tải nhiều trang lúc đầu
       await chatStore.fetchMessages(activeConversationId.value);
       
       // Đợi DOM cập nhật
@@ -338,12 +369,22 @@ const handleScroll = async () => {
       if (messagesContainer.value) {
         const newScrollHeight = messagesContainer.value.scrollHeight;
         const heightDifference = newScrollHeight - previousScrollHeight;
-        messagesContainer.value.scrollTop = heightDifference + 20; // +20 để tránh kích hoạt lại ngay lập tức
+        
+        // Cộng thêm 20px để tránh kích hoạt ngay lập tức sự kiện tải thêm
+        const newScrollTop = heightDifference + 20;
+        
+        // Điều chỉnh cuộn để giữ vị trí người dùng đang xem
+        messagesContainer.value.scrollTop = newScrollTop;
+        
+        console.log(`Đã điều chỉnh scrollTop từ 0 đến ${newScrollTop}px`);
       }
     } catch (error) {
-      console.error('Lỗi khi tải thêm tin nhắn cũ:', error);
+      console.error('Lỗi khi tải thêm tin nhắn cũ hơn:', error);
     } finally {
-      loadingOlderMessages.value = false;
+      // Đợi một chút trước khi bỏ trạng thái loading để tránh tải liên tục
+      setTimeout(() => {
+        loadingOlderMessages.value = false;
+      }, 500);
     }
   }
 };
@@ -355,13 +396,17 @@ watch(() => JSON.stringify(chatStore.sortedMessages), () => {
   // Đánh dấu tin nhắn mới là đã đọc
   markMessagesAsRead();
   
-  // Chỉ cuộn xuống khi người dùng đang ở gần cuối
+  // Cuộn xuống khi người dùng đang ở gần cuối hoặc có tin nhắn mới 
   if (messagesContainer.value) {
     const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
     const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
     
-    if (isNearBottom) {
-      console.log('Nội dung thay đổi và người dùng gần cuối, đang cuộn xuống');
+    // Nếu người dùng đang gần cuối hoặc nếu tin nhắn mới là từ người dùng hiện tại, cuộn xuống
+    const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
+    const isFromCurrentUser = latestMessage && latestMessage.sender === currentUserId.value;
+    
+    if (isNearBottom || isFromCurrentUser) {
+      console.log('Nội dung thay đổi và người dùng gần cuối hoặc gửi tin nhắn mới, đang cuộn xuống');
       nextTick(() => {
         scrollToBottom();
       });
@@ -410,8 +455,9 @@ watch(() => chatStore.messages, (newMessages, oldMessages) => {
 
 onMounted(async () => {
   console.log('ChatContainer đã được mount');
+  
   // Kết nối WebSocket
-  socketService.init();
+  initSocketConnection();
   
   // Lấy userId từ route hoặc từ giá trị được inject
   let targetUserId = null;
@@ -459,13 +505,60 @@ onMounted(async () => {
         console.error(`Không thể lấy thông tin cho người dùng ${conv.userId}:`, error);
       }
     }
+    
+    // Thiết lập kiểm tra kết nối WebSocket định kỳ
+    startSocketConnectionChecker();
   } catch (error) {
     console.error('Lỗi khi khởi tạo ChatContainer:', error);
   }
 });
 
+// Khởi tạo kết nối WebSocket
+const initSocketConnection = () => {
+  console.log('Đang khởi tạo kết nối WebSocket...');
+  
+  // Thử kết nối trước
+  socketService.init();
+  
+  // Kiểm tra trạng thái kết nối sau 2 giây
+  setTimeout(() => {
+    if (!socketService.connected) {
+      console.log('⚠️ WebSocket chưa kết nối sau 2 giây, thử kết nối lại...');
+      socketService.disconnect(); // Đảm bảo đóng kết nối cũ
+      socketService.init(); // Thử kết nối lại
+    } else {
+      console.log('✅ WebSocket đã kết nối thành công!');
+    }
+  }, 2000);
+};
+
+// Kiểm tra kết nối socket định kỳ
+let socketCheckInterval = null;
+const startSocketConnectionChecker = () => {
+  // Xóa interval cũ nếu có
+  if (socketCheckInterval) {
+    clearInterval(socketCheckInterval);
+  }
+  
+  // Thiết lập interval mới kiểm tra mỗi 30 giây
+  socketCheckInterval = setInterval(() => {
+    if (!socketService.connected) {
+      console.log('⚠️ Phát hiện WebSocket đã ngắt kết nối, đang thử kết nối lại...');
+      socketService.init();
+    } else {
+      console.log('✓ WebSocket vẫn đang kết nối');
+    }
+  }, 30000); // 30 giây
+};
+
 onUnmounted(() => {
   console.log('ChatContainer đã được unmount');
+  
+  // Xóa interval kiểm tra socket
+  if (socketCheckInterval) {
+    clearInterval(socketCheckInterval);
+    socketCheckInterval = null;
+  }
   
   // Ngắt kết nối socket để tránh nhận tin nhắn trùng lặp ở các màn hình khác
   socketService.disconnect();

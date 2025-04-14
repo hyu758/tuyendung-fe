@@ -1,19 +1,21 @@
 <template>
-  <div 
-    :class="[
-      'rounded-lg p-3 mb-2 max-w-[80%]', 
-      isCurrentUser ? 'bg-blue-500 text-white self-end' : 'bg-gray-100 text-gray-800 self-start'
-    ]"
-  >
-    <p class="text-sm mb-1">{{ content }}</p>
-    <div class="flex justify-between items-center">
-      <span class="text-xs" :class="isCurrentUser ? 'text-blue-100' : 'text-gray-500'">
-        {{ formatTime(createdAt) }}
-      </span>
-      <span v-if="isCurrentUser" class="text-xs text-blue-100 ml-2 flex items-center">
-        <i class="fas" :class="isRead ? 'fa-check-double' : 'fa-check'"></i>
-        <span class="ml-1" v-if="isRead">Đã đọc</span>
-      </span>
+  <div :class="['flex', isCurrentUser ? 'justify-end' : 'justify-start', 'mb-4']">
+    <div
+      :class="[
+        'max-w-[70%] rounded-lg px-4 py-2 break-words',
+        isCurrentUser 
+          ? 'bg-blue-500 text-white rounded-br-none' 
+          : 'bg-gray-100 text-gray-800 rounded-bl-none'
+      ]"
+    >
+      <p class="whitespace-pre-wrap">{{ content }}</p>
+      <div :class="['text-xs mt-1 flex justify-end items-center', isCurrentUser ? 'text-blue-100' : 'text-gray-500']">
+        {{ formattedTime }}
+        <span v-if="isCurrentUser" class="ml-1">
+          <i v-if="isRead" class="fas fa-check-double"></i>
+          <i v-else class="fas fa-check"></i>
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -35,28 +37,24 @@ const props = defineProps({
     default: false
   },
   createdAt: {
-    type: String,
+    type: [String, Date],
     required: true
   }
 });
 
-// Format thời gian tin nhắn
-const formatTime = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
+// Định dạng thời gian
+const formattedTime = computed(() => {
+  const date = new Date(props.createdAt);
   
-  // Nếu là ngày hôm nay, chỉ hiển thị giờ và phút
-  if (isToday) {
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  // Kiểm tra nếu thời gian hợp lệ
+  if (isNaN(date.getTime())) {
+    return '';
   }
   
-  // Ngày khác, hiển thị ngày tháng và giờ
-  return date.toLocaleString('vi-VN', { 
-    day: '2-digit', 
-    month: '2-digit',
-    hour: '2-digit', 
+  // Format thời gian theo giờ:phút
+  return date.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
     minute: '2-digit'
   });
-};
+});
 </script> 

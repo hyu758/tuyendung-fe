@@ -90,8 +90,20 @@
             </div>
           </div>
 
-          <!-- Chat Messages -->
-          <chat-dropdown />
+          <!-- Tin nhắn -->
+          <router-link 
+            to="/employer/messages" 
+            class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full relative"
+            title="Tin nhắn"
+          >
+            <i class="fas fa-comment-dots text-xl"></i>
+            <span 
+              v-if="chatStore?.unreadCount > 0" 
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
+            >
+              {{ chatStore.unreadCount > 9 ? '9+' : chatStore.unreadCount }}
+            </span>
+          </router-link>
 
           <!-- User Menu -->
           <div class="relative" ref="profileDropdown">
@@ -140,23 +152,6 @@
               </a>
             </div>
           </div>
-
-          <div class="hidden md:flex items-center space-x-3">
-            <!-- Tin nhắn -->
-            <router-link 
-              to="/employer/messages" 
-              class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
-              title="Tin nhắn"
-            >
-              <i class="fas fa-comment-dots text-xl"></i>
-            </router-link>
-            
-            <!-- Notifications -->
-            <notification-dropdown />
-
-            <!-- Chat Messages -->
-            <chat-dropdown />
-          </div>
         </div>
       </div>
     </div>
@@ -186,11 +181,13 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useNotificationStore } from '../../stores/notification'
+import { useChatStore } from '../../stores/chat'
 import ChatDropdown from '../common/ChatDropdown.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
+const chatStore = useChatStore()
 const showDropdown = ref(false)
 const showNotifications = ref(false)
 const profileDropdown = ref(null)

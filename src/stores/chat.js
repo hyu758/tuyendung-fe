@@ -66,30 +66,65 @@ export const useChatStore = defineStore('chat', {
       this.activeConversation = userId
       
       try {
-        console.log(`Tải tin nhắn trang ${this.page} cho cuộc trò chuyện ${userId}`)
-        const response = await chatService.getMessages(userId, {
-          page: this.page,
-          limit: 20 // Số lượng tin nhắn mỗi lần tải
-        })
+        // Số trang cần tải ban đầu
+        const initialPages = refresh ? 3 : 1
+        let allNewMessages = []
+        let totalPages = 0
         
-        console.log('Phản hồi từ API messages:', response.data)
-        const newMessages = response.data.data.results
+        // Tải nhiều trang nếu là refresh
+        for (let i = 0; i < initialPages; i++) {
+          const currentPage = refresh ? i + 1 : this.page
+          
+          console.log(`Tải tin nhắn trang ${currentPage} cho cuộc trò chuyện ${userId}`)
+          const response = await chatService.getMessages(userId, {
+            page: currentPage,
+            limit: 10 // Số lượng tin nhắn mỗi lần tải
+          })
+          
+          console.log(`Phản hồi từ API messages page ${currentPage}:`, response.data)
+          const pageMessages = response.data.data.results
+          allNewMessages = [...allNewMessages, ...pageMessages]
+          
+          // Cập nhật tổng số trang
+          totalPages = response.data.data.total_pages
+          this.hasMoreMessages = currentPage < totalPages
+          
+          // Nếu đã hết trang thì dừng vòng lặp
+          if (currentPage >= totalPages) {
+            console.log(`Đã tải hết tất cả tin nhắn (${totalPages} trang)`)
+            break
+          }
+          
+          // Nếu đây là lần refresh và chưa tải hết số trang cần thiết, tiếp tục vòng lặp
+          if (refresh && i < initialPages - 1) {
+            continue
+          } else {
+            // Cập nhật page cho lần tải tiếp theo
+            this.page = currentPage + 1
+            break
+          }
+        }
         
         if (refresh) {
-          this.messages = newMessages
+          // Nếu là refresh, thay thế toàn bộ tin nhắn
+          this.messages = allNewMessages
+          // Cập nhật page cho lần tải tiếp theo
+          this.page = Math.min(initialPages + 1, totalPages + 1)
         } else {
+          // Nếu không phải refresh, thêm tin nhắn mới vào đầu danh sách hiện tại
           // Kết hợp tin nhắn mới với tin nhắn hiện tại, loại bỏ trùng lặp
           const messageIds = new Set(this.messages.map(msg => msg.id))
-          const uniqueNewMessages = newMessages.filter(msg => !messageIds.has(msg.id))
+          const uniqueNewMessages = allNewMessages.filter(msg => !messageIds.has(msg.id))
           this.messages = [...uniqueNewMessages, ...this.messages]
+          
+          // Cập nhật page cho lần tải tiếp theo
+          this.page += 1
         }
         
         console.log('Số lượng tin nhắn sau khi tải:', this.messages.length)
-        this.page += 1
-        this.hasMoreMessages = this.page <= response.data.data.total_pages
         this.loading = false
         
-        return newMessages
+        return allNewMessages
       } catch (error) {
         console.error('Lỗi khi lấy tin nhắn:', error)
         this.error = error.response?.data?.message || 'Không thể lấy tin nhắn'
@@ -249,11 +284,6 @@ export const useChatStore = defineStore('chat', {
         // Thêm tin nhắn mới vào danh sách
         this.messages.push(message);
         console.log('Đã thêm tin nhắn mới vào store. Số lượng tin nhắn hiện tại:', this.messages.length);
-        
-        // Sắp xếp tin nhắn theo thời gian
-        this.messages = [...this.messages].sort((a, b) => 
-          new Date(a.created_at) - new Date(b.created_at)
-        );
         
         // Đảm bảo cuộc trò chuyện này có tin nhắn mới nhất lên đầu trong danh sách
         this.sortConversationToTop(message);
