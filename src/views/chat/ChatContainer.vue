@@ -505,6 +505,30 @@ watch(() => chatStore.messages, (newMessages, oldMessages) => {
   }
 }, { deep: true });
 
+// Thêm vào ngay trước onMounted
+// Xử lý cập nhật tin nhắn thông qua socket
+const handleSocketMessage = (data) => {
+  console.log('Nhận tin nhắn từ socket:', data);
+  if (data && data.type === 'chat_message') {
+    const message = data.message;
+    
+    // Thêm tin nhắn mới vào store
+    chatStore.addMessage(message);
+    
+    // Nếu cuộc trò chuyện đang mở, đánh dấu là đã đọc
+    if (activeConversationId.value === message.sender) {
+      chatStore.markMessageAsRead(message.id);
+    }
+    
+    // Cuộn xuống nếu cần
+    if (activeConversationId.value === message.sender && messagesContainer.value) {
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }
+  }
+};
+
 onMounted(async () => {
   console.log('ChatContainer đã được mount');
   
@@ -534,27 +558,32 @@ onMounted(async () => {
       selectConversation(targetUserId);
     }
     
-    // Lấy tin nhắn gần đây nhất cho mỗi cuộc trò chuyện
-    // Cần tải tin nhắn mới nhất cho mỗi cuộc trò chuyện
-    for (const conv of processedConversations.value) {
-      try {
-        // Lấy thông tin người dùng để hiển thị tên
-        const userInfo = await chatStore.fetchUserInfo(conv.userId);
-        if (userInfo) {
-          conv.displayName = userInfo.fullname || conv.displayName;
-          conv.avatar = userInfo.avatar || null;
-        }
-        
-        // Nếu chưa có tin nhắn mới nhất, tải một tin nhắn mới nhất
-        if (!conv.lastMessage) {
-          const messages = await chatStore.fetchLatestMessage(conv.userId);
-          if (messages && messages.length > 0) {
-            conv.lastMessage = messages[0].content;
-            conv.lastMessageTime = messages[0].created_at;
-          }
-        }
-      } catch (error) {
-        console.error(`Không thể lấy thông tin cho người dùng ${conv.userId}:`, error);
+    // Lấy tin nhắn mới nhất cho tất cả cuộc trò chuyện
+    const latestMessages = await chatStore.fetchLatestMessages();
+    
+    // Tạo danh sách người dùng cần lấy thông tin
+    const userIdsToFetch = [];
+    const conversations = processedConversations.value;
+    
+    for (const conv of conversations) {
+      // Kiểm tra xem đã có thông tin user này trong cache chưa
+      if (!chatStore.userInfoCache[conv.userId]) {
+        userIdsToFetch.push(conv.userId);
+      }
+    }
+    
+    // Tải thông tin người dùng cho tất cả ID cùng một lúc
+    if (userIdsToFetch.length > 0) {
+      console.log(`Tải thông tin cho ${userIdsToFetch.length} người dùng`);
+      await Promise.all(userIdsToFetch.map(id => chatStore.fetchUserInfo(id)));
+    }
+    
+    // Cập nhật thông tin người dùng cho mỗi cuộc trò chuyện
+    for (const conv of conversations) {
+      const userInfo = chatStore.userInfoCache[conv.userId];
+      if (userInfo) {
+        conv.displayName = userInfo.fullname || conv.displayName;
+        conv.avatar = userInfo.avatar || null;
       }
     }
     
@@ -563,6 +592,9 @@ onMounted(async () => {
   } catch (error) {
     console.error('Lỗi khi khởi tạo ChatContainer:', error);
   }
+  
+  // Thiết lập lắng nghe tin nhắn từ socket
+  socketService.onMessage(handleSocketMessage);
 });
 
 // Khởi tạo kết nối WebSocket
@@ -614,5 +646,8 @@ onUnmounted(() => {
   
   // Ngắt kết nối socket để tránh nhận tin nhắn trùng lặp ở các màn hình khác
   socketService.disconnect();
+  
+  // Xóa listener
+  socketService.offMessage(handleSocketMessage);
 });
 </script> 

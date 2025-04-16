@@ -13,7 +13,8 @@ export const useChatStore = defineStore('chat', {
     unreadCount: 0,
     page: 1,
     hasMoreMessages: true,
-    userInfo: null
+    userInfo: null,
+    userInfoCache: {} // Cache thông tin người dùng
   }),
   
   getters: {
@@ -47,6 +48,29 @@ export const useChatStore = defineStore('chat', {
         this.error = error.response?.data?.message || 'Không thể lấy danh sách cuộc trò chuyện'
         this.loading = false
         throw error
+      }
+    },
+    
+    async fetchLatestMessages() {
+      try {
+        console.log('Đang tải tin nhắn mới nhất cho tất cả cuộc trò chuyện')
+        const response = await chatService.getLatestMessages()
+        
+        if (response.data.status === 200 && response.data.data) {
+          const latestMessages = response.data.data
+          console.log('Đã tải xong tin nhắn mới nhất:', latestMessages)
+          
+          // Thêm tất cả tin nhắn mới nhất vào store
+          latestMessages.forEach(message => {
+            this.addMessage(message)
+          })
+          
+          return latestMessages
+        }
+        return []
+      } catch (error) {
+        console.error('Lỗi khi lấy tin nhắn mới nhất cho tất cả cuộc trò chuyện:', error)
+        return []
       }
     },
     
@@ -232,12 +256,31 @@ export const useChatStore = defineStore('chat', {
       this.userInfo = null
     },
     
+    resetActiveConversation() {
+      console.log('Reset activeConversation từ:', this.activeConversation, 'thành null');
+      // Reset các trạng thái liên quan đến cuộc trò chuyện hiện tại
+      this.activeConversation = null;
+      this.messages = [];
+      this.page = 1;
+      this.hasMoreMessages = true;
+      this.loading = false;
+    },
+    
     async fetchUserInfo(userId) {
+      // Kiểm tra cache trước khi gọi API
+      if (this.userInfoCache[userId]) {
+        console.log(`Lấy thông tin người dùng ${userId} từ cache`);
+        return this.userInfoCache[userId];
+      }
+      
       try {
         // Gọi API để lấy thông tin người dùng
+        console.log(`Gọi API lấy thông tin người dùng ${userId}`);
         const response = await axios.get(`/api/users/${userId}/info/`);
         
         if (response.data.status === 200) {
+          // Lưu vào cache
+          this.userInfoCache[userId] = response.data.data;
           return response.data.data;
         }
         return null;

@@ -1,14 +1,16 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed, provide, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import CandidateHeader from './components/layouts/CandidateHeader.vue'
 import BaseAlert from './components/common/BaseAlert.vue'
 import socketService from './services/socketService'
+import ChatManager from './components/chat/ChatManager.vue'
 
 
 const route = useRoute()
 const authStore = useAuthStore()
+const chatManager = ref(null)
 
 
 const notification = ref({
@@ -32,6 +34,11 @@ onMounted(() => {
   
   // Bắt đầu kiểm tra thông báo mỗi khi chuyển trang
   window.addEventListener('popstate', checkNotification)
+  
+  // Theo dõi chatManager ref
+  watchEffect(() => {
+    console.log('App.vue - chatManager ref:', chatManager.value)
+  })
 })
 
 // Xóa sự kiện khi component bị hủy
@@ -71,6 +78,26 @@ function closeNotification() {
 const isEmployerPage = computed(() => {
   return route.path.startsWith('/employer')
 })
+
+// Kiểm tra người dùng đã đăng nhập chưa
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+// Cung cấp phương thức mở chat cho toàn bộ ứng dụng
+const openChat = (userId) => {
+  console.log('openChat được gọi trong App.vue với userId:', userId)
+  if (chatManager.value) {
+    console.log('Gọi phương thức openChat của chatManager')
+    chatManager.value.openChat(userId)
+  } else {
+    console.warn('chatManager không tồn tại, không thể mở chat')
+  }
+}
+
+// Cung cấp phương thức mở chat cho toàn bộ ứng dụng
+provide('openChat', openChat)
+
+// Cung cấp chatManager ref trực tiếp cho các component con
+provide('chatManager', chatManager)
 </script>
 
 <template>
@@ -179,6 +206,9 @@ const isEmployerPage = computed(() => {
         </div>
       </div>
     </footer>
+
+    <!-- Đảm bảo ChatManager được hiển thị khi người dùng đã đăng nhập -->
+    <ChatManager ref="chatManager" v-if="isAuthenticated" />
   </div>
 </template>
 

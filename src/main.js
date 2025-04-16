@@ -153,6 +153,24 @@ app.use(pinia)
 app.use(router)
 app.component('font-awesome-icon', FontAwesomeIcon)
 
+// Đăng ký directive toàn cục
+app.directive('scroll-bottom', {
+  updated: (el, binding) => {
+    if (binding.value !== binding.oldValue) {
+      console.log('v-scroll-bottom directive updated, scrolling to bottom');
+      setTimeout(() => {
+        el.scrollTop = el.scrollHeight;
+      }, 100);
+    }
+  },
+  mounted: (el) => {
+    console.log('v-scroll-bottom directive mounted, scrolling to bottom');
+    setTimeout(() => {
+      el.scrollTop = el.scrollHeight;
+    }, 100);
+  }
+});
+
 // Khởi tạo WebSocket
 router.isReady().then(() => {
     // Khởi tạo WebSocket chỉ khi đã đăng nhập

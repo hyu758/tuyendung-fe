@@ -1,38 +1,51 @@
 <template>
   <div 
-    class="flex items-center p-3 border-b hover:bg-gray-50 cursor-pointer"
-    :class="{ 'bg-blue-50': isActive }"
-    @click="$emit('select')"
+    class="flex items-center p-3 border-b cursor-pointer transition-colors duration-150"
+    :class="{ 
+      'bg-blue-50': isActive,
+      'hover:bg-gray-50': !isActive,
+      'border-l-4 border-l-blue-500': isActive
+    }"
+    @click="handleSelect"
   >
-    <div class="relative">
-      <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
-        <template v-if="avatar">
-          <img :src="avatar" alt="Avatar" class="w-full h-full object-cover" />
-        </template>
-        <template v-else>
-          <i class="fas fa-user text-gray-500 text-xl"></i>
-        </template>
+    <div class="flex-shrink-0 mr-3 relative">
+      <div v-if="avatar" class="w-12 h-12 rounded-full overflow-hidden border border-gray-200">
+        <img :src="avatar" alt="Avatar" class="w-full h-full object-cover" />
       </div>
-      <div v-if="unreadCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-        {{ unreadCount > 9 ? '9+' : unreadCount }}
+      <div v-else class="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+        {{ getInitials(displayName) }}
       </div>
-      <div v-if="isOnline" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
+      <div v-if="isOnline" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
     </div>
     
-    <div class="ml-3 flex-1 overflow-hidden">
+    <div class="flex-1 min-w-0">
       <div class="flex justify-between items-center">
-        <h3 class="font-medium text-gray-800 truncate">{{ displayName }}</h3>
-        <span v-if="lastMessageTime" class="text-xs text-gray-500">{{ formatTime(lastMessageTime) }}</span>
+        <h3 class="text-sm font-medium text-gray-900 truncate">{{ displayName }}</h3>
+        <span class="text-xs text-gray-500">{{ formattedTime }}</span>
       </div>
-      <p class="text-sm text-gray-500 truncate" :class="{ 'font-semibold': hasUnread }">
-        {{ lastMessage || 'Không có tin nhắn' }}
-      </p>
+      <div class="flex items-center mt-1">
+        <p 
+          class="text-sm truncate flex-1" 
+          :class="{ 
+            'text-gray-600 font-medium': !isRead && unreadCount > 0,
+            'text-gray-500': isRead || unreadCount === 0
+          }"
+        >
+          {{ lastMessage }}
+        </p>
+        <span 
+          v-if="unreadCount > 0"
+          class="ml-2 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center"
+        >
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 
 const props = defineProps({
   displayName: {
@@ -41,7 +54,7 @@ const props = defineProps({
   },
   avatar: {
     type: String,
-    default: ''
+    default: null
   },
   lastMessage: {
     type: String,
@@ -62,31 +75,62 @@ const props = defineProps({
   isActive: {
     type: Boolean,
     default: false
+  },
+  isRead: {
+    type: Boolean,
+    default: true
+  },
+  userId: {
+    type: [Number, String],
+    required: true
+  },
+  openInPopup: {
+    type: Boolean,
+    default: false
   }
 });
 
-const hasUnread = computed(() => props.unreadCount > 0);
+const emit = defineEmits(['select']);
 
-defineEmits(['select']);
+// Tiêm phương thức mở chat từ ứng dụng (nếu có)
+const openChat = inject('openChat', null);
 
-// Format thời gian tin nhắn cuối cùng
-const formatTime = (dateString) => {
-  const date = new Date(dateString);
+// Format thời gian
+const formattedTime = computed(() => {
+  if (!props.lastMessageTime) return '';
+  
+  const date = new Date(props.lastMessageTime);
   const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
+  const diffInMs = now - date;
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
   
-  // Nếu là ngày hôm nay, chỉ hiển thị giờ và phút
-  if (isToday) {
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  if (diffInMinutes < 1) {
+    return 'Vừa xong';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} phút`;
+  } else if (diffInMinutes < 24 * 60) {
+    return `${Math.floor(diffInMinutes / 60)}h`;
+  } else if (diffInMinutes < 7 * 24 * 60) {
+    return `${Math.floor(diffInMinutes / (24 * 60))} ngày`;
+  } else {
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
   }
-  
-  // Nếu là tuần này, hiển thị tên ngày
-  const dayDiff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-  if (dayDiff < 7) {
-    return date.toLocaleDateString('vi-VN', { weekday: 'short' });
+});
+
+// Lấy chữ cái đầu của tên để hiển thị avatar
+const getInitials = (name) => {
+  if (!name) return '?';
+  return name.charAt(0).toUpperCase();
+};
+
+// Xử lý khi chọn cuộc trò chuyện
+const handleSelect = () => {
+  if (props.openInPopup && openChat) {
+    // Mở cửa sổ chat popup nếu có
+    openChat(props.userId);
+  } else {
+    // Emit sự kiện để component cha xử lý
+    emit('select');
   }
-  
-  // Ngày xa hơn, hiển thị ngày tháng
-  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 };
 </script> 

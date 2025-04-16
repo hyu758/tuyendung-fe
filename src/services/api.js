@@ -95,6 +95,10 @@ export const chatService = {
       } 
     });
   },
+  getLatestMessages() {
+    console.log('Gọi API lấy tin nhắn mới nhất cho tất cả cuộc trò chuyện');
+    return axios.get('/api/messages/latest/')
+  },
   sendMessage(recipientId, content) {
     console.log('Gửi tin nhắn đến recipientId:', recipientId);
     

@@ -208,6 +208,18 @@ class SocketService {
     else if (data.type === 'new_message' || (data.data && data.data.type === 'new_message')) {
       // Xử lý tin nhắn mới
       this.handleNewMessage(data);
+      
+      // Gọi tất cả các message handlers đã đăng ký
+      if (this.messageHandlers && this.messageHandlers.length > 0) {
+        console.log(`Gọi ${this.messageHandlers.length} message handlers đã đăng ký`);
+        this.messageHandlers.forEach(handler => {
+          try {
+            handler(data);
+          } catch (error) {
+            console.error('Lỗi khi gọi message handler:', error);
+          }
+        });
+      }
     }
     else {
       // Xử lý thông báo thông thường
@@ -340,6 +352,41 @@ class SocketService {
     this.socket = null;
     this.connected = false;
     this.connecting = false;
+  }
+  
+  // Mảng để lưu trữ các hàm xử lý tin nhắn
+  messageHandlers = [];
+  
+  // Đăng ký hàm xử lý tin nhắn
+  onMessage(handler) {
+    if (typeof handler !== 'function') {
+      console.error('onMessage handler phải là hàm');
+      return;
+    }
+    
+    // Kiểm tra xem handler đã được đăng ký chưa
+    if (!this.messageHandlers.includes(handler)) {
+      console.log('Đăng ký message handler mới');
+      this.messageHandlers.push(handler);
+    } else {
+      console.log('Message handler đã được đăng ký trước đó');
+    }
+  }
+  
+  // Hủy đăng ký hàm xử lý tin nhắn
+  offMessage(handler) {
+    if (typeof handler !== 'function') {
+      console.error('offMessage handler phải là hàm');
+      return;
+    }
+    
+    const index = this.messageHandlers.indexOf(handler);
+    if (index !== -1) {
+      console.log('Hủy đăng ký message handler');
+      this.messageHandlers.splice(index, 1);
+    } else {
+      console.log('Không tìm thấy message handler để hủy đăng ký');
+    }
   }
 }
 
