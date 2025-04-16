@@ -1,15 +1,20 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
+  <div class="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-6 md:py-8">
     <div class="container mx-auto px-4">
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="p-6 border-b">
-          <h1 class="text-2xl font-bold text-gray-800">Tin nhắn của tôi</h1>
-          <p class="text-gray-600 mt-1">
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-xl">
+        <div class="p-4 md:p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+          <h1 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+            <span class="inline-block mr-3 bg-blue-100 text-blue-600 p-2 rounded-full">
+              <font-awesome-icon icon="comments" />
+            </span>
+            Tin nhắn của tôi
+          </h1>
+          <p class="text-gray-600 mt-1 pl-11">
             Trò chuyện với nhà tuyển dụng của bạn
           </p>
         </div>
         
-        <div class="h-[calc(100vh-200px)]">
+        <div class="h-[calc(100vh-220px)] md:h-[calc(100vh-200px)] transition-all duration-300">
           <chat-container />
         </div>
       </div>
@@ -18,14 +23,16 @@
 </template>
 
 <script setup>
-import { onMounted, provide, onUnmounted } from 'vue';
+import { onMounted, provide, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ChatContainer from '../chat/ChatContainer.vue';
 import { useChatStore } from '../../stores/chat';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const chatStore = useChatStore();
 const route = useRoute();
 const router = useRouter();
+const isLoading = ref(true);
 
 // Cung cấp tham số lấy từ URL cho các component con
 provide('chatUserId', route.query.user ? parseInt(route.query.user, 10) : null);
@@ -38,7 +45,10 @@ onMounted(() => {
   chatStore.resetStore();
   
   // Tải số lượng tin nhắn chưa đọc ngay khi component mount
-  chatStore.fetchUnreadMessages();
+  chatStore.fetchUnreadMessages()
+    .finally(() => {
+      isLoading.value = false;
+    });
   
   // Thiết lập cập nhật định kỳ
   const intervalId = setInterval(async () => {
@@ -63,4 +73,16 @@ onMounted(() => {
     }
   }
 });
-</script> 
+</script>
+
+<style scoped>
+.container {
+  max-width: 1200px;
+}
+
+@media (max-width: 640px) {
+  .h-\[calc\(100vh-220px\)\] {
+    height: calc(100vh - 180px);
+  }
+}
+</style> 
