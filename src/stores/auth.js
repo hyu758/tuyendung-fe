@@ -31,14 +31,10 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    // Lấy toàn bộ thông tin user từ token hoặc state
     userInfo() {
-      // Nếu đã có thông tin user trong state, trả về nó
       if (this.user) return this.user
-      // Nếu không có, thử lấy từ token
       const decoded = this.decodedToken
       if (!decoded) return null
-      // Tạo đối tượng user từ thông tin trong token
       return {
         username: decoded.username || decoded.email || localStorage.getItem('username'),
         user_id: decoded.user_id,
@@ -64,6 +60,7 @@ export const useAuthStore = defineStore('auth', {
     
     isCandidate() {
       const user = this.userInfo;
+      console.log('isCandidate getter - user:', user);
       return user && user.is_applicant === true;
     },
     

@@ -136,32 +136,50 @@
             </div>
 
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-4">
+              <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <base-button
                   text="Ứng tuyển ngay"
                   variant="primary"
                   size="md"
-                  class="w-full mt-4"
+                  class="w-full sm:w-auto px-6 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300"
                   :disabled="isApplied"
                   @click="applyForJob"
-                />
+                >
+                  <font-awesome-icon icon="paper-plane" class="mr-1" />
+                  <span>{{ isApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay' }}</span>
+                </base-button>
 
-                <!-- Nút chat với nhà tuyển dụng - hiển thị rõ ràng hơn -->
                 <base-button
-                  v-if="isCandidate"
+                  v-if="authStore.isCandidate"
                   type="button"
                   variant="secondary" 
                   size="md"
-                  class="w-full mt-2 flex items-center justify-center"
+                  class="w-full sm:w-auto px-6 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300"
                   @click="chatWithEmployer"
                 >
-                  <i class="fas fa-comment-dots mr-2"></i>
-                  Nhắn tin
+                  <font-awesome-icon icon="comment-dots" class="mr-1" />
+                  <span>Nhắn tin</span>
                 </base-button>
               </div>
-              <div v-if="job.appliedDate" class="text-gray-500 text-sm">
-                <span>Bạn đã gửi CV cho vị trí này vào ngày: {{ job.appliedDate }}</span>
-                <a href="#" class="text-blue-600 hover:underline ml-2">Xem CV đã nộp</a>
+              <div v-if="authStore.isLoggedIn && job.appliedDate" class="hidden sm:block text-gray-500 text-sm bg-green-50 px-4 py-2 rounded-lg border border-green-100">
+                <div class="flex items-center gap-2">
+                  <font-awesome-icon icon="check-circle" class="text-green-500" />
+                  <div>
+                    <span>Đã ứng tuyển: {{ job.appliedDate }}</span>
+                    <a href="#" class="text-blue-600 hover:underline ml-2">Xem CV</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Hiển thị thông báo đã ứng tuyển trên mobile -->
+            <div v-if="authStore.isLoggedIn && job.appliedDate" class="block sm:hidden mt-4 text-gray-500 text-sm bg-green-50 px-4 py-2 rounded-lg border border-green-100">
+              <div class="flex items-center gap-2">
+                <font-awesome-icon icon="check-circle" class="text-green-500" />
+                <div>
+                  <span>Đã ứng tuyển: {{ job.appliedDate }}</span>
+                  <a href="#" class="text-blue-600 hover:underline ml-2">Xem CV</a>
+                </div>
               </div>
             </div>
           </div>
@@ -545,6 +563,7 @@ import axios from 'axios'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseAlert from '../components/common/BaseAlert.vue'
+import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
@@ -556,6 +575,7 @@ const isDragging = ref(false)
 const cvFile = ref(null)
 const isSubmitting = ref(false)
 const authStore = useAuthStore()
+const { addToast } = useToast()
 
 const applyForm = reactive({
   name: '',
@@ -773,12 +793,33 @@ const submitApplication = async () => {
   }
 }
 
-const handleApplyClick = () => {
-  if (!authStore.isAuthenticated) {
-    showLoginRequiredModal.value = true
-  } else {
-    showApplyModal.value = true
+const applyForJob = () => {
+  if (!authStore.isLoggedIn) {
+    // Chuyển hướng đến trang đăng nhập kèm theo URL redirect
+    addToast({
+      title: 'Cần đăng nhập',
+      message: 'Vui lòng đăng nhập để ứng tuyển công việc này',
+      type: 'warning'
+    })
+    router.push({ 
+      name: 'Login',
+      query: { redirect: route.fullPath } 
+    })
+    return
   }
+  
+  if (!authStore.isCandidate) {
+    addToast({
+      title: 'Không thể ứng tuyển',
+      message: 'Chỉ tài khoản ứng viên mới có thể ứng tuyển công việc',
+      type: 'error'
+    })
+    return
+  }
+  
+  // Đã đăng nhập và là ứng viên, tiếp tục ứng tuyển
+  // Chuyển hướng đến trang ứng tuyển
+  router.push({ name: 'ApplyJob', params: { id: job.value.id } })
 }
 
 const redirectToLogin = () => {
@@ -806,34 +847,55 @@ const showToast = (message, type = 'success') => {
   }, 5000)
 }
 
-// Hàm kiểm tra trạng thái đăng nhập và vai trò
-const isCandidate = computed(() => {
-  console.log('Auth state:', {
-    isAuthenticated: authStore.isAuthenticated,
-    userRole: authStore.userRole
-  });
-  return authStore.isAuthenticated && authStore.userRole === 'candidate';
-});
+
+// Kiểm tra xem job đã được ứng tuyển chưa
+const isApplied = computed(() => {
+  return !!job.value?.appliedDate
+})
 
 // Mở chat với nhà tuyển dụng
 const chatWithEmployer = () => {
-  console.log('chatWithEmployer called, job data:', job.value);
-  console.log('user_id:', job.value?.user_id);
-  console.log('Auth state when clicking:', isCandidate.value);
-  
-  if (!job.value?.user_id) {
-    console.error('Error: user_id is missing in job data');
-    // Hiển thị thông báo cho người dùng
-    showToast('Không thể chat với nhà tuyển dụng. Vui lòng thử lại sau.', 'error');
-    return;
+  if (!authStore.isLoggedIn) {
+    addToast({
+      title: 'Cần đăng nhập',
+      message: 'Vui lòng đăng nhập để nhắn tin với nhà tuyển dụng',
+      type: 'warning'
+    })
+    router.push({ 
+      name: 'Login',
+      query: { redirect: route.fullPath } 
+    })
+    return
   }
   
-  // Chuyển hướng đến trang chat với userId của nhà tuyển dụng
+  if (!authStore.isCandidate) {
+    addToast({
+      title: 'Không thể nhắn tin',
+      message: 'Chỉ tài khoản ứng viên mới có thể nhắn tin với nhà tuyển dụng',
+      type: 'error'
+    })
+    return
+  }
+
+  // Kiểm tra xem đã có thông tin người dùng và doanh nghiệp chưa
+  if (!job.value || !job.value.enterprise_id) {
+    addToast({
+      title: 'Lỗi',
+      message: 'Không tìm thấy thông tin nhà tuyển dụng',
+      type: 'error'
+    })
+    return
+  }
+  
+  // Logic để mở chat với nhà tuyển dụng
   router.push({ 
-    name: 'candidate-messages',
-    query: { user: job.value.user_id }
-  });
-};
+    name: 'candidate/messages',
+    params: { 
+      employerId: job.value.enterprise_id,
+      jobId: job.value.id
+    } 
+  })
+}
 
 onMounted(() => {
   fetchJobDetail()
