@@ -141,12 +141,13 @@
                   text="Ứng tuyển ngay"
                   variant="primary"
                   size="md"
-                  class="w-full sm:w-auto px-6 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300"
+                  class="relative w-full sm:w-auto px-6 py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 rounded-md overflow-hidden"
+                  :class="{'animate-pulse-gentle': !authStore.isLoggedIn}"
                   :disabled="isApplied"
                   @click="applyForJob"
                 >
-                  <font-awesome-icon icon="paper-plane" class="mr-1" />
-                  <span>{{ isApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay' }}</span>
+                  <font-awesome-icon icon="paper-plane" class="text-white" />
+                  <span class="text-white font-medium">{{ isApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay' }}</span>
                 </base-button>
 
                 <base-button
@@ -154,32 +155,28 @@
                   type="button"
                   variant="secondary" 
                   size="md"
-                  class="w-full sm:w-auto px-6 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300"
+                  class="w-full sm:w-auto px-6 py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:border-blue-300 shadow-md hover:shadow-lg"
                   @click="chatWithEmployer"
                 >
-                  <font-awesome-icon icon="comment-dots" class="mr-1" />
-                  <span>Nhắn tin</span>
+                  <font-awesome-icon icon="comment-dots" class="text-blue-600" />
+                  <span class="text-blue-600 font-medium">Nhắn tin</span>
                 </base-button>
               </div>
-              <div v-if="authStore.isLoggedIn && job.appliedDate" class="hidden sm:block text-gray-500 text-sm bg-green-50 px-4 py-2 rounded-lg border border-green-100">
-                <div class="flex items-center gap-2">
-                  <font-awesome-icon icon="check-circle" class="text-green-500" />
-                  <div>
-                    <span>Đã ứng tuyển: {{ job.appliedDate }}</span>
-                    <a href="#" class="text-blue-600 hover:underline ml-2">Xem CV</a>
-                  </div>
+              <div v-if="authStore.isLoggedIn && job.appliedDate" class="hidden sm:flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-100 shadow-sm">
+                <font-awesome-icon icon="check-circle" class="text-green-500" />
+                <div class="text-gray-700 text-sm">
+                  <span>Đã ứng tuyển: {{ job.appliedDate }}</span>
+                  <a href="#" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</a>
                 </div>
               </div>
             </div>
             
             <!-- Hiển thị thông báo đã ứng tuyển trên mobile -->
-            <div v-if="authStore.isLoggedIn && job.appliedDate" class="block sm:hidden mt-4 text-gray-500 text-sm bg-green-50 px-4 py-2 rounded-lg border border-green-100">
-              <div class="flex items-center gap-2">
-                <font-awesome-icon icon="check-circle" class="text-green-500" />
-                <div>
-                  <span>Đã ứng tuyển: {{ job.appliedDate }}</span>
-                  <a href="#" class="text-blue-600 hover:underline ml-2">Xem CV</a>
-                </div>
+            <div v-if="authStore.isLoggedIn && job.appliedDate" class="block sm:hidden mt-4 flex items-center gap-2 bg-green-50 px-4 py-3 rounded-lg border border-green-100 shadow-sm">
+              <font-awesome-icon icon="check-circle" class="text-green-500" />
+              <div class="text-gray-700 text-sm">
+                <span>Đã ứng tuyển: {{ job.appliedDate }}</span>
+                <a href="#" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</a>
               </div>
             </div>
           </div>
@@ -564,6 +561,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseAlert from '../components/common/BaseAlert.vue'
 import { useToast } from '@/composables/useToast'
+import socketService from '@/services/socketService'
 
 const route = useRoute()
 const router = useRouter()
@@ -855,7 +853,18 @@ const isApplied = computed(() => {
 
 // Mở chat với nhà tuyển dụng
 const chatWithEmployer = () => {
+  console.log('------------ DEBUG CHAT WITH EMPLOYER ------------');
+  console.log('Auth status:', {
+    isLoggedIn: authStore.isLoggedIn,
+    isAuthenticated: authStore.isAuthenticated,
+    userRole: authStore.userRole,
+    isCandidate: authStore.isCandidate,
+    token: !!localStorage.getItem('token')
+  });
+  
   if (!authStore.isLoggedIn) {
+    console.error('Không thể chat: Người dùng chưa đăng nhập');
+    // Chuyển hướng đến trang đăng nhập kèm theo URL redirect
     addToast({
       title: 'Cần đăng nhập',
       message: 'Vui lòng đăng nhập để nhắn tin với nhà tuyển dụng',
@@ -869,6 +878,7 @@ const chatWithEmployer = () => {
   }
   
   if (!authStore.isCandidate) {
+    console.error('Không thể chat: Người dùng không phải là ứng viên');
     addToast({
       title: 'Không thể nhắn tin',
       message: 'Chỉ tài khoản ứng viên mới có thể nhắn tin với nhà tuyển dụng',
@@ -877,8 +887,43 @@ const chatWithEmployer = () => {
     return
   }
 
-  // Kiểm tra xem đã có thông tin người dùng và doanh nghiệp chưa
-  if (!job.value || !job.value.enterprise_id) {
+  // Kiểm tra thông tin của job
+  if (!job.value) {
+    addToast({
+      title: 'Lỗi',
+      message: 'Không tìm thấy thông tin công việc',
+      type: 'error'
+    })
+    return
+  }
+
+  // Tìm ID của nhà tuyển dụng, ưu tiên theo thứ tự: user_id, enterprise_id, enterprise
+  let employerId = null
+  
+  // Lấy các thông tin quan trọng của job object để kiểm tra
+  console.log('Thông tin job để nhắn tin:', {
+    id: job.value.id,
+    title: job.value.title,
+    user_id: job.value.user_id,
+    enterprise_id: job.value.enterprise_id, 
+    enterprise: job.value.enterprise,
+    enterprise_name: job.value.enterprise_name
+  })
+  
+  // Xác định employerId theo thứ tự ưu tiên
+  if (job.value.user_id) {
+    employerId = job.value.user_id
+    console.log('Sử dụng user_id:', employerId)
+  } else if (job.value.enterprise_id) {
+    employerId = job.value.enterprise_id
+    console.log('Sử dụng enterprise_id:', employerId)
+  } else if (job.value.enterprise) {
+    employerId = job.value.enterprise
+    console.log('Sử dụng enterprise:', employerId)
+  }
+  
+  // Kiểm tra xem có ID không
+  if (!employerId) {
     addToast({
       title: 'Lỗi',
       message: 'Không tìm thấy thông tin nhà tuyển dụng',
@@ -887,14 +932,31 @@ const chatWithEmployer = () => {
     return
   }
   
+  // Đảm bảo kết nối socket được khởi tạo trước khi chuyển hướng
+  if (!socketService.connected) {
+    console.log('Đang khởi tạo kết nối Socket trước khi chuyển trang...')
+    socketService.init()
+  }
+  
   // Logic để mở chat với nhà tuyển dụng
-  router.push({ 
-    name: 'candidate/messages',
-    params: { 
-      employerId: job.value.enterprise_id,
-      jobId: job.value.id
-    } 
-  })
+  console.log(`Chuyển hướng đến trang nhắn tin với nhà tuyển dụng ID: ${employerId}`)
+  
+  // Chờ một chút để đảm bảo socket đã kết nối
+  setTimeout(() => {
+    router.push({
+      name: 'candidate-messages',
+      query: { 
+        user: employerId 
+      }
+    }).catch(error => {
+      console.error('Lỗi chuyển hướng đến trang chat:', error)
+      addToast({
+        title: 'Lỗi chuyển hướng',
+        message: 'Không thể mở trang chat, vui lòng thử lại sau',
+        type: 'error'
+      })
+    })
+  }, 300)
 }
 
 onMounted(() => {
@@ -912,12 +974,27 @@ onMounted(() => {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
   }
   50% {
     opacity: .5;
+  }
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.03);
   }
 }
 </style>

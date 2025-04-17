@@ -16,6 +16,13 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isAuthenticated: (state) => !!state.token,
     
+    // Thêm getter isLoggedIn để đảm bảo nhất quán với isAuthenticated
+    isLoggedIn(state) {
+      console.log('isLoggedIn getter called');
+      // Kiểm tra cả token và thông tin người dùng
+      return !!state.token && !!this.userInfo;
+    },
+    
     // Giải mã JWT token để lấy thông tin
     decodedToken() {
       if (!this.token) return null
@@ -60,7 +67,7 @@ export const useAuthStore = defineStore('auth', {
     
     isCandidate() {
       const user = this.userInfo;
-      console.log('isCandidate getter - user:', user);
+      console.log('isCandidate getter - user:', user, 'is_applicant:', user?.is_applicant);
       return user && user.is_applicant === true;
     },
     
@@ -283,43 +290,51 @@ export const useAuthStore = defineStore('auth', {
     },
     
     updateUserFromToken() {
-      if (!this.token) {
-        console.log('updateUserFromToken: No token available');
-        return null;
-      }
-      
       try {
+        console.log('Đang cập nhật thông tin từ token');
+        // Lấy token từ localStorage nếu cần
+        if (!this.token) {
+          this.token = localStorage.getItem('token');
+          console.log('Lấy token từ localStorage:', !!this.token);
+        }
+        
+        if (!this.token) {
+          console.log('Không có token để cập nhật thông tin người dùng');
+          return false;
+        }
+        
+        // Giải mã token
         const decoded = this.decodedToken;
+        console.log('Decoded token:', decoded);
+        
         if (!decoded) {
           console.error('Không thể giải mã token');
-          return null;
+          return false;
         }
         
-        
-        // Cập nhật thông tin user từ token
+        // Cập nhật thông tin user
         this.user = {
           username: decoded.username || decoded.email || localStorage.getItem('username'),
-          user_id: decoded.user_id || decoded.id,
-          is_active: decoded.is_active || false,
-          role: decoded.role || 'candidate',
+          user_id: decoded.user_id,
+          is_active: decoded.is_active === true,
           is_admin: decoded.role === 'admin',
           is_recruiter: decoded.role === 'employer',
-          is_applicant: decoded.role === 'candidate'
+          is_applicant: decoded.role === 'candidate',
+          role: decoded.role
         };
         
-        console.log('User object sau khi cập nhật từ token:', this.user);
+        console.log('Đã cập nhật thông tin người dùng từ token:', this.user);
         
-        // Nếu tài khoản chưa kích hoạt, có thể xử lý tương ứng
-        if (!this.isActivated && decoded.role !== 'admin') {
-          this.error = 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt tài khoản.';
-          // Không tự động chuyển hướng ở đây để tránh lặp vô tận
-          console.log('Tài khoản chưa kích hoạt');
+        // Kiểm tra trạng thái kích hoạt
+        if (decoded.is_active === false) {
+          console.log('Tài khoản chưa được kích hoạt');
+          return false;
         }
         
-        return this.user;
+        return true;
       } catch (error) {
         console.error('Lỗi khi cập nhật thông tin từ token:', error);
-        return null;
+        return false;
       }
     },
     
