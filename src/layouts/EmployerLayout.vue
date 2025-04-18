@@ -1,11 +1,38 @@
 <template>
   <div class="min-h-screen bg-gray-50">
+    <!-- Mobile sidebar toggle button -->
+    <button 
+      v-if="!showSidebar"
+      @click="toggleSidebar" 
+      class="md:hidden fixed top-4 left-4 z-40 bg-white rounded-md shadow-md p-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+      aria-label="Mở menu"
+    >
+      <i class="fas fa-bars text-xl"></i>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div 
+      v-if="showSidebar" 
+      class="md:hidden fixed inset-0 bg-black/50 z-30 transition-opacity duration-300"
+      @click="closeSidebar"
+    ></div>
+
     <!-- Sidebar -->
-    <aside class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-30">
-      <div class="flex items-center justify-center h-16 border-b border-gray-200">
+    <aside 
+      class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-30 transition-transform duration-300 transform"
+      :class="{'translate-x-0': showSidebar, '-translate-x-full md:translate-x-0': !showSidebar}"
+    >
+      <div class="flex items-center justify-between h-16 border-b border-gray-200 px-4">
         <router-link to="/" class="text-xl font-bold text-blue-600 hover:text-blue-700">
           JobHub
         </router-link>
+        <button 
+          @click="closeSidebar" 
+          class="md:hidden text-gray-500 hover:text-gray-700"
+          aria-label="Đóng menu"
+        >
+          <i class="fas fa-times text-xl"></i>
+        </button>
       </div>
       
       <nav class="mt-6 px-4">
@@ -28,8 +55,9 @@
             to="/employer/profile"
             class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
             :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/profile') }"
+            @click="mobileLinkClick"
           >
-            <font-awesome-icon icon="user-circle" class="w-5 h-5 mr-3" />
+            <i class="fas fa-user-circle w-5 h-5 mr-3"></i>
             <span>Thông tin cá nhân</span>
           </router-link>
 
@@ -37,8 +65,9 @@
             to="/employer/company"
             class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
             :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/company') }"
+            @click="mobileLinkClick"
           >
-            <font-awesome-icon icon="building" class="w-5 h-5 mr-3" />
+            <i class="fas fa-building w-5 h-5 mr-3"></i>
             <span>Thông tin công ty</span>
           </router-link>
 
@@ -46,8 +75,9 @@
             to="/employer/posts"
             class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
             :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/jobs') }"
+            @click="mobileLinkClick"
           >
-            <font-awesome-icon icon="briefcase" class="w-5 h-5 mr-3" />
+            <i class="fas fa-briefcase w-5 h-5 mr-3"></i>
             <span>Tin tuyển dụng</span>
           </router-link>
 
@@ -55,6 +85,7 @@
             to="/employer/notifications"
             class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
             :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/notifications') }"
+            @click="mobileLinkClick"
           >
             <i class="fas fa-bell w-5 h-5 mr-3"></i>
             <span>Thông báo</span>
@@ -68,6 +99,7 @@
               'bg-blue-50 text-blue-600 font-medium': isCurrentRoute('/employer/messages'), 
               'bg-red-50': unreadMessageCount > 0 && !isCurrentRoute('/employer/messages') 
             }"
+            @click="mobileLinkClick"
           >
             <i class="fas fa-comment-dots w-5 h-5 mr-3" 
               :class="{ 'text-red-500': unreadMessageCount > 0 && !isCurrentRoute('/employer/messages') }"
@@ -85,18 +117,28 @@
             to="/employer/settings"
             class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
             :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/settings') }"
+            @click="mobileLinkClick"
           >
-            <font-awesome-icon icon="cog" class="w-5 h-5 mr-3" />
+            <i class="fas fa-cog w-5 h-5 mr-3"></i>
             <span>Cài đặt</span>
           </router-link>
+          
+          <!-- Nút đăng xuất cho mobile -->
+          <button
+            @click="logout"
+            class="md:hidden flex items-center w-full px-4 py-2 mt-4 text-gray-700 hover:bg-gray-50 rounded-md text-left"
+          >
+            <i class="fas fa-sign-out-alt w-5 h-5 mr-3"></i>
+            <span>Đăng xuất</span>
+          </button>
         </div>
       </nav>
     </aside>
 
     <!-- Main Content -->
-    <div class="ml-64">
+    <div class="transition-all duration-300 md:ml-64">
       <!-- Simplified Header -->
-      <header class="bg-white h-16 border-b border-gray-200">
+      <header class="bg-white h-16 border-b border-gray-200 sticky top-0 z-20">
         <div class="flex justify-end items-center h-full px-6">
           <!-- Notifications -->
           <NotificationDropdown />
@@ -133,9 +175,9 @@
               :aria-expanded="showDropdown"
             >
               <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <font-awesome-icon icon="user" class="text-gray-500" />
+                <i class="fas fa-user text-gray-500"></i>
               </div>
-              <font-awesome-icon icon="chevron-down" class="text-sm text-gray-400" />
+              <i class="fas fa-chevron-down text-sm text-gray-400"></i>
             </button>
 
             <!-- Dropdown Menu -->
@@ -149,7 +191,7 @@
                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 role="menuitem"
               >
-                <font-awesome-icon icon="sign-out-alt" class="mr-2" /> Đăng xuất
+                <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
               </a>
             </div>
           </div>
@@ -157,7 +199,7 @@
       </header>
 
       <!-- Page Content -->
-      <main class="p-6">
+      <main class="p-4 md:p-6">
         <router-view></router-view>
       </main>
     </div>
@@ -211,6 +253,7 @@ const chatStore = useChatStore()
 
 const showDropdown = ref(false)
 const profileDropdown = ref(null)
+const showSidebar = ref(window.innerWidth >= 768) // Mặc định hiển thị sidebar trên màn hình lớn
 
 const userFullName = computed(() => authStore.userFullName || 'Người dùng')
 const unreadMessageCount = computed(() => chatStore.unreadCount || 0)
@@ -236,8 +279,46 @@ const setupMessageCheck = () => {
   }, 30000) // Cập nhật mỗi 30 giây
 }
 
+// Mở/đóng sidebar
+const toggleSidebar = () => {
+  showSidebar.value = !showSidebar.value
+  if (showSidebar.value && window.innerWidth < 768) {
+    document.body.classList.add('overflow-hidden')
+  } else {
+    document.body.classList.remove('overflow-hidden')
+  }
+}
+
+// Đóng sidebar (chỉ dùng trên mobile)
+const closeSidebar = () => {
+  if (window.innerWidth < 768) {
+    showSidebar.value = false
+    document.body.classList.remove('overflow-hidden')
+  }
+}
+
+// Khi click vào link trên mobile
+const mobileLinkClick = () => {
+  if (window.innerWidth < 768) {
+    closeSidebar()
+  }
+}
+
+// Xử lý sự kiện resize cửa sổ
+const handleResize = () => {
+  if (window.innerWidth >= 768) {
+    showSidebar.value = true
+    document.body.classList.remove('overflow-hidden')
+  } else if (!showSidebar.value) {
+    // Đảm bảo sidebar đóng trên mobile khi resize từ desktop xuống
+    document.body.classList.remove('overflow-hidden')
+  }
+}
+
 onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('resize', handleResize)
+  
   if (!authStore.user) {
     authStore.updateUserFromToken()
   }
@@ -258,6 +339,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('resize', handleResize)
   
   // Xóa interval khi component bị hủy
   if (messageCheckInterval) {

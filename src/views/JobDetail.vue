@@ -1,16 +1,16 @@
 <template>
-  <div class="job-detail-container">
+  <div class="job-detail-container px-4 pb-8 pt-4">
     <div class="max-w-5xl mx-auto">
       <!-- Loading skeleton -->
       <div v-if="loading" class="space-y-6">
         <!-- Header skeleton -->
         <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
-          <div class="p-6">
-            <div class="h-8 bg-gray-200 rounded w-2/3 mb-4 animate-pulse"></div>
+          <div class="p-4 md:p-6">
+            <div class="h-8 bg-gray-200 rounded w-full md:w-2/3 mb-4 animate-pulse"></div>
             
-            <div class="grid grid-cols-3 gap-6 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6">
               <div v-for="i in 3" :key="i" class="flex items-center animate-pulse">
-                <div class="w-12 h-12 bg-gray-200 rounded-full mr-3"></div>
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-gray-200 rounded-full mr-3"></div>
                 <div class="flex-1">
                   <div class="h-4 bg-gray-200 rounded w-20 mb-2"></div>
                   <div class="h-5 bg-gray-200 rounded w-32"></div>
@@ -18,20 +18,20 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-between animate-pulse">
-              <div class="flex items-center gap-4">
-                <div class="h-10 w-32 bg-gray-200 rounded-lg"></div>
-                <div class="h-10 w-24 bg-gray-200 rounded-lg"></div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between animate-pulse">
+              <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-4 sm:mb-0">
+                <div class="h-10 w-full sm:w-32 bg-gray-200 rounded-lg"></div>
+                <div class="h-10 w-full sm:w-24 bg-gray-200 rounded-lg"></div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Content skeleton -->
-        <div class="grid grid-cols-3 gap-6">
-          <div class="col-span-2 space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 space-y-6">
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div class="p-6">
+              <div class="p-4 md:p-6">
                 <div class="flex gap-2 mb-4 animate-pulse">
                   <div class="h-6 w-24 bg-gray-200 rounded-full"></div>
                   <div class="h-6 w-24 bg-gray-200 rounded-full"></div>
@@ -52,7 +52,7 @@
           <div class="space-y-6">
             <!-- Company info skeleton -->
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div class="p-6 animate-pulse">
+              <div class="p-4 md:p-6 animate-pulse">
                 <div class="flex items-center mb-6">
                   <div class="w-16 h-16 bg-gray-200 rounded mr-4"></div>
                   <div class="flex-1">
@@ -69,7 +69,7 @@
 
             <!-- Additional info skeleton -->
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div class="p-6">
+              <div class="p-4 md:p-6">
                 <div class="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
                 <div class="space-y-4">
                   <div v-for="i in 5" :key="i" class="flex items-center animate-pulse">
@@ -85,7 +85,7 @@
 
             <!-- Skills skeleton -->
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div class="p-6">
+              <div class="p-4 md:p-6">
                 <div class="h-6 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
                 <div class="flex flex-wrap gap-2">
                   <div v-for="i in 5" :key="i" class="h-6 bg-gray-200 rounded-full w-24 animate-pulse"></div>
@@ -100,48 +100,48 @@
       <div v-else>
         <!-- Header section -->
         <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
-          <div class="p-6">
-            <h1 class="text-2xl font-bold text-gray-900 mb-4">{{ job.title }}</h1>
+          <div class="p-4 md:p-6">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900 mb-4">{{ job.title }}</h1>
             
-            <div class="grid grid-cols-3 gap-6 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6">
               <div class="flex items-center transform hover:scale-105 transition-transform">
-                <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-                  <font-awesome-icon icon="money-bill" class="text-emerald-500 text-xl" />
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                  <font-awesome-icon icon="money-bill" class="text-emerald-500 text-lg md:text-xl" />
                 </div>
                 <div>
-                  <div class="text-gray-500 text-sm">Mức lương</div>
-                  <div class="font-medium">{{ getSalaryDisplay(job) }}</div>
+                  <div class="text-gray-500 text-xs md:text-sm">Mức lương</div>
+                  <div class="font-medium text-sm md:text-base">{{ getSalaryDisplay(job) }}</div>
                 </div>
               </div>
 
               <div class="flex items-center transform hover:scale-105 transition-transform">
-                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <font-awesome-icon icon="map-marker-alt" class="text-blue-500 text-xl" />
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <font-awesome-icon icon="map-marker-alt" class="text-blue-500 text-lg md:text-xl" />
                 </div>
                 <div>
-                  <div class="text-gray-500 text-sm">Địa điểm</div>
-                  <div class="font-medium">{{ job.city }}{{ job.district ? `, ${job.district}` : '' }}</div>
+                  <div class="text-gray-500 text-xs md:text-sm">Địa điểm</div>
+                  <div class="font-medium text-sm md:text-base truncate max-w-[180px]">{{ job.city }}{{ job.district ? `, ${job.district}` : '' }}</div>
                 </div>
               </div>
 
               <div class="flex items-center transform hover:scale-105 transition-transform">
-                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                  <font-awesome-icon icon="briefcase" class="text-purple-500 text-xl" />
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                  <font-awesome-icon icon="briefcase" class="text-purple-500 text-lg md:text-xl" />
                 </div>
                 <div>
-                  <div class="text-gray-500 text-sm">Kinh nghiệm</div>
-                  <div class="font-medium">{{ job.experience }}</div>
+                  <div class="text-gray-500 text-xs md:text-sm">Kinh nghiệm</div>
+                  <div class="font-medium text-sm md:text-base">{{ job.experience }}</div>
                 </div>
               </div>
             </div>
 
-            <div class="flex items-center justify-between">
-              <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mb-4 sm:mb-0">
                 <base-button
                   text="Ứng tuyển ngay"
                   variant="primary"
                   size="md"
-                  class="relative w-full sm:w-auto px-6 py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 rounded-md overflow-hidden"
+                  class="relative w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 rounded-md overflow-hidden"
                   :class="{'animate-pulse-gentle': !authStore.isLoggedIn}"
                   :disabled="isApplied"
                   @click="applyForJob"
@@ -155,7 +155,7 @@
                   type="button"
                   variant="secondary" 
                   size="md"
-                  class="w-full sm:w-auto px-6 py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:border-blue-300 shadow-md hover:shadow-lg"
+                  class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:border-blue-300 shadow-md hover:shadow-lg"
                   @click="chatWithEmployer"
                 >
                   <font-awesome-icon icon="comment-dots" class="text-blue-600" />
@@ -183,33 +183,33 @@
         </div>
 
         <!-- Main content -->
-        <div class="grid grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Left column -->
-          <div class="col-span-2 space-y-6">
+          <div class="lg:col-span-2 space-y-6">
             <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-              <div class="p-6">
-                <div class="flex items-center gap-2 mb-4">
-                  <span class="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors">
+              <div class="p-4 md:p-6">
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                  <span class="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-xs md:text-sm hover:bg-gray-200 transition-colors">
                     {{ job.position_name }}
                   </span>
-                  <span class="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors">
+                  <span class="text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-xs md:text-sm hover:bg-gray-200 transition-colors">
                     {{ job.field_name }}
                   </span>
                 </div>
 
                 <section class="mb-8">
-                  <h2 class="text-xl font-bold text-gray-900 mb-4">Mô tả công việc</h2>
-                  <div class="prose text-gray-600 whitespace-pre-line">{{ job.description }}</div>
+                  <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Mô tả công việc</h2>
+                  <div class="prose text-gray-600 text-sm md:text-base whitespace-pre-line">{{ job.description }}</div>
                 </section>
 
                 <section class="mb-8">
-                  <h2 class="text-xl font-bold text-gray-900 mb-4">Yêu cầu ứng viên</h2>
-                  <div class="prose text-gray-600 whitespace-pre-line">{{ job.required }}</div>
+                  <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Yêu cầu ứng viên</h2>
+                  <div class="prose text-gray-600 text-sm md:text-base whitespace-pre-line">{{ job.required }}</div>
                 </section>
 
                 <section>
-                  <h2 class="text-xl font-bold text-gray-900 mb-4">Quyền lợi</h2>
-                  <div class="prose text-gray-600 whitespace-pre-line">{{ job.interest }}</div>
+                  <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Quyền lợi</h2>
+                  <div class="prose text-gray-600 text-sm md:text-base whitespace-pre-line">{{ job.interest }}</div>
                 </section>
               </div>
             </div>
@@ -219,30 +219,30 @@
           <div class="space-y-6">
             <!-- Company info -->
             <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-              <div class="p-6">
+              <div class="p-4 md:p-6">
                 <div class="flex items-center mb-6">
                   <img 
                     :src="job.enterprise_logo" 
                     alt="Company logo" 
-                    class="w-16 h-16 object-contain bg-white rounded p-1" 
+                    class="w-14 h-14 md:w-16 md:h-16 object-contain bg-white rounded p-1" 
                     @error="handleImageError"
                   />
-                  <div>
-                    <h3 class="font-bold text-gray-900">{{ job.enterprise_name }}</h3>
-                    <div class="text-gray-600 text-sm mt-1">{{ job.field_name }}</div>
+                  <div class="ml-3">
+                    <h3 class="font-bold text-gray-900 text-sm md:text-base">{{ job.enterprise_name }}</h3>
+                    <div class="text-gray-600 text-xs md:text-sm mt-1">{{ job.field_name }}</div>
                   </div>
                 </div>
 
-                <div class="space-y-4 text-gray-600">
+                <div class="space-y-4 text-gray-600 text-sm md:text-base">
                   <div class="flex items-start">
-                    <font-awesome-icon icon="map-marker-alt" class="w-5 h-5 mr-3 mt-1" />
+                    <font-awesome-icon icon="map-marker-alt" class="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
                     <span>{{ job.detail_address }}</span>
                   </div>
                   <router-link 
                     :to="{ name: 'EnterpriseDetail', params: { id: job.enterprise } }" 
                     class="text-blue-600 hover:underline flex items-center group"
                   >
-                    <font-awesome-icon icon="external-link-alt" class="w-5 h-5 mr-3 transition-transform group-hover:translate-x-1" />
+                    <font-awesome-icon icon="external-link-alt" class="w-5 h-5 mr-3 transition-transform group-hover:translate-x-1 flex-shrink-0" />
                     Xem trang công ty
                   </router-link>
                 </div>
@@ -251,56 +251,56 @@
 
             <!-- Additional info -->
             <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-              <div class="p-6">
-                <h3 class="font-bold text-gray-900 mb-4">Thông tin chung</h3>
+              <div class="p-4 md:p-6">
+                <h3 class="font-bold text-gray-900 mb-4 text-base md:text-lg">Thông tin chung</h3>
                 <div class="space-y-4">
                   <div class="flex items-center transform hover:scale-105 transition-transform">
-                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                       <font-awesome-icon icon="graduation-cap" class="text-emerald-500" />
                     </div>
                     <div>
-                      <div class="text-gray-500 text-sm">Cấp bậc</div>
-                      <div class="font-medium">{{ job.level }}</div>
+                      <div class="text-gray-500 text-xs md:text-sm">Cấp bậc</div>
+                      <div class="font-medium text-sm md:text-base">{{ job.level }}</div>
                     </div>
                   </div>
 
                   <div class="flex items-center transform hover:scale-105 transition-transform">
-                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                       <font-awesome-icon icon="users" class="text-purple-500" />
                     </div>
                     <div>
-                      <div class="text-gray-500 text-sm">Số lượng tuyển</div>
-                      <div class="font-medium">{{ job.quantity }} người</div>
+                      <div class="text-gray-500 text-xs md:text-sm">Số lượng tuyển</div>
+                      <div class="font-medium text-sm md:text-base">{{ job.quantity }} người</div>
                     </div>
                   </div>
 
                   <div class="flex items-center transform hover:scale-105 transition-transform">
-                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                       <font-awesome-icon icon="clock" class="text-orange-500" />
                     </div>
                     <div>
-                      <div class="text-gray-500 text-sm">Thời gian làm việc</div>
-                      <div class="font-medium">{{ job.time_working }}</div>
+                      <div class="text-gray-500 text-xs md:text-sm">Thời gian làm việc</div>
+                      <div class="font-medium text-sm md:text-base">{{ job.time_working }}</div>
                     </div>
                   </div>
 
                   <div class="flex items-center transform hover:scale-105 transition-transform">
-                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                       <font-awesome-icon icon="briefcase" class="text-orange-500" />
                     </div>
                     <div>
-                      <div class="text-gray-500 text-sm">Hình thức làm việc</div>
-                      <div class="font-medium">{{ job.type_working }}</div>
+                      <div class="text-gray-500 text-xs md:text-sm">Hình thức làm việc</div>
+                      <div class="font-medium text-sm md:text-base">{{ job.type_working }}</div>
                     </div>
                   </div>
 
                   <div class="flex items-center transform hover:scale-105 transition-transform">
-                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                       <font-awesome-icon icon="calendar" class="text-orange-500" />
                     </div>
                     <div>
-                      <div class="text-gray-500 text-sm">Hạn nộp hồ sơ</div>
-                      <div class="font-medium">{{ new Date(job.deadline).toLocaleDateString('vi-VN') }}</div>
+                      <div class="text-gray-500 text-xs md:text-sm">Hạn nộp hồ sơ</div>
+                      <div class="font-medium text-sm md:text-base">{{ new Date(job.deadline).toLocaleDateString('vi-VN') }}</div>
                     </div>
                   </div>
                 </div>
@@ -309,13 +309,13 @@
 
             <!-- Skills -->
             <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-              <div class="p-6">
-                <h3 class="font-bold text-gray-900 mb-4">Kỹ năng cần có</h3>
+              <div class="p-4 md:p-6">
+                <h3 class="font-bold text-gray-900 mb-4 text-base md:text-lg">Kỹ năng cần có</h3>
                 <div class="flex flex-wrap gap-2">
                   <span 
                     v-for="skill in job.skills" 
                     :key="skill"
-                    class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition-colors cursor-pointer"
+                    class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs md:text-sm hover:bg-gray-200 transition-colors cursor-pointer"
                   >
                     {{ skill }}
                   </span>
@@ -328,24 +328,24 @@
     </div>
 
     <!-- Modal Ứng tuyển -->
-    <div v-if="showApplyModal" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div v-if="showApplyModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div class="absolute inset-0 bg-black/50" @click="closeApplyModal"></div>
-      <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+      <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all duration-300"
         :class="{'translate-y-0 opacity-100 scale-100': showApplyModal, 'translate-y-4 opacity-0 scale-95': !showApplyModal}">
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b">
-          <h3 class="text-xl font-bold text-gray-900">Ứng tuyển vị trí: {{ job.title }}</h3>
+          <h3 class="text-lg md:text-xl font-bold text-gray-900 pr-6">Ứng tuyển vị trí: {{ job.title }}</h3>
           <button @click="closeApplyModal" class="text-gray-400 hover:text-gray-600">
             <font-awesome-icon icon="times" class="text-xl" />
           </button>
         </div>
         
         <!-- Form -->
-        <form @submit.prevent="submitApplication" class="p-6">
+        <form @submit.prevent="submitApplication" class="p-4 md:p-6">
           <!-- Thông báo lỗi -->
           <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
             <div class="flex items-center">
-              <font-awesome-icon icon="exclamation-circle" class="mr-2" />
+              <font-awesome-icon icon="exclamation-circle" class="mr-2 flex-shrink-0" />
               <span>{{ errorMessage }}</span>
             </div>
           </div>
@@ -407,7 +407,7 @@
             <!-- Upload CV -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">CV của bạn <span class="text-red-500">*</span></label>
-              <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 transition-all"
+              <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 md:p-6 transition-all"
                 :class="{'border-blue-500 bg-blue-50': isDragging, 'border-red-300': applyErrors.cv}"
                 @dragover.prevent="isDragging = true"
                 @dragleave.prevent="isDragging = false"
@@ -415,20 +415,20 @@
               >
                 <div v-if="cvFile" class="flex items-center justify-between">
                   <div class="flex items-center">
-                    <font-awesome-icon icon="file-pdf" class="text-red-500 text-2xl mr-3" />
-                    <div>
-                      <p class="font-medium text-gray-900">{{ cvFile.name }}</p>
-                      <p class="text-sm text-gray-500">{{ formatFileSize(cvFile.size) }}</p>
+                    <font-awesome-icon icon="file-pdf" class="text-red-500 text-xl mr-3 flex-shrink-0" />
+                    <div class="truncate">
+                      <p class="font-medium text-gray-900 text-sm md:text-base truncate">{{ cvFile.name }}</p>
+                      <p class="text-xs md:text-sm text-gray-500">{{ formatFileSize(cvFile.size) }}</p>
                     </div>
                   </div>
-                  <button type="button" @click="removeCvFile" class="text-gray-400 hover:text-red-500">
+                  <button type="button" @click="removeCvFile" class="text-gray-400 hover:text-red-500 ml-2 flex-shrink-0">
                     <font-awesome-icon icon="times" />
                   </button>
                 </div>
                 
                 <div v-else class="flex flex-col items-center justify-center">
-                  <font-awesome-icon icon="cloud-upload-alt" class="text-gray-400 text-3xl mb-3" />
-                  <p class="text-center text-gray-500">Kéo thả file CV của bạn vào đây hoặc
+                  <font-awesome-icon icon="cloud-upload-alt" class="text-gray-400 text-2xl md:text-3xl mb-3" />
+                  <p class="text-center text-gray-500 text-sm md:text-base">Kéo thả file CV của bạn vào đây hoặc
                     <label class="text-blue-600 cursor-pointer hover:underline">
                       tải lên từ máy tính
                       <input 
@@ -439,7 +439,7 @@
                       >
                     </label>
                   </p>
-                  <p class="text-sm text-gray-400 mt-1">Chấp nhận PDF, DOCX (Tối đa 5MB)</p>
+                  <p class="text-xs md:text-sm text-gray-400 mt-1">Chấp nhận PDF, DOCX (Tối đa 5MB)</p>
                 </div>
               </div>
               <p v-if="applyErrors.cv" class="mt-1 text-sm text-red-500">{{ applyErrors.cv }}</p>
@@ -447,20 +447,20 @@
           </div>
           
           <!-- Submit button -->
-          <div class="mt-6 flex justify-end">
+          <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <button 
               type="button" 
               @click="closeApplyModal" 
-              class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3"
+              class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
               Hủy
             </button>
             <button 
               type="submit" 
-              class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed mb-2 sm:mb-0"
               :disabled="isSubmitting"
             >
-              <span v-if="isSubmitting" class="flex items-center">
+              <span v-if="isSubmitting" class="flex items-center justify-center">
                 <font-awesome-icon icon="circle-notch" class="fa-spin mr-2" />
                 Đang gửi...
               </span>
@@ -472,28 +472,28 @@
     </div>
 
     <!-- Modal thông báo cần đăng nhập -->
-    <div v-if="showLoginRequiredModal" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div v-if="showLoginRequiredModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div class="absolute inset-0 bg-black/50" @click="showLoginRequiredModal = false"></div>
-      <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300"
+      <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300"
         :class="{'translate-y-0 opacity-100 scale-100': showLoginRequiredModal, 'translate-y-4 opacity-0 scale-95': !showLoginRequiredModal}">
-        <div class="p-6">
+        <div class="p-4 md:p-6">
           <div class="flex items-center justify-center mb-4">
             <div class="bg-yellow-100 p-3 rounded-full">
-              <font-awesome-icon icon="exclamation-triangle" class="text-yellow-500 text-2xl" />
+              <font-awesome-icon icon="exclamation-triangle" class="text-yellow-500 text-xl md:text-2xl" />
             </div>
           </div>
           <h3 class="text-lg font-medium text-center text-gray-900 mb-2">Yêu cầu đăng nhập</h3>
           <p class="text-gray-500 text-center mb-6">Bạn cần đăng nhập để có thể ứng tuyển vào vị trí này</p>
-          <div class="flex justify-center space-x-4">
+          <div class="flex flex-col sm:flex-row justify-center gap-2 sm:space-x-4">
             <button
               @click="showLoginRequiredModal = false"
-              class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 order-2 sm:order-1"
             >
               Để sau
             </button>
             <button
               @click="redirectToLogin"
-              class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 order-1 sm:order-2 mb-2 sm:mb-0"
             >
               Đăng nhập ngay
             </button>
@@ -505,7 +505,7 @@
     <!-- Toast Notification -->
     <div 
       v-if="showNotification" 
-      class="fixed bottom-4 right-4 z-50 max-w-md shadow-xl rounded-lg overflow-hidden transform transition-all duration-300"
+      class="fixed bottom-4 right-4 z-50 max-w-md w-full sm:w-auto shadow-xl rounded-lg overflow-hidden transform transition-all duration-300"
       :class="{
         'translate-y-0 opacity-100': showNotification,
         'translate-y-4 opacity-0': !showNotification,
@@ -529,9 +529,9 @@
             }" 
           />
         </div>
-        <div class="flex-1">
+        <div class="flex-1 mr-2">
           <p 
-            class="font-medium"
+            class="font-medium text-sm"
             :class="{
               'text-green-800': notificationType === 'success',
               'text-red-800': notificationType === 'error'
@@ -542,12 +542,21 @@
         </div>
         <button 
           @click="showNotification = false" 
-          class="ml-3 flex-shrink-0 text-gray-400 hover:text-gray-600"
+          class="flex-shrink-0 text-gray-400 hover:text-gray-600"
         >
           <font-awesome-icon icon="times" />
         </button>
       </div>
     </div>
+    
+    <!-- Nút quay lại -->
+    <button 
+      @click="$router.go(-1)" 
+      class="fixed bottom-6 left-6 z-30 bg-white shadow-lg rounded-full p-3 hover:shadow-xl transition-all duration-300 focus:outline-none"
+      aria-label="Quay lại"
+    >
+      <font-awesome-icon icon="arrow-left" class="text-gray-600" />
+    </button>
   </div>
 </template>
 

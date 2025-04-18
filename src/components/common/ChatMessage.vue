@@ -1,14 +1,14 @@
 <template>
-  <div :class="['flex', isCurrentUser ? 'justify-end' : 'justify-start', 'mb-4']">
+  <div :class="['flex', isCurrentUser ? 'justify-end' : 'justify-start', 'mb-3']">
     <div
       :class="[
-        'max-w-[70%] rounded-lg px-4 py-2 break-words',
+        'max-w-[70%] rounded-2xl px-4 py-2.5 break-words shadow-sm',
         isCurrentUser 
           ? 'bg-blue-500 text-white rounded-br-none' 
           : 'bg-gray-100 text-gray-800 rounded-bl-none'
       ]"
     >
-      <p class="whitespace-pre-wrap">{{ content }}</p>
+      <p class="whitespace-pre-wrap text-[15px]">{{ content }}</p>
       <div :class="['text-xs mt-1 flex justify-end items-center', isCurrentUser ? 'text-blue-100' : 'text-gray-500']">
         {{ formattedTime }}
         <span v-if="isCurrentUser" class="ml-1">

@@ -15,10 +15,10 @@
     
     <div 
       v-show="isOpen" 
-      class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 border overflow-hidden"
+      class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 border-b overflow-hidden"
       style="max-height: 70vh;"
     >
-      <div class="p-3 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+      <div class="p-3 flex justify-between items-center sticky top-0 bg-white z-10">
         <h3 class="font-medium text-gray-800 text-lg">Tin nhắn</h3>
         <div class="flex items-center space-x-2">
           <button 
@@ -29,11 +29,12 @@
             <i class="fas fa-edit text-gray-500"></i>
           </button>
           <router-link 
-            :to="{ name: userRole === 'employer' ? 'employer-messages' : 'candidate-messages' }" 
-            class="text-blue-500 hover:text-blue-700 text-sm underline"
-          >
-            Xem tất cả
-          </router-link>
+                to="/candidate/messages" 
+                class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
+                title="Tin nhắn"
+              >
+              Xem tất cả
+              </router-link>
         </div>
       </div>
       
@@ -112,6 +113,7 @@
 import { ref, onMounted, onUnmounted, computed, inject, watch } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import { useChatStore } from '../../stores/chat';
+import socketService from '../../services/socketService';
 
 const dropdown = ref(null);
 const isOpen = ref(false);
@@ -138,6 +140,52 @@ watch(() => chatManager, (newVal, oldVal) => {
 const userRole = computed(() => authStore.userRole);
 const unreadCount = computed(() => chatStore.unreadCount);
 const currentUserId = computed(() => authStore.userInfo?.user_id);
+
+// Xử lý khi nhận được tin nhắn mới qua socket
+const handleSocketMessage = (data) => {
+  console.log('ChatDropdown nhận được tin nhắn mới qua socket:', data);
+  
+  if (data && (data.type === 'chat_message' || data.type === 'new_message')) {
+    const message = data.message || data.data;
+    if (!message) return;
+    
+    // Cập nhật số lượng tin nhắn chưa đọc
+    chatStore.fetchUnreadMessages();
+    
+    // Thêm tin nhắn mới vào danh sách nếu không phải tin nhắn của chính mình
+    if (message.sender !== currentUserId.value) {
+      // Đảm bảo không thêm trùng tin nhắn
+      const messageExists = recentMessages.value.some(msg => msg.id === message.id);
+      
+      if (!messageExists) {
+        // Lấy thông tin người gửi
+        const userId = message.sender;
+        chatStore.fetchUserInfo(userId).then(userInfo => {
+          const newMessage = {
+            id: message.id,
+            senderId: message.sender,
+            sender: message.sender,
+            recipient: message.recipient,
+            content: message.content,
+            created_at: message.created_at || new Date().toISOString(),
+            is_read: false,
+            senderName: userInfo?.fullname || `Người dùng #${userId}`,
+            avatar: userInfo?.avatar || null,
+            isOnline: true
+          };
+          
+          // Thêm vào đầu danh sách
+          recentMessages.value = [newMessage, ...recentMessages.value.filter(msg => msg.id !== newMessage.id)];
+          
+          // Hiển thị thông báo (nếu cần)
+          if (!isOpen.value) {
+            // Có thể thêm thông báo âm thanh hoặc animation ở đây
+          }
+        });
+      }
+    }
+  }
+};
 
 // Lọc tin nhắn theo tìm kiếm
 const filteredMessages = computed(() => {
@@ -173,14 +221,31 @@ const toggleDropdown = async () => {
 const loadUnreadMessages = async () => {
   try {
     const messages = await chatStore.fetchUnreadMessages();
+    
+    // Tạo danh sách người dùng cần lấy thông tin
+    const userIdsToFetch = [];
+    for (const msg of messages) {
+      if (!chatStore.userInfoCache[msg.sender]) {
+        userIdsToFetch.push(msg.sender);
+      }
+    }
+    
+    // Tải thông tin người dùng một lần cho tất cả IDs
+    if (userIdsToFetch.length > 0) {
+      await Promise.all(userIdsToFetch.map(id => chatStore.fetchUserInfo(id)));
+    }
+    
     // Chỉ lấy tin nhắn chưa đọc để bổ sung vào danh sách
     const unreadMessages = messages.map(msg => {
+      // Lấy thông tin người dùng từ cache
+      const userInfo = chatStore.userInfoCache[msg.sender];
+      
       return {
         ...msg,
         senderId: msg.sender,
-        senderName: '', // Sẽ được cập nhật sau
+        senderName: userInfo?.fullname || `Người dùng #${msg.sender}`,
         isOnline: false,
-        avatar: null
+        avatar: userInfo?.avatar || null
       };
     });
     
@@ -190,6 +255,9 @@ const loadUnreadMessages = async () => {
         recentMessages.value.push(msg);
       }
     });
+    
+    // Sắp xếp lại danh sách theo thời gian
+    recentMessages.value.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (error) {
     console.error('Lỗi khi tải tin nhắn chưa đọc:', error);
   }
@@ -250,8 +318,14 @@ const loadRecentConversations = async () => {
     // Sắp xếp theo thời gian gần nhất
     conversations.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     
-    // Cập nhật danh sách tin nhắn
-    recentMessages.value = conversations;
+    // Cập nhật danh sách tin nhắn, đảm bảo không trùng lặp
+    const existingIds = new Set(recentMessages.value.map(msg => msg.id));
+    const newMessages = conversations.filter(msg => !existingIds.has(msg.id));
+    
+    recentMessages.value = [...recentMessages.value, ...newMessages];
+    
+    // Sắp xếp lại danh sách theo thời gian
+    recentMessages.value.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     
   } catch (error) {
     console.error('Lỗi khi tải cuộc trò chuyện gần đây:', error);
@@ -270,8 +344,6 @@ const openChatPopup = (userId) => {
   
   // Đóng dropdown
   isOpen.value = false;
-  
-  console.log('openChatFunction chi tiết:', openChatFunction);
   
   // Thử sử dụng hàm openChat được inject
   if (openChatFunction) {
@@ -304,9 +376,25 @@ const openChatPopup = (userId) => {
     }
   } else {
     console.warn('Không tìm thấy chatManager hoặc openChat, không thể mở box chat.');
-    console.log('chatManager:', chatManager);
-    console.log('openChatFunction:', openChatFunction);
-    console.log('Thông tin người dùng:', userId);
+  }
+};
+
+// Khởi tạo kết nối Socket
+const initSocketConnection = () => {
+  if (!socketService.connected) {
+    console.log('Khởi tạo kết nối socket trong ChatDropdown');
+    socketService.init();
+    
+    // Kiểm tra trạng thái kết nối sau 2 giây
+    setTimeout(() => {
+      if (!socketService.connected) {
+        console.log('⚠️ Socket chưa kết nối sau 2 giây, thử kết nối lại...');
+        socketService.disconnect();
+        socketService.init();
+      } else {
+        console.log('✅ Socket đã kết nối thành công!');
+      }
+    }, 2000);
   }
 };
 
@@ -346,15 +434,40 @@ const formatTime = (dateString) => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   
+  // Khởi tạo kết nối socket
+  initSocketConnection();
+  
+  // Đăng ký handler cho tin nhắn mới nhận được qua socket
+  socketService.onMessage(handleSocketMessage);
+  
   // Lấy số lượng tin nhắn chưa đọc khi component được mounted
   chatStore.fetchUnreadMessages();
   
-  console.log('ChatDropdown mounted - chatManager:', chatManager);
-  console.log('ChatDropdown mounted - openChat function:', openChatFunction);
+  // Lấy các cuộc trò chuyện gần đây
+  loadRecentConversations();
+  
+  // Thiết lập kiểm tra kết nối socket định kỳ
+  const socketCheckInterval = setInterval(() => {
+    if (!socketService.connected) {
+      console.log('⚠️ Socket đã ngắt kết nối, thử kết nối lại...');
+      socketService.init();
+    }
+  }, 30000); // Kiểm tra mỗi 30 giây
+  
+  // Lưu interval để có thể clear khi component unmounted
+  const intervalId = socketCheckInterval;
+  
+  // Đảm bảo hủy interval khi component unmounted
+  onUnmounted(() => {
+    clearInterval(intervalId);
+  });
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  
+  // Hủy đăng ký handler tin nhắn
+  socketService.offMessage(handleSocketMessage);
 });
 </script>
 

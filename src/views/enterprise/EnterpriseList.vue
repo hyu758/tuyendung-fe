@@ -23,7 +23,7 @@
           </button>
         </div>
 
-        <div :class="{'hidden': !isFilterVisible && window.innerWidth < 1024}" class="lg:block">
+        <div :class="{'hidden': !isFilterVisible && isMobileView}" class="lg:block">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             <!-- Search input -->
             <div>
@@ -307,14 +307,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, computed } from 'vue'
+import { ref, reactive, onMounted, watch, computed, onUnmounted } from 'vue'
 import { useEnterpriseStore } from '../../stores/enterprise'
 import { debounce } from 'lodash'
+import { useRouter, useRoute } from 'vue-router'
+import { useToast } from '../../composables/useToast'
 
 const enterpriseStore = useEnterpriseStore()
 const loading = ref(true)
 const enterprises = ref([])
-const isFilterVisible = ref(window.innerWidth >= 1024) // Mặc định hiển thị trên desktop
+const isFilterVisible = ref(true)
+const isMobileView = ref(false)
 
 const pagination = ref({
   currentPage: 1,
@@ -404,12 +407,24 @@ const changePage = (page) => {
   }
 }
 
-// Theo dõi thay đổi kích thước màn hình
-const handleResize = () => {
-  if (window.innerWidth >= 1024) {
-    isFilterVisible.value = true
-  }
+// Kiểm tra kích thước màn hình và cập nhật isMobileView
+const checkScreenSize = () => {
+  isMobileView.value = window.innerWidth < 1024
 }
+
+onMounted(() => {
+  // Kiểm tra kích thước màn hình khi component mounted
+  checkScreenSize()
+  
+  // Thêm event listener cho resize
+  window.addEventListener('resize', checkScreenSize)
+  loadEnterprises()
+})
+
+onUnmounted(() => {
+  // Loại bỏ event listener khi component unmounted
+  window.removeEventListener('resize', checkScreenSize)
+})
 
 // Watch cho các tham số tìm kiếm
 watch([
@@ -417,14 +432,6 @@ watch([
   () => searchParams.field,
   () => searchParams.scale
 ], handleSearch)
-
-onMounted(() => {
-  loadEnterprises()
-  window.addEventListener('resize', handleResize)
-})
-
-// Dọn dẹp sự kiện khi component unmount
-
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@
   <div class="relative" ref="dropdown">
     <button 
       @click="toggleDropdown"
-      class="text-gray-500 hover:text-gray-600 relative"
+      class="text-gray-500 hover:text-gray-600 relative notification-dropdown-trigger"
     >
       <i class="fas fa-bell text-xl"></i>
       <span 

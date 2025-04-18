@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="flex items-center p-3 border-b cursor-pointer transition-colors duration-150"
+    class="flex items-center px-4 py-3 cursor-pointer transition-colors border-b border-gray-100"
     :class="{ 
       'bg-blue-50': isActive,
       'hover:bg-gray-50': !isActive,
@@ -9,10 +9,10 @@
     @click="handleSelect"
   >
     <div class="flex-shrink-0 mr-3 relative">
-      <div v-if="avatar" class="w-12 h-12 rounded-full overflow-hidden border border-gray-200">
+      <div v-if="avatar" class="w-12 h-12 rounded-full overflow-hidden shadow-sm">
         <img :src="avatar" alt="Avatar" class="w-full h-full object-cover" />
       </div>
-      <div v-else class="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+      <div v-else class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
         {{ getInitials(displayName) }}
       </div>
       <div v-if="isOnline" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -20,14 +20,28 @@
     
     <div class="flex-1 min-w-0">
       <div class="flex justify-between items-center">
-        <h3 class="text-sm font-medium text-gray-900 truncate">{{ displayName }}</h3>
-        <span class="text-xs text-gray-500">{{ formattedTime }}</span>
+        <h3 
+          class="text-sm font-medium truncate"
+          :class="[
+            unreadCount > 0 ? 'text-gray-900 font-semibold' : 'text-gray-700'
+          ]"
+        >
+          {{ displayName }}
+        </h3>
+        <span 
+          class="text-xs text-gray-500"
+          :class="[
+            unreadCount > 0 ? 'text-blue-600 font-semibold' : 'text-gray-500'
+          ]"
+        >
+          {{ formattedTime }}
+        </span>
       </div>
       <div class="flex items-center mt-1">
         <p 
           class="text-sm truncate flex-1" 
           :class="{ 
-            'text-gray-600 font-medium': !isRead && unreadCount > 0,
+            'text-gray-700 font-medium': !isRead && unreadCount > 0,
             'text-gray-500': isRead || unreadCount === 0
           }"
         >
@@ -35,7 +49,7 @@
         </p>
         <span 
           v-if="unreadCount > 0"
-          class="ml-2 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center"
+          class="ml-2 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-sm"
         >
           {{ unreadCount > 99 ? '99+' : unreadCount }}
         </span>
@@ -120,7 +134,14 @@ const formattedTime = computed(() => {
 // Lấy chữ cái đầu của tên để hiển thị avatar
 const getInitials = (name) => {
   if (!name) return '?';
-  return name.charAt(0).toUpperCase();
+  
+  // Lấy chữ cái đầu tiên của mỗi từ trong tên đầy đủ (tối đa 2 ký tự)
+  return name
+    .split(' ')
+    .filter(word => word.length > 0)
+    .map(word => word.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join('');
 };
 
 // Xử lý khi chọn cuộc trò chuyện

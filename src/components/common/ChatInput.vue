@@ -1,11 +1,11 @@
 <template>
-  <div class="border-t py-3 px-4">
+  <div class="border-t border-gray-100 py-3 px-4 bg-white">
     <form @submit.prevent="sendMessage" class="flex items-end gap-2">
       <div class="relative flex-1">
         <textarea
           v-model="messageContent"
           placeholder="Nhập tin nhắn..."
-          class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          class="w-full border-gray-200 border rounded-2xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-gray-50"
           :class="{ 'h-10': lineCount === 1, 'h-20': lineCount > 1 }"
           @keydown.enter.prevent="onEnterPress"
           @input="updateLineCount"
@@ -14,21 +14,11 @@
       </div>
       <button
         type="submit"
-        class="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center"
+        class="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-11 h-11 flex items-center justify-center shadow-sm transition-colors"
+        :class="{'opacity-50 cursor-not-allowed': !canSend, 'hover:shadow-md': canSend}"
         :disabled="!canSend"
       >
-        <i class="fas fa-paper-plane"></i>
-      </button>
-      
-      <!-- Nút debug WebSocket - chỉ hiển thị trong môi trường dev -->
-      <button 
-        v-if="isDevMode"
-        type="button" 
-        @click="checkSocketConnection"
-        class="text-xs text-gray-500 hover:text-gray-700 ml-1"
-        title="Kiểm tra kết nối WebSocket"
-      >
-        <i class="fas fa-plug" :class="{ 'text-green-500': socketConnected, 'text-red-500': !socketConnected }"></i>
+        <i class="fab fa-telegram-plane"></i>
       </button>
     </form>
   </div>
@@ -51,7 +41,6 @@ const messageContent = ref('');
 const textarea = ref(null);
 const lineCount = ref(1);
 const socketConnected = ref(false);
-const isDevMode = ref(import.meta.env.DEV || true); // Hiển thị trong môi trường dev hoặc luôn hiển thị để debug
 
 const canSend = computed(() => {
   return messageContent.value.trim().length > 0 && !props.loading;

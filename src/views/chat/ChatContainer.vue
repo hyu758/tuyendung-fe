@@ -1,15 +1,15 @@
 <template>
-  <div class="h-full flex bg-white shadow-lg rounded-lg overflow-hidden">
+  <div class="h-full flex bg-white shadow-md rounded-lg overflow-hidden">
     <!-- Sidebar với danh sách cuộc trò chuyện -->
-    <div class="w-1/3 border-r flex flex-col">
-      <div class="py-3 px-4 border-b">
+    <div class="w-1/3 border-r border-gray-100 flex flex-col">
+      <div class="py-3 px-4 border-b border-gray-100 bg-white">
         <h2 class="text-lg font-semibold text-gray-800">Tin nhắn</h2>
         <div class="relative mt-2">
           <input
             type="text"
             v-model="searchQuery"
             placeholder="Tìm kiếm cuộc trò chuyện..."
-            class="w-full border rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full border-gray-200 border rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-gray-50"
           />
           <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
             <i class="fas fa-search"></i>
@@ -39,6 +39,7 @@
             :unread-count="conversation.unreadCount"
             :is-online="conversation.isOnline"
             :is-active="activeConversationId === conversation.userId"
+            :userId="conversation.userId"
             @select="selectConversation(conversation.userId)"
           />
         </template>
@@ -49,14 +50,14 @@
     <div class="w-2/3 flex flex-col">
       <template v-if="activeConversationId">
         <!-- Header cuộc trò chuyện -->
-        <div class="py-3 px-4 border-b flex items-center justify-between">
+        <div class="py-3 px-4 border-b border-gray-100 flex items-center justify-between bg-white shadow-sm">
           <div class="flex items-center">
-            <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden mr-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden mr-3">
               <template v-if="activeConversation?.avatar">
                 <img :src="activeConversation.avatar" alt="Avatar" class="w-full h-full object-cover" />
               </template>
               <template v-else>
-                <i class="fas fa-user text-gray-500"></i>
+                <i class="fas fa-user text-blue-500"></i>
               </template>
             </div>
             <div>
@@ -70,7 +71,7 @@
         
         <!-- Khu vực tin nhắn -->
         <div 
-          class="flex-1 p-4 overflow-y-auto flex flex-col relative" 
+          class="flex-1 p-4 overflow-y-auto flex flex-col relative bg-gray-50" 
           ref="messagesContainer"
           @scroll="handleScroll"
         >
@@ -78,7 +79,7 @@
           <button 
             v-if="!isAtBottom && chatStore.messages.length > 5"
             @click="scrollToBottom" 
-            class="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg z-10"
+            class="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-md z-10 transition-colors"
             title="Cuộn xuống tin nhắn mới nhất"
           >
             <i class="fas fa-arrow-down"></i>
@@ -95,8 +96,8 @@
             <p class="text-xs text-gray-400 mt-1">Đang tải nhiều trang để hiển thị đầy đủ cuộc trò chuyện</p>
           </div>
           
-          <div v-else-if="!chatStore.messages.length" class="my-auto text-center">
-            <i class="fas fa-comment-dots text-gray-300 text-4xl"></i>
+          <div v-else-if="!chatStore.messages.length" class="my-auto text-center py-12">
+            <i class="fas fa-comment-dots text-gray-300 text-5xl mb-3"></i>
             <p class="mt-2 text-gray-500">Chưa có tin nhắn. Hãy gửi tin nhắn đầu tiên!</p>
           </div>
           
@@ -215,11 +216,14 @@ const processedConversations = computed(() => {
     
     // Bỏ qua nếu đã có người dùng này trong map
     if (!userMap.has(otherUserId)) {
+      // Lấy thông tin người dùng từ cache nếu có
+      const userInfo = chatStore.userInfoCache[otherUserId];
+      
       userMap.set(otherUserId, {
         userId: otherUserId,
-        displayName: `Người dùng #${otherUserId}`,
-        avatar: null, // TODO: Lấy avatar từ API
-        isOnline: false, // TODO: Kiểm tra trạng thái online
+        displayName: userInfo?.fullname || `Người dùng #${otherUserId}`,
+        avatar: userInfo?.avatar || null,
+        isOnline: false,
         lastMessage: lastMessage?.content || '', 
         lastMessageTime: lastMessage?.created_at || '',
         unreadCount: unreadCountMap.get(otherUserId) || 0
@@ -252,6 +256,7 @@ const activeConversation = computed(() => {
 
 // Lấy tên hiển thị của người dùng
 const getDisplayName = (conversation) => {
+  console.log('Lấy tên hiển thị cho conversation:', conversation);
   return conversation.displayName || `Người dùng #${conversation.userId}`;
 };
 
@@ -259,6 +264,24 @@ const getDisplayName = (conversation) => {
 const selectConversation = async (userId) => {
   console.log('Đang chọn cuộc trò chuyện với userId:', userId);
   activeConversationId.value = userId;
+  
+  // Kiểm tra và tải thông tin người dùng nếu chưa có trong cache
+  if (!chatStore.userInfoCache[userId]) {
+    console.log(`Tải thông tin người dùng ${userId} cho cuộc trò chuyện đang chọn`);
+    try {
+      const userInfo = await chatStore.fetchUserInfo(userId);
+      if (userInfo) {
+        // Cập nhật thông tin trong danh sách cuộc trò chuyện
+        const conversation = processedConversations.value.find(c => c.userId === userId);
+        if (conversation) {
+          conversation.displayName = userInfo.fullname || conversation.displayName;
+          conversation.avatar = userInfo.avatar || conversation.avatar;
+        }
+      }
+    } catch (error) {
+      console.error(`Lỗi khi tải thông tin người dùng ${userId}:`, error);
+    }
+  }
   
   // Lấy tin nhắn của cuộc trò chuyện này
   await chatStore.fetchMessages(userId, true);
@@ -319,32 +342,24 @@ const sendMessage = async (content) => {
       currentConversation.lastMessageTime = new Date().toISOString();
     }
     
-    // Mô phỏng cập nhật ngay cả khi WebSocket không hoạt động
-    // Chờ 500ms để kiểm tra xem tin nhắn mới đã được thêm vào danh sách chưa
     setTimeout(() => {
-      // Kiểm tra xem tin nhắn mới nhất có nội dung trùng với tin nhắn vừa gửi hay không
       const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
       
       if (latestMessage && latestMessage.content === content) {
         console.log('✅ Tin nhắn đã được thêm vào danh sách, không cần mô phỏng');
       } else {
-        // Nếu chưa có trong danh sách, có thể do WebSocket không hoạt động, tạo tin nhắn mô phỏng
         console.log('⚠️ Không tìm thấy tin nhắn mới trong danh sách, mô phỏng tin nhắn');
-        
-        // Thử thêm tin nhắn vào store một lần nữa để đảm bảo hiển thị
         if (newMessage) {
           chatStore.addMessage({
             ...newMessage,
-            is_read: true // Tự động đánh dấu là đã đọc vì người gửi đã đọc tin nhắn của mình
+            is_read: true
           });
           
-          // Đưa cuộc trò chuyện này lên đầu danh sách
           chatStore.sortConversationToTop(newMessage);
         }
       }
     }, 500);
     
-    // Cuộn xuống tin nhắn cuối cùng
     await nextTick();
     scrollToBottom();
   } catch (error) {

@@ -72,12 +72,9 @@ const openChat = async (userId) => {
     console.log(`Sử dụng thông tin người dùng ${userId} từ cache`);
   }
   
-  console.log('Thông tin người dùng đã lấy được:', userInfo);
-  
-  // Thêm chat mới vào đầu danh sách
   activeChats.value.unshift({
     userId: userId,
-    displayName: userInfo?.fullname || `Người dùng #${userId}`,
+    displayName: userInfo?.displayName || `Người dùng #${userId}`,
     avatar: userInfo?.avatar || null,
     isOnline: false,
     index: 0
