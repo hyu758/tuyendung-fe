@@ -58,9 +58,10 @@
 </template>
 
 <script>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { usePremiumStore } from '../stores/premium'
 
 export default {
   name: 'PaymentResult',
@@ -68,35 +69,70 @@ export default {
   setup() {
     const route = useRoute()
     const authStore = useAuthStore()
+    const premiumStore = usePremiumStore()
+    const loadingPackage = ref(true)
     
     // Kiểm tra kết quả thanh toán dựa vào query parameter trong URL
     const isSuccess = computed(() => {
       return route.path.includes('payment-success')
     })
     
-    // Lấy thông tin gói premium từ URL
+    // Lấy thông tin gói premium từ API và URL
     const packageInfo = computed(() => {
       if (!route.query.package || !route.query.name) return null
       
       const packageId = parseInt(route.query.package)
+      const packageName = route.query.name
+      let durationText = 'Đang tải...'
+      
+      // Tìm thông tin gói từ danh sách gói đã lấy từ API
+      const packageData = premiumStore.packages.find(pkg => pkg.id === packageId)
+      
+      if (packageData) {
+        // Tính thời hạn dựa trên số ngày một cách linh hoạt
+        const days = packageData.duration_days
+        
+        if (days % 365 === 0) {
+          const years = days / 365
+          durationText = years > 1 ? `${years} năm` : '1 năm'
+        } else if (days % 30 === 0) {
+          const months = days / 30
+          durationText = months > 1 ? `${months} tháng` : '1 tháng'
+        } else if (days % 7 === 0) {
+          const weeks = days / 7
+          durationText = weeks > 1 ? `${weeks} tuần` : '1 tuần'
+        } else {
+          durationText = `${days} ngày`
+        }
+      }
       
       return {
         id: packageId,
-        name: route.query.name,
-        duration: packageId === 2 ? '1 năm' : '1 tháng'
+        name: packageName,
+        duration: durationText
       }
     })
     
-    onMounted(() => {
+    onMounted(async () => {
       // Cập nhật thông tin người dùng nếu thanh toán thành công
       if (isSuccess.value) {
         authStore.updateUserFromToken()
+        
+        // Lấy thông tin các gói Premium từ API
+        try {
+          await premiumStore.fetchPremiumPackages()
+        } catch (error) {
+          console.error('Lỗi khi lấy thông tin gói Premium:', error)
+        } finally {
+          loadingPackage.value = false
+        }
       }
     })
     
     return {
       isSuccess,
-      packageInfo
+      packageInfo,
+      loadingPackage
     }
   }
 }

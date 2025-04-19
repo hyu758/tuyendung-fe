@@ -23,7 +23,7 @@
               <h3 class="text-lg font-semibold text-gray-800">{{ profileStore.profile?.fullname || 'Người dùng' }}</h3>
               <div v-if="isPremium" class="text-xs font-bold bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-3 py-1 rounded-full mb-1 shadow-sm flex items-center justify-center">
                 <font-awesome-icon :icon="['fas', 'crown']" class="mr-1 text-xs" />
-                PREMIUM
+                {{ profileStore.profile?.name_display || 'Premium' }}
               </div>
               <p class="text-gray-500 text-sm">{{ profileStore.email }}</p>
             </div>

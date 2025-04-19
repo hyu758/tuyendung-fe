@@ -8,7 +8,8 @@ export const usePremiumStore = defineStore('premium', {
     selectedPackage: null,
     loading: false,
     error: null,
-    paymentUrl: null
+    paymentUrl: null,
+    premiumHistory: []
   }),
   
   getters: {
@@ -38,6 +39,16 @@ export const usePremiumStore = defineStore('premium', {
       const expiryDate = new Date(this.premiumExpiry)
       const now = new Date()
       return expiryDate <= now
+    },
+    
+    sortedPremiumHistory() {
+      return [...this.premiumHistory].sort((a, b) => {
+        return new Date(b.start_date) - new Date(a.start_date)
+      })
+    },
+    
+    currentPremium() {
+      return this.premiumHistory.find(h => h.is_active === true)
     }
   },
   
@@ -51,6 +62,11 @@ export const usePremiumStore = defineStore('premium', {
         
         if (response.data.status === 200) {
           this.packages = response.data.data.packages
+          
+          if (response.data.data.premium_history) {
+            this.premiumHistory = response.data.data.premium_history
+          }
+          
           return { success: true, data: response.data.data }
         } else {
           throw new Error('Không thể lấy thông tin gói Premium')
@@ -93,7 +109,6 @@ export const usePremiumStore = defineStore('premium', {
     },
     
     async checkPremiumExpiry() {
-      // Kiểm tra xem Premium đã hết hạn chưa
       if (this.isPremiumExpired) {
         console.log('Premium đã hết hạn, đang hủy Premium...')
         return await this.cancelPremium()
@@ -109,9 +124,10 @@ export const usePremiumStore = defineStore('premium', {
         const response = await premiumService.deletePremium()
         
         if (response.data.status === 200) {
-          // Cập nhật thông tin người dùng
           const authStore = useAuthStore()
           await authStore.updateUserFromToken()
+          
+          await this.fetchPremiumPackages()
           
           return { success: true, message: response.data.message }
         } else {
