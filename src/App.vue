@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed, provide, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+import { usePremiumStore } from './stores/premium'
 import CandidateHeader from './components/layouts/CandidateHeader.vue'
 import BaseAlert from './components/common/BaseAlert.vue'
 import socketService from './services/socketService'
@@ -10,6 +11,7 @@ import ChatManager from './components/chat/ChatManager.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const premiumStore = usePremiumStore()
 const chatManager = ref(null)
 
 
@@ -24,10 +26,22 @@ watch(() => route.path, () => {
   checkNotification()
 })
 
-onMounted(() => {
+// Theo dõi trạng thái đăng nhập để kiểm tra Premium
+watch(() => authStore.isAuthenticated, (newValue) => {
+  if (newValue) {
+    checkPremiumExpiry()
+  }
+})
+
+onMounted(async () => {
   if (localStorage.getItem('token') && !authStore.user) {
     console.log('App mounted - Initializing user data from token')
-    authStore.updateUserFromToken()
+    await authStore.updateUserFromToken()
+    
+    // Kiểm tra hạn Premium nếu người dùng đã đăng nhập
+    if (authStore.isAuthenticated) {
+      checkPremiumExpiry()
+    }
   }
   
   checkNotification()
@@ -46,6 +60,22 @@ onUnmounted(() => {
   window.removeEventListener('popstate', checkNotification)
   socketService.disconnect()
 })
+
+// Hàm kiểm tra hạn Premium và xử lý khi hết hạn
+async function checkPremiumExpiry() {
+  console.log('Kiểm tra hạn Premium')
+  if (premiumStore.isPremium) {
+    if (premiumStore.isPremiumExpired) {
+      console.log('Premium đã hết hạn, đang hủy Premium...')
+      const result = await premiumStore.cancelPremium()
+      if (result.success) {
+        showNotification('info', 'Gói Premium của bạn đã hết hạn và đã được hủy tự động.')
+      }
+    } else {
+      console.log('Premium còn hạn sử dụng')
+    }
+  }
+}
 
 // Hàm kiểm tra thông báo trong localStorage
 function checkNotification() {
@@ -66,6 +96,16 @@ function checkNotification() {
       console.error('Lỗi khi parse thông báo:', e)
       localStorage.removeItem('notification')
     }
+  }
+}
+
+// Hiển thị thông báo
+function showNotification(type, message) {
+  notification.value = {
+    show: true,
+    type,
+    message,
+    autoClose: 5000
   }
 }
 

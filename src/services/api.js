@@ -12,6 +12,18 @@ export const authService = {
   }
 }
 
+export const premiumService = {
+  getPremiumPackages() {
+    return axios.get('/api/premium/packages/')
+  },
+  purchasePremium(packageId) {
+    return axios.post('/api/premium/purchase/', { package_id: packageId })
+  },
+  deletePremium() {
+    return axios.post('/auth/delete-premium/')
+  }
+}
+
 export const jobService = {
   getAllJobs(params) {
     return axios.get('/jobs', { params })

@@ -123,6 +123,17 @@
             <span>Cài đặt</span>
           </router-link>
           
+          <!-- Mua Premium -->
+          <router-link 
+            to="/premium"
+            class="flex items-center px-4 py-2 mt-2 bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-700 hover:from-yellow-100 hover:to-yellow-200 rounded-md border border-yellow-200 group"
+            @click="mobileLinkClick"
+          >
+            <i class="fas fa-crown w-5 h-5 mr-3 text-yellow-500 group-hover:text-yellow-600"></i>
+            <span class="font-medium">Mua Premium</span>
+            <i class="fas fa-chevron-right ml-auto text-yellow-400 group-hover:translate-x-1 transition-transform"></i>
+          </router-link>
+          
           <!-- Nút đăng xuất cho mobile -->
           <button
             @click="logout"

@@ -21,6 +21,10 @@
                 </div>
               </div>
               <h3 class="text-lg font-semibold text-gray-800">{{ profileStore.profile?.fullname || 'Người dùng' }}</h3>
+              <div v-if="isPremium" class="text-xs font-bold bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-3 py-1 rounded-full mb-1 shadow-sm flex items-center justify-center">
+                <font-awesome-icon :icon="['fas', 'crown']" class="mr-1 text-xs" />
+                PREMIUM
+              </div>
               <p class="text-gray-500 text-sm">{{ profileStore.email }}</p>
             </div>
             
@@ -129,6 +133,19 @@
                         <font-awesome-icon :icon="option.icon" class="mr-2" :class="profileForm.gender === option.value ? 'text-blue-600' : 'text-gray-400'" />
                         <span :class="profileForm.gender === option.value ? 'text-blue-700 font-medium' : 'text-gray-700'">{{ option.label }}</span>
                       </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Premium Expiry Date -->
+                <div v-if="isPremium" class="lg:col-span-2 mt-2">
+                  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                      <font-awesome-icon :icon="['fas', 'crown']" class="text-yellow-500 mr-3" />
+                      <div>
+                        <p class="text-sm font-medium text-gray-800">Thời hạn Premium</p>
+                        <p class="text-sm text-gray-600">{{ premiumExpiryDate }}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -309,11 +326,40 @@
 <script setup>
 import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useProfileStore } from '../stores/profile'
+import { useAuthStore } from '../stores/auth'
+import { usePremiumStore } from '../stores/premium'
 
 const profileStore = useProfileStore()
+const authStore = useAuthStore()
+const premiumStore = usePremiumStore()
 const activeTab = ref('profile')
 const passwordError = ref('')
 const passwordStrength = ref(0)
+
+// Kiểm tra tài khoản Premium
+const isPremium = computed(() => {
+  console.log('Profile data:', profileStore.profile);
+  console.log('User data:', authStore.user);
+  // Ưu tiên lấy từ profile nếu có, nếu không thì lấy từ authStore
+  return profileStore.profile?.is_premium === true || authStore.user?.is_premium === true || false;
+})
+
+// Định dạng ngày hết hạn Premium
+const premiumExpiryDate = computed(() => {
+  // Ưu tiên lấy từ profile nếu có
+  const expiryDate = profileStore.profile?.premium_expiry || authStore.user?.premium_expiry;
+  
+  if (!expiryDate) return 'Không xác định';
+  
+  // Parse ISO date string và format thành dạng ngày/tháng/năm
+  const expiry = new Date(expiryDate);
+  
+  return expiry.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+})
 
 // Form data
 const profileForm = reactive({
@@ -418,6 +464,11 @@ watch(passwordForm, () => {
 
 // Lấy thông tin hồ sơ khi component được tạo
 onMounted(async () => {
+  // Đảm bảo thông tin người dùng đã được cập nhật
+  if (authStore.isAuthenticated && !authStore.user) {
+    authStore.updateUserFromToken()
+  }
+  
   const result = await profileStore.fetchProfile()
   
   if (result.success) {
@@ -425,7 +476,19 @@ onMounted(async () => {
     profileForm.fullname = profileStore.profile.fullname || ''
     profileForm.gender = profileStore.profile.gender || 'male'
   }
+  
+  // Kiểm tra trạng thái Premium
+  checkPremiumExpiry()
 })
+
+// Kiểm tra hạn Premium
+async function checkPremiumExpiry() {
+  // Kiểm tra xem Premium đã hết hạn chưa
+  if (premiumStore.isPremium && premiumStore.isPremiumExpired) {
+    console.log('Profile page - Premium đã hết hạn, đang hủy Premium...')
+    await premiumStore.cancelPremium()
+  }
+}
 
 // Cập nhật thông tin hồ sơ
 async function updateProfile() {

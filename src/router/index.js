@@ -173,6 +173,24 @@ const routes = [
     }
   },
   {
+    path: '/premium',
+    name: 'Premium',
+    component: () => import('../views/Premium.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/payment-success',
+    name: 'PaymentSuccess',
+    component: () => import('../views/PaymentResult.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/payment-failed',
+    name: 'PaymentFailed',
+    component: () => import('../views/PaymentResult.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')

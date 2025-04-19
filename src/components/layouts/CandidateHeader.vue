@@ -22,6 +22,9 @@
             <router-link to="/blog" class="text-gray-700 hover:text-blue-600 font-medium">
               Blog
             </router-link>
+            <router-link to="/premium" class="text-yellow-500 hover:text-yellow-600 font-medium flex items-center">
+              <i class="fas fa-crown mr-1 text-yellow-500"></i> Mua Premium
+            </router-link>
           </nav>
         </div>
 
@@ -277,6 +280,9 @@
               <router-link to="/blog" class="block text-gray-700 hover:text-blue-600 font-medium" @click="closeMobileMenu">
                 <i class="fas fa-newspaper mr-2"></i> Blog
               </router-link>
+              <router-link to="/premium" class="block text-gray-700 hover:text-blue-600 font-medium" @click="closeMobileMenu">
+                <i class="fas fa-crown mr-2"></i> Premium
+              </router-link>
             </div>
             
             <div class="border-t border-gray-200 my-6"></div>
@@ -401,12 +407,14 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useNotificationStore } from '../../stores/notification'
+import { usePremiumStore } from '../../stores/premium'
 import NotificationDropdown from '../common/NotificationDropdown.vue'
 import ChatDropdown from '../common/ChatDropdown.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
+const premiumStore = usePremiumStore()
 const showDropdown = ref(false)
 const showMobileMenu = ref(false)
 const profileDropdown = ref(null)
@@ -425,6 +433,8 @@ const username = ref('')
 watch(() => authStore.user, (newUser) => {
   if (newUser) {
     console.log('New user is_active:', newUser.is_active)
+    // Kiểm tra premium khi thông tin người dùng thay đổi
+    checkPremiumExpiry()
   }
 }, { deep: true, immediate: true })
 
@@ -435,11 +445,14 @@ onMounted(async () => {
   // Kiểm tra thông tin từ token
   if (isAuthenticated.value) {
     if (!authStore.user) {
-      authStore.updateUserFromToken()
+      await authStore.updateUserFromToken()
     }
     
     // Lấy số lượng thông báo chưa đọc khi component được mounted
     await notificationStore.fetchUnreadCount()
+    
+    // Kiểm tra trạng thái Premium
+    checkPremiumExpiry()
   }
   
   // Thêm xử lý sự kiện click ngoài dropdown để đóng nó
@@ -539,6 +552,19 @@ const handleMobileNotificationClickOutside = (event) => {
     showMobileNotification.value = false;
   }
 };
+
+// Kiểm tra hạn Premium
+async function checkPremiumExpiry() {
+  // Nếu người dùng có Premium, kiểm tra xem có hết hạn chưa
+  if (premiumStore.isPremium) {
+    if (premiumStore.isPremiumExpired) {
+      console.log('Premium đã hết hạn, đang hủy Premium...')
+      await premiumStore.cancelPremium()
+    } else {
+      console.log('Premium còn hạn sử dụng')
+    }
+  }
+}
 </script>
 
 <style scoped>
