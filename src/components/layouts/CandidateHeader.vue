@@ -22,9 +22,6 @@
             <router-link to="/blog" class="text-gray-700 hover:text-blue-600 font-medium">
               Blog
             </router-link>
-            <router-link to="/premium" class="text-yellow-500 hover:text-yellow-600 font-medium flex items-center">
-              <i class="fas fa-crown mr-1 text-yellow-500"></i> Mua Premium
-            </router-link>
           </nav>
         </div>
 

@@ -149,6 +149,15 @@ const routes = [
           requiresAuth: true,
           role: 'employer'
         }
+      },
+      {
+        path: 'premium',
+        name: 'EmployerPremium',
+        component: () => import('../views/Premium.vue'),
+        meta: {
+          requiresAuth: true,
+          role: 'employer'
+        }
       }
     ]
   },
@@ -171,12 +180,6 @@ const routes = [
       requiresAuth: true,
       role: 'candidate'
     }
-  },
-  {
-    path: '/premium',
-    name: 'Premium',
-    component: () => import('../views/Premium.vue'),
-    meta: { requiresAuth: true }
   },
   {
     path: '/payment-success',
