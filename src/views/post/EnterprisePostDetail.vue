@@ -183,8 +183,20 @@
         <div class="flex items-center justify-between mb-3 sm:mb-4">
           <h2 class="text-base sm:text-lg font-semibold text-gray-900">Danh sách ứng viên</h2>
           <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-            {{ filteredCVs.length }} ứng viên
+            {{ canViewSubmittedCVs ? `${filteredCVs.length} ứng viên` : 'Nâng cấp để xem' }}
           </span>
+        </div>
+        
+        <!-- Premium warning if not allowed to view CVs -->
+        <div v-if="!canViewSubmittedCVs" class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+          <i class="fas fa-crown text-yellow-500 mt-0.5"></i>
+          <div>
+            <h3 class="font-medium text-gray-900">Tính năng giới hạn</h3>
+            <p class="text-sm text-gray-600 mt-1">
+              Bạn cần nâng cấp lên gói Premium để xem số lượng CV đã nộp cho bài đăng này.
+              <router-link to="/premium" class="text-blue-600 hover:underline font-medium">Nâng cấp ngay</router-link>
+            </p>
+          </div>
         </div>
 
         <!-- Filter options -->
@@ -512,6 +524,7 @@ const activeDropdownIndex = ref(null)
 const statusFilter = ref('all')
 const viewedFilter = ref('all')
 const activeTab = ref('all')
+const canViewSubmittedCVs = ref(true)
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event) => {
@@ -598,9 +611,14 @@ const loadData = async () => {
     const postResult = await postStore.fetchPostById(postId)
     if (postResult && postResult.data && postResult.data.data) {
       post.value = postResult.data.data
+      // Kiểm tra quyền xem CV đã nộp
+      canViewSubmittedCVs.value = post.value.can_view_submitted_cvs === true
     }
     
-    await cvStore.fetchCVsByPostId(postId)
+    // Tải CV chỉ khi có quyền xem
+    if (canViewSubmittedCVs.value) {
+      await cvStore.fetchCVsByPostId(postId)
+    }
     
   } catch (err) {
     console.error('Error loading data:', err)

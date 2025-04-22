@@ -151,7 +151,7 @@
                 </base-button>
 
                 <base-button
-                  v-if="authStore.isCandidate"
+                  v-if="authStore.isCandidate && canChatWithEmployer"
                   type="button"
                   variant="secondary" 
                   size="md"
@@ -160,6 +160,18 @@
                 >
                   <font-awesome-icon icon="comment-dots" class="text-blue-600" />
                   <span class="text-blue-600 font-medium">Nhắn tin</span>
+                </base-button>
+                
+                <base-button
+                  v-else-if="authStore.isCandidate && !canChatWithEmployer"
+                  type="button"
+                  variant="secondary" 
+                  size="md"
+                  class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 hover:border-yellow-300 shadow-md hover:shadow-lg cursor-not-allowed opacity-75"
+                  @click="showPremiumRequiredModal('chat')"
+                >
+                  <font-awesome-icon icon="comment-dots" class="text-yellow-600" />
+                  <span class="text-yellow-600 font-medium">Nâng cấp để nhắn tin</span>
                 </base-button>
               </div>
               <div v-if="authStore.isLoggedIn && job.appliedDate" class="hidden sm:flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-100 shadow-sm">
@@ -294,13 +306,37 @@
                     </div>
                   </div>
 
-                  <div class="flex items-center transform hover:scale-105 transition-transform">
-                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                      <font-awesome-icon icon="calendar" class="text-orange-500" />
-                    </div>
+                  <div class="flex items-center gap-1">
+                    <i class="fas fa-calendar-alt text-green-500"></i>
+                    <span>Hạn nộp: {{ formatDate(job.deadline) }}</span>
+                  </div>
+                  
+                  <!-- Hiển thị số lượng ứng viên với animation khi có quyền premium -->
+                  <div v-if="canViewApplicants && job.total_applicants !== undefined" 
+                       class="flex items-center gap-2 bg-blue-50 py-2 px-3 rounded-lg text-blue-700 transform hover:scale-105 transition-all duration-300">
+                    <i class="fas fa-users text-blue-500"></i>
                     <div>
-                      <div class="text-gray-500 text-xs md:text-sm">Hạn nộp hồ sơ</div>
-                      <div class="font-medium text-sm md:text-base">{{ new Date(job.deadline).toLocaleDateString('vi-VN') }}</div>
+                      <span class="font-medium">{{ job.total_applicants }} ứng viên</span>
+                      <span class="text-sm text-blue-600"> đã ứng tuyển</span>
+                    </div>
+                    <i class="fas fa-crown text-yellow-500 ml-1"></i>
+                  </div>
+                  
+                  <!-- Khi có ứng viên nhưng không có quyền xem (premium lock) -->
+                  <div v-else-if="job.has_applicants && !canViewApplicants" 
+                       @click="showPremiumRequiredModal('view-applicants')"
+                       class="flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 py-2 px-3 rounded-lg text-gray-700 cursor-pointer hover:bg-yellow-50 transform hover:scale-105 transition-all duration-300">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-lock text-gray-400"></i>
+                      <div>
+                        <span class="font-medium">?? ứng viên</span>
+                        <span class="text-sm text-gray-500"> đã ứng tuyển</span>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1 text-yellow-600 font-medium text-sm">
+                      <i class="fas fa-crown text-yellow-500"></i>
+                      <span>Nâng cấp Premium</span>
+                      <i class="fas fa-arrow-right text-xs"></i>
                     </div>
                   </div>
                 </div>
@@ -854,11 +890,66 @@ const showToast = (message, type = 'success') => {
   }, 5000)
 }
 
-
 // Kiểm tra xem job đã được ứng tuyển chưa
 const isApplied = computed(() => {
   return !!job.value?.appliedDate
 })
+
+// Kiểm tra quyền chat với nhà tuyển dụng
+const canChatWithEmployer = computed(() => {
+  return job.value?.can_chat_with_employer === true
+})
+
+// Kiểm tra quyền xem số ứng viên
+const canViewApplicants = computed(() => {
+  return job.value?.can_view_applicants === true
+})
+
+// Format date string to Vietnamese format
+const formatDate = (dateString) => {
+  if (!dateString) return 'Không xác định'
+  
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date)
+}
+
+// Hiển thị modal yêu cầu premium
+const showPremiumRequiredModal = (feature) => {
+  let title = 'Tính năng Premium'
+  let message = ''
+  let icon = 'crown'
+  
+  if (feature === 'chat') {
+    title = 'Trò chuyện với nhà tuyển dụng'
+    message = 'Nâng cấp lên gói Premium để có thể trò chuyện trực tiếp với nhà tuyển dụng và tăng cơ hội được nhận việc!'
+    icon = 'comment-dots'
+  } else if (feature === 'view-applicants') {
+    title = 'Xem số lượng ứng viên'
+    message = 'Nâng cấp lên gói Premium để xem số lượng người đã ứng tuyển vào vị trí này và đánh giá mức độ cạnh tranh!'
+    icon = 'users'
+  }
+  
+  addToast({
+    title,
+    message,
+    type: 'premium',
+    icon,
+    duration: 7000,
+    action: {
+      text: 'Nâng cấp ngay',
+      callback: () => router.push({ name: 'premium' })
+    }
+  })
+  
+  // Có thể chuyển hướng đến trang nâng cấp premium
+  setTimeout(() => {
+    router.push({ name: 'premium' })
+  }, 3000)
+}
 
 // Mở chat với nhà tuyển dụng
 const chatWithEmployer = () => {
