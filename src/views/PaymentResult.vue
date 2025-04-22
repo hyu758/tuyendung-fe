@@ -17,6 +17,7 @@
             <h2 class="font-semibold text-lg mb-2">Thông tin gói Premium:</h2>
             <p><span class="font-medium">Tên gói:</span> {{ packageInfo.name }}</p>
             <p><span class="font-medium">Thời hạn:</span> {{ packageInfo.duration }}</p>
+            <p v-if="premiumExpiry"><span class="font-medium">Hiệu lực đến:</span> {{ formatDate(premiumExpiry) }}</p>
           </div>
           
           <div class="flex flex-col space-y-3">
@@ -77,18 +78,28 @@ export default {
       return route.path.includes('payment-success')
     })
     
+    // Lấy ngày hết hạn Premium của người dùng
+    const premiumExpiry = computed(() => {
+      return authStore.user?.premium_expiry
+    })
+    
     // Lấy thông tin gói premium từ API và URL
     const packageInfo = computed(() => {
-      if (!route.query.package || !route.query.name) return null
+      if (!route.query.package) return null
       
       const packageId = parseInt(route.query.package)
-      const packageName = route.query.name
+      let packageName = route.query.name || ''
       let durationText = 'Đang tải...'
       
       // Tìm thông tin gói từ danh sách gói đã lấy từ API
       const packageData = premiumStore.packages.find(pkg => pkg.id === packageId)
       
       if (packageData) {
+        // Lấy tên gói từ API nếu không có trong URL
+        if (!packageName) {
+          packageName = packageData.name
+        }
+        
         // Tính thời hạn dựa trên số ngày một cách linh hoạt
         const days = packageData.duration_days
         
@@ -113,10 +124,22 @@ export default {
       }
     })
     
+    // Format ngày thành dạng ngày/tháng/năm
+    const formatDate = (dateString) => {
+      if (!dateString) return 'Không xác định'
+      
+      const date = new Date(dateString)
+      return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    }
+    
     onMounted(async () => {
       // Cập nhật thông tin người dùng nếu thanh toán thành công
       if (isSuccess.value) {
-        authStore.updateUserFromToken()
+        await authStore.updateUserFromToken()
         
         // Lấy thông tin các gói Premium từ API
         try {
@@ -132,7 +155,9 @@ export default {
     return {
       isSuccess,
       packageInfo,
-      loadingPackage
+      loadingPackage,
+      premiumExpiry,
+      formatDate
     }
   }
 }
