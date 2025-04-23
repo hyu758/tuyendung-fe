@@ -22,6 +22,9 @@
             <router-link to="/blog" class="text-gray-700 hover:text-blue-600 font-medium">
               Blog
             </router-link>
+            <router-link to="/premium" class="text-gray-700 hover:text-blue-600 font-medium flex items-center">
+              <i class="fas fa-crown text-yellow-500 mr-1"></i> Premium
+            </router-link>
           </nav>
         </div>
 
@@ -164,6 +167,15 @@
 
               <!-- Chat Messages -->
               <chat-dropdown />
+              
+              <!-- Premium Button -->
+              <router-link 
+                to="/premium" 
+                class="flex items-center px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-md hover:from-yellow-600 hover:to-amber-700 transition-colors shadow-sm"
+              >
+                <i class="fas fa-crown mr-1.5"></i>
+                <span class="font-medium text-sm">Premium</span>
+              </router-link>
             </div>
             
             <!-- User profile dropdown -->
@@ -204,6 +216,13 @@
                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <i class="fas fa-bookmark mr-2"></i> Việc đã lưu
+                  </router-link>
+                  
+                  <router-link 
+                    to="/premium" 
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <i class="fas fa-crown mr-2 text-yellow-500"></i> Nâng cấp Premium
                   </router-link>
                 </div>
                 

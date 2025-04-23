@@ -182,6 +182,14 @@ const routes = [
     }
   },
   {
+    path: '/premium',
+    name: 'CandidatePremium',
+    component: () => import('../views/Premium.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/payment-success',
     name: 'PaymentSuccess',
     component: () => import('../views/PaymentResult.vue'),

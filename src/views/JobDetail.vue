@@ -151,7 +151,7 @@
                 </base-button>
 
                 <base-button
-                  v-if="authStore.isCandidate && canChatWithEmployer"
+                  v-if="authStore.isCandidate && authStore.isLoggedIn && authStore.userInfo?.is_premium"
                   type="button"
                   variant="secondary" 
                   size="md"
@@ -163,11 +163,11 @@
                 </base-button>
                 
                 <base-button
-                  v-else-if="authStore.isCandidate && !canChatWithEmployer"
+                  v-else-if="authStore.isCandidate && authStore.isLoggedIn && !authStore.userInfo?.is_premium"
                   type="button"
                   variant="secondary" 
                   size="md"
-                  class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 hover:border-yellow-300 shadow-md hover:shadow-lg cursor-not-allowed opacity-75"
+                  class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 hover:border-yellow-300 shadow-md hover:shadow-lg"
                   @click="showPremiumRequiredModal('chat')"
                 >
                   <font-awesome-icon icon="comment-dots" class="text-yellow-600" />
@@ -312,7 +312,7 @@
                   </div>
                   
                   <!-- Hiển thị số lượng ứng viên với animation khi có quyền premium -->
-                  <div v-if="canViewApplicants && job.total_applicants !== undefined" 
+                  <div v-if="(authStore.isLoggedIn && authStore.userInfo?.is_premium) && job.total_applicants !== undefined" 
                        class="flex items-center gap-2 bg-blue-50 py-2 px-3 rounded-lg text-blue-700 transform hover:scale-105 transition-all duration-300">
                     <i class="fas fa-users text-blue-500"></i>
                     <div>
@@ -323,7 +323,7 @@
                   </div>
                   
                   <!-- Khi có ứng viên nhưng không có quyền xem (premium lock) -->
-                  <div v-else-if="job.has_applicants && !canViewApplicants" 
+                  <div v-else-if="job.has_applicants && !(authStore.isLoggedIn && authStore.userInfo?.is_premium)" 
                        @click="showPremiumRequiredModal('view-applicants')"
                        class="flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 py-2 px-3 rounded-lg text-gray-700 cursor-pointer hover:bg-yellow-50 transform hover:scale-105 transition-all duration-300">
                     <div class="flex items-center gap-2">
@@ -860,9 +860,8 @@ const applyForJob = () => {
     return
   }
   
-  // Đã đăng nhập và là ứng viên, tiếp tục ứng tuyển
-  // Chuyển hướng đến trang ứng tuyển
-  router.push({ name: 'ApplyJob', params: { id: job.value.id } })
+  // Đã đăng nhập và là ứng viên, mở modal ứng tuyển
+  showApplyModal.value = true
 }
 
 const redirectToLogin = () => {
@@ -902,7 +901,12 @@ const canChatWithEmployer = computed(() => {
 
 // Kiểm tra quyền xem số ứng viên
 const canViewApplicants = computed(() => {
-  return job.value?.can_view_applicants === true
+  // Nếu người dùng đã đăng nhập và là premium, luôn cho phép xem số ứng viên
+  if (authStore.isLoggedIn && authStore.userInfo?.is_premium) {
+    return true;
+  }
+  // Nếu không phải premium, kiểm tra theo quyền từ job
+  return job.value?.can_view_applicants === true;
 })
 
 // Format date string to Vietnamese format
@@ -941,13 +945,13 @@ const showPremiumRequiredModal = (feature) => {
     duration: 7000,
     action: {
       text: 'Nâng cấp ngay',
-      callback: () => router.push({ name: 'premium' })
+      callback: () => router.push({ name: 'CandidatePremium' })
     }
   })
   
   // Có thể chuyển hướng đến trang nâng cấp premium
   setTimeout(() => {
-    router.push({ name: 'premium' })
+    router.push({ name: 'CandidatePremium' })
   }, 3000)
 }
 
@@ -959,6 +963,7 @@ const chatWithEmployer = () => {
     isAuthenticated: authStore.isAuthenticated,
     userRole: authStore.userRole,
     isCandidate: authStore.isCandidate,
+    isPremium: authStore.userInfo?.is_premium,
     token: !!localStorage.getItem('token')
   });
   
@@ -984,6 +989,12 @@ const chatWithEmployer = () => {
       message: 'Chỉ tài khoản ứng viên mới có thể nhắn tin với nhà tuyển dụng',
       type: 'error'
     })
+    return
+  }
+  
+  if (!authStore.userInfo?.is_premium) {
+    console.error('Không thể chat: Người dùng không phải là Premium');
+    showPremiumRequiredModal('chat');
     return
   }
 
@@ -1060,6 +1071,12 @@ const chatWithEmployer = () => {
 }
 
 onMounted(() => {
+  // Tải thông tin profile để cập nhật trạng thái Premium
+  authStore.fetchUserProfile().then(() => {
+    console.log('[DEBUG] Thông tin người dùng sau khi tải profile:', authStore.userInfo);
+    console.log('[DEBUG] Trạng thái premium sau khi tải profile:', authStore.userInfo?.is_premium);
+  });
+  
   fetchJobDetail()
 })
 </script>

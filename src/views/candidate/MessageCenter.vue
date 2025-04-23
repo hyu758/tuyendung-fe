@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-6 px-4 md:py-8">
     <div class="container mx-auto">
+      <!-- Luôn hiển thị giao diện trò chuyện -->
       <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-2xl">
         <div class="p-5 md:p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600">
           <h1 class="text-xl md:text-2xl font-bold text-white flex items-center">
@@ -12,6 +13,29 @@
           <p class="text-indigo-100 mt-1 pl-11">
             Trò chuyện với nhà tuyển dụng của bạn
           </p>
+          
+          <!-- Thông báo cho người dùng không phải Premium -->
+          <div v-if="!authStore.userInfo?.is_premium" class="mt-3 ml-11 flex items-center">
+            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-medium inline-flex items-center">
+              <i class="fas fa-crown text-yellow-600 mr-2"></i>
+              Tính năng dành cho người dùng Premium
+            </div>
+          </div>
+        </div>
+        
+        <!-- Nếu không phải Premium, hiển thị thông báo nâng cấp bao phủ phần nội dung -->
+        <div v-if="!authStore.userInfo?.is_premium" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10" style="top: 180px;">
+          <div class="text-center px-4 py-6 max-w-md mx-auto">
+            <div class="w-24 h-24 mb-4 flex items-center justify-center bg-yellow-50 rounded-full mx-auto">
+              <i class="fas fa-crown text-yellow-500 text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Tính năng dành cho người dùng Premium</h2>
+            <p class="text-gray-600 mb-6">Để có thể nhắn tin với nhà tuyển dụng, bạn cần nâng cấp tài khoản lên gói Premium.</p>
+            <router-link to="/premium" class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 mx-auto w-max hover:shadow-lg transition duration-300">
+              <i class="fas fa-crown"></i>
+              Nâng cấp Premium ngay
+            </router-link>
+          </div>
         </div>
         
         <!-- Trạng thái loading -->
@@ -25,7 +49,7 @@
           </div>
         </div>
         
-        <div v-else class="h-[calc(100vh-220px)] md:h-[calc(100vh-200px)] transition-all duration-300">
+        <div v-else class="h-[calc(100vh-220px)] md:h-[calc(100vh-200px)] transition-all duration-300 relative">
           <chat-container />
         </div>
       </div>
@@ -38,16 +62,45 @@ import { onMounted, provide, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ChatContainer from '../chat/ChatContainer.vue';
 import { useChatStore } from '../../stores/chat';
+import { useAuthStore } from '../../stores/auth';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import socketService from '../../services/socketService';
 
 const chatStore = useChatStore();
+const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const isLoading = ref(true);
 
+// Kiểm tra người dùng có phải Premium không
+const checkPremiumStatus = () => {
+  if (!authStore.isLoggedIn) {
+    console.log('Người dùng chưa đăng nhập, chuyển hướng đến trang đăng nhập');
+    router.replace({ 
+      name: 'Login',
+      query: { redirect: route.fullPath }
+    });
+    return false;
+  }
+  
+  if (!authStore.isCandidate) {
+    console.log('Người dùng không phải ứng viên, chuyển hướng đến trang chủ');
+    router.replace({ name: 'Home' });
+    return false;
+  }
+  
+  // Không chuyển hướng khi không phải premium, chỉ ghi log
+  if (!authStore.userInfo?.is_premium) {
+    console.log('Người dùng không phải Premium, nhưng vẫn hiển thị giao diện với thông báo nâng cấp');
+  }
+  
+  return true;
+};
+
 // Cung cấp tham số lấy từ URL cho các component con
 provide('chatUserId', route.query.user ? parseInt(route.query.user, 10) : null);
+// Cung cấp thông tin premium cho các component con
+provide('isPremiumUser', computed(() => authStore.userInfo?.is_premium || false));
 
 // Xử lý khi nhận được tin nhắn mới qua socket
 const handleNewMessage = (data) => {
@@ -73,38 +126,49 @@ onMounted(() => {
   console.log('MessageCenter đã được mount');
   console.log('Tham số URL hiện tại:', route.query);
   
-  // Reset store để tránh xung đột dữ liệu từ các màn hình khác
-  chatStore.resetStore();
-  
-  // Tải số lượng tin nhắn chưa đọc ngay khi component mount
-  chatStore.fetchUnreadMessages()
-    .finally(() => {
-      setTimeout(() => {
-        isLoading.value = false;
-      }, 500); // Thêm timeout nhỏ để có hiệu ứng loading
-    });
-  
-  // Khởi tạo kết nối socket nếu chưa được kết nối
-  if (!socketService.connected) {
-    console.log('Khởi tạo kết nối socket trong MessageCenter');
-    socketService.init();
-  }
-  
-  // Đăng ký handler cho tin nhắn mới nhận được qua socket
-  socketService.onMessage(handleNewMessage);
-  
-  // Log thông tin user_id từ URL nếu có
-  if (route.query.user) {
-    console.log('Đang truy cập trang tin nhắn với userId:', route.query.user);
+  // Tải thông tin profile trước khi kiểm tra
+  authStore.fetchUserProfile().then(() => {
+    console.log('[DEBUG] Thông tin người dùng sau khi tải profile:', authStore.userInfo);
+    console.log('[DEBUG] Trạng thái premium sau khi tải profile:', authStore.userInfo?.is_premium);
     
-    // Kiểm tra xem user_id có phải là số không
-    const userId = parseInt(route.query.user, 10);
-    if (isNaN(userId)) {
-      console.error('user_id không hợp lệ:', route.query.user);
-      // Quay về trang tin nhắn không có tham số
-      router.replace({ name: 'candidate-messages' });
+    // Kiểm tra trạng thái người dùng
+    if (!checkPremiumStatus()) {
+      return; // Không tiếp tục nếu không đăng nhập hoặc không phải ứng viên
     }
-  }
+    
+    // Reset store để tránh xung đột dữ liệu từ các màn hình khác
+    chatStore.resetStore();
+    
+    // Tải số lượng tin nhắn chưa đọc ngay khi component mount
+    chatStore.fetchUnreadMessages()
+      .finally(() => {
+        setTimeout(() => {
+          isLoading.value = false;
+        }, 500); // Thêm timeout nhỏ để có hiệu ứng loading
+      });
+    
+    // Khởi tạo kết nối socket nếu chưa được kết nối
+    if (!socketService.connected) {
+      console.log('Khởi tạo kết nối socket trong MessageCenter');
+      socketService.init();
+    }
+    
+    // Đăng ký handler cho tin nhắn mới nhận được qua socket
+    socketService.onMessage(handleNewMessage);
+    
+    // Log thông tin user_id từ URL nếu có
+    if (route.query.user) {
+      console.log('Đang truy cập trang tin nhắn với userId:', route.query.user);
+      
+      // Kiểm tra xem user_id có phải là số không
+      const userId = parseInt(route.query.user, 10);
+      if (isNaN(userId)) {
+        console.error('user_id không hợp lệ:', route.query.user);
+        // Quay về trang tin nhắn không có tham số
+        router.replace({ name: 'candidate-messages' });
+      }
+    }
+  });
 });
 
 // Hủy kết nối và event handlers khi component unmounted

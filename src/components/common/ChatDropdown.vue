@@ -18,93 +18,117 @@
       class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 border-b overflow-hidden"
       style="max-height: 70vh;"
     >
-      <div class="p-3 flex justify-between items-center sticky top-0 bg-white z-10">
-        <h3 class="font-medium text-gray-800 text-lg">Tin nhắn</h3>
-        <div class="flex items-center space-x-2">
-          <button 
-            title="Tin nhắn mới" 
-            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
-            @click="openNewMessageModal"
-          >
-            <i class="fas fa-edit text-gray-500"></i>
-          </button>
+      <!-- Khi người dùng không phải Premium -->
+      <div v-if="!userIsPremium" class="py-6 px-4 text-center border-b">
+        <div class="bg-yellow-50 rounded-xl p-4 mb-3">
+          <div class="mb-2">
+            <i class="fas fa-crown text-yellow-500 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">
+            Nâng cấp lên Premium
+          </h3>
+          <p class="text-gray-600 mb-4 text-sm">
+            Tính năng nhắn tin chỉ dành cho người dùng Premium. Nâng cấp ngay để trò chuyện trực tiếp với nhà tuyển dụng!
+          </p>
           <router-link 
-                to="/candidate/messages" 
-                class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
-                title="Tin nhắn"
-              >
-              Xem tất cả
-              </router-link>
+            :to="{ name: 'CandidatePremium' }" 
+            class="block w-full py-2 px-4 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-lg font-medium hover:from-yellow-600 hover:to-amber-700 transition-all shadow-md hover:shadow-lg"
+          >
+            Nâng cấp Premium ngay
+          </router-link>
         </div>
       </div>
       
-      <div class="relative">
-        <div class="px-3 py-2 border-b">
-          <div class="relative">
-            <input 
-              type="text" 
-              v-model="searchQuery" 
-              placeholder="Tìm kiếm cuộc trò chuyện..." 
-              class="w-full pl-8 pr-4 py-2 rounded-full bg-gray-100 border-none text-sm focus:ring-1 focus:ring-blue-500 focus:bg-white"
-            />
-            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <!-- Khi người dùng là Premium -->
+      <template v-else>
+        <div class="p-3 flex justify-between items-center sticky top-0 bg-white z-10">
+          <h3 class="font-medium text-gray-800 text-lg">Tin nhắn</h3>
+          <div class="flex items-center space-x-2">
+            <button 
+              title="Tin nhắn mới" 
+              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+              @click="openNewMessageModal"
+            >
+              <i class="fas fa-edit text-gray-500"></i>
+            </button>
+            <router-link 
+                  to="/candidate/messages" 
+                  class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
+                  title="Tin nhắn"
+                >
+                Xem tất cả
+                </router-link>
           </div>
         </div>
-      </div>
-
-      <div class="overflow-y-auto" style="max-height: calc(70vh - 110px);">
-        <div v-if="loading" class="p-4 text-center">
-          <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
-          <p class="text-sm text-gray-500 mt-2">Đang tải tin nhắn...</p>
-        </div>
         
-        <div v-else-if="filteredMessages.length === 0" class="p-4 text-center">
-          <i class="fas fa-comment-slash text-gray-300 text-2xl"></i>
-          <p class="text-sm text-gray-500 mt-2">Bạn chưa có tin nhắn nào</p>
-        </div>
-        
-        <template v-else>
-          <a 
-            v-for="message in filteredMessages" 
-            :key="message.id"
-            href="#"
-            @click.prevent="openChatPopup(message.senderId)"
-            class="block border-b hover:bg-gray-50 transition-colors"
-          >
-            <div class="flex p-3">
-              <div class="flex-shrink-0 mr-3 relative">
-                <div v-if="message.avatar" class="w-12 h-12 rounded-full overflow-hidden border border-gray-200">
-                  <img :src="message.avatar" alt="Avatar" class="w-full h-full object-cover" />
-                </div>
-                <div v-else class="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {{ getInitials(message.senderName || `U${message.senderId}`) }}
-                </div>
-                <div v-if="message.isOnline" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-              </div>
-              <div class="flex-1 min-w-0 flex flex-col justify-center">
-                <div class="flex justify-between items-center">
-                  <h4 class="text-sm font-medium text-gray-900 truncate">
-                    {{ message.senderName || `Người dùng #${message.senderId}` }}
-                  </h4>
-                  <span class="text-xs text-gray-500 whitespace-nowrap ml-1">
-                    {{ formatTime(message.created_at) }}
-                  </span>
-                </div>
-                <div class="flex items-center">
-                  <p 
-                    class="text-sm text-gray-500 truncate flex-1" 
-                    :class="{ 'font-semibold text-gray-800': !message.is_read }"
-                  >
-                    <template v-if="message.sender === currentUserId">Bạn: </template>
-                    {{ message.content }}
-                  </p>
-                  <div v-if="!message.is_read" class="ml-2 w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                </div>
-              </div>
+        <div class="relative">
+          <div class="px-3 py-2 border-b">
+            <div class="relative">
+              <input 
+                type="text" 
+                v-model="searchQuery" 
+                placeholder="Tìm kiếm cuộc trò chuyện..." 
+                class="w-full pl-8 pr-4 py-2 rounded-full bg-gray-100 border-none text-sm focus:ring-1 focus:ring-blue-500 focus:bg-white"
+              />
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
             </div>
-          </a>
-        </template>
-      </div>
+          </div>
+        </div>
+
+        <div class="overflow-y-auto" style="max-height: calc(70vh - 110px);">
+          <div v-if="loading" class="p-4 text-center">
+            <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
+            <p class="text-sm text-gray-500 mt-2">Đang tải tin nhắn...</p>
+          </div>
+          
+          <div v-else-if="filteredMessages.length === 0" class="p-4 text-center">
+            <i class="fas fa-comment-slash text-gray-300 text-2xl"></i>
+            <p class="text-sm text-gray-500 mt-2">Bạn chưa có tin nhắn nào</p>
+          </div>
+          
+          <template v-else>
+            <a 
+              v-for="message in filteredMessages" 
+              :key="message.id"
+              href="#"
+              @click.prevent="openChatPopup(message.senderId)"
+              class="block border-b hover:bg-gray-50 transition-colors"
+            >
+              <div class="flex p-3">
+                <div class="flex-shrink-0 mr-3 relative">
+                  <div v-if="message.avatar" class="w-12 h-12 rounded-full overflow-hidden border border-gray-200">
+                    <img :src="message.avatar" alt="Avatar" class="w-full h-full object-cover" />
+                  </div>
+                  <div v-else class="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {{ getInitials(message.senderName || `U${message.senderId}`) }}
+                  </div>
+                  <div v-if="message.isOnline" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
+                <div class="flex-1 min-w-0 flex flex-col justify-center">
+                  <div class="flex justify-between items-center">
+                    <h4 class="text-sm font-medium text-gray-900 truncate">
+                      {{ message.senderName || `Người dùng #${message.senderId}` }}
+                    </h4>
+                    <span class="text-xs text-gray-500 whitespace-nowrap ml-1">
+                      {{ formatTime(message.created_at) }}
+                    </span>
+                  </div>
+                  <div class="flex items-center">
+                    <p 
+                      class="text-sm text-gray-500 truncate flex-1" 
+                      :class="{ 'font-semibold text-gray-800': !message.is_read }"
+                    >
+                      <template v-if="message.sender === currentUserId">Bạn: </template>
+                      {{ message.content }}
+                    </p>
+                    <div v-if="!message.is_read" class="ml-2 w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </template>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -113,6 +137,7 @@
 import { ref, onMounted, onUnmounted, computed, inject, watch } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import { useChatStore } from '../../stores/chat';
+import { useRouter } from 'vue-router';
 import socketService from '../../services/socketService';
 
 const dropdown = ref(null);
@@ -120,6 +145,7 @@ const isOpen = ref(false);
 const loading = ref(false);
 const recentMessages = ref([]);
 const searchQuery = ref('');
+const router = useRouter();
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
@@ -141,8 +167,21 @@ const userRole = computed(() => authStore.userRole);
 const unreadCount = computed(() => chatStore.unreadCount);
 const currentUserId = computed(() => authStore.userInfo?.user_id);
 
+// Kiểm tra xem người dùng có phải là Premium không
+const userIsPremium = computed(() => {
+  // Debug trạng thái premium
+  console.log('[DEBUG] Thông tin người dùng:', authStore.userInfo);
+  console.log('[DEBUG] Trạng thái premium:', authStore.userInfo?.is_premium);
+  
+  // Chỉ kiểm tra trường is_premium từ API
+  return authStore.userInfo?.is_premium === true;
+});
+
 // Xử lý khi nhận được tin nhắn mới qua socket
 const handleSocketMessage = (data) => {
+  // Chỉ xử lý tin nhắn khi người dùng là Premium
+  if (!userIsPremium.value) return;
+  
   console.log('ChatDropdown nhận được tin nhắn mới qua socket:', data);
   
   if (data && (data.type === 'chat_message' || data.type === 'new_message')) {
@@ -199,9 +238,11 @@ const filteredMessages = computed(() => {
 
 // Toggle dropdown visibility
 const toggleDropdown = async () => {
+  // Luôn mở dropdown, không chuyển hướng sang premium nếu chưa phải premium
   isOpen.value = !isOpen.value;
   
-  if (isOpen.value) {
+  // Nếu đang mở dropdown và là tài khoản Premium, tải tin nhắn
+  if (isOpen.value && userIsPremium.value) {
     loading.value = true;
     try {
       // Tải tin nhắn chưa đọc và recent conversations
@@ -219,6 +260,9 @@ const toggleDropdown = async () => {
 
 // Tải tin nhắn chưa đọc
 const loadUnreadMessages = async () => {
+  // Chỉ tải tin nhắn khi người dùng là Premium
+  if (!userIsPremium.value) return;
+  
   try {
     const messages = await chatStore.fetchUnreadMessages();
     
@@ -265,6 +309,9 @@ const loadUnreadMessages = async () => {
 
 // Tải các cuộc trò chuyện gần đây
 const loadRecentConversations = async () => {
+  // Chỉ tải tin nhắn khi người dùng là Premium
+  if (!userIsPremium.value) return;
+  
   try {
     // Tải danh sách cuộc trò chuyện
     await chatStore.fetchConversations();
@@ -334,12 +381,28 @@ const loadRecentConversations = async () => {
 
 // Mở modal để soạn tin nhắn mới
 const openNewMessageModal = () => {
+  // Kiểm tra người dùng có phải Premium không
+  if (!userIsPremium.value) {
+    // Không chuyển hướng đến trang Premium, chỉ hiển thị thông báo
+    console.log('Người dùng không phải Premium, hiển thị thông báo');
+    // Có thể thêm toast hoặc thông báo ở đây nếu cần
+    return;
+  }
+  
   console.log('Mở modal soạn tin nhắn mới');
   // Phần này sẽ xử lý sau khi có component cho modal soạn tin nhắn mới
 };
 
 // Mở box chat nhỏ khi click vào tin nhắn
 const openChatPopup = (userId) => {
+  // Kiểm tra người dùng có phải Premium không
+  if (!userIsPremium.value) {
+    // Không chuyển hướng đến trang Premium, chỉ hiển thị thông báo
+    console.log('Người dùng không phải Premium, hiển thị thông báo');
+    // Có thể thêm toast hoặc thông báo ở đây nếu cần
+    return;
+  }
+  
   console.log('Mở box chat nhỏ với người dùng:', userId);
   
   // Đóng dropdown
@@ -381,6 +444,9 @@ const openChatPopup = (userId) => {
 
 // Khởi tạo kết nối Socket
 const initSocketConnection = () => {
+  // Chỉ khởi tạo kết nối Socket cho người dùng Premium
+  if (!userIsPremium.value) return;
+  
   if (!socketService.connected) {
     console.log('Khởi tạo kết nối socket trong ChatDropdown');
     socketService.init();
@@ -434,40 +500,52 @@ const formatTime = (dateString) => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   
-  // Khởi tạo kết nối socket
-  initSocketConnection();
-  
-  // Đăng ký handler cho tin nhắn mới nhận được qua socket
-  socketService.onMessage(handleSocketMessage);
-  
-  // Lấy số lượng tin nhắn chưa đọc khi component được mounted
-  chatStore.fetchUnreadMessages();
-  
-  // Lấy các cuộc trò chuyện gần đây
-  loadRecentConversations();
-  
-  // Thiết lập kiểm tra kết nối socket định kỳ
-  const socketCheckInterval = setInterval(() => {
-    if (!socketService.connected) {
-      console.log('⚠️ Socket đã ngắt kết nối, thử kết nối lại...');
-      socketService.init();
-    }
-  }, 30000); // Kiểm tra mỗi 30 giây
-  
-  // Lưu interval để có thể clear khi component unmounted
-  const intervalId = socketCheckInterval;
-  
-  // Đảm bảo hủy interval khi component unmounted
-  onUnmounted(() => {
-    clearInterval(intervalId);
+  // Tải thông tin profile để cập nhật trạng thái Premium
+  authStore.fetchUserProfile().then(() => {
+    console.log('[DEBUG] Thông tin người dùng sau khi tải profile:', authStore.userInfo);
+    console.log('[DEBUG] Trạng thái premium sau khi tải profile:', authStore.userInfo?.is_premium);
   });
+  
+  // Chỉ khởi tạo kết nối socket và đăng ký handler khi người dùng là Premium
+  if (userIsPremium.value) {
+    // Khởi tạo kết nối socket
+    initSocketConnection();
+    
+    // Đăng ký handler cho tin nhắn mới nhận được qua socket
+    socketService.onMessage(handleSocketMessage);
+    
+    // Lấy số lượng tin nhắn chưa đọc khi component được mounted
+    chatStore.fetchUnreadMessages();
+    
+    // Lấy các cuộc trò chuyện gần đây
+    loadRecentConversations();
+    
+    // Thiết lập kiểm tra kết nối socket định kỳ
+    const socketCheckInterval = setInterval(() => {
+      if (!socketService.connected) {
+        console.log('⚠️ Socket đã ngắt kết nối, thử kết nối lại...');
+        socketService.init();
+      }
+    }, 30000); // Kiểm tra mỗi 30 giây
+    
+    // Lưu interval để có thể clear khi component unmounted
+    const intervalId = socketCheckInterval;
+    
+    // Đảm bảo hủy interval khi component unmounted
+    onUnmounted(() => {
+      clearInterval(intervalId);
+    });
+  }
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   
-  // Hủy đăng ký handler tin nhắn
-  socketService.offMessage(handleSocketMessage);
+  // Chỉ hủy đăng ký handler tin nhắn khi người dùng là Premium
+  if (userIsPremium.value) {
+    // Hủy đăng ký handler tin nhắn
+    socketService.offMessage(handleSocketMessage);
+  }
 });
 </script>
 

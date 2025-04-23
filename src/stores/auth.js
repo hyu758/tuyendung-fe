@@ -331,10 +331,44 @@ export const useAuthStore = defineStore('auth', {
           return false;
         }
         
+        // Tải thông tin profile từ API để lấy trạng thái Premium
+        this.fetchUserProfile();
+        
         return true;
       } catch (error) {
         console.error('Lỗi khi cập nhật thông tin từ token:', error);
         return false;
+      }
+    },
+    
+    // Thêm phương thức tải thông tin profile từ API
+    async fetchUserProfile() {
+      try {
+        if (!this.token) return;
+        
+        console.log('Đang tải thông tin profile từ API...');
+        const response = await axios.get('/api/profile/');
+        
+        if (response.data.status === 200 && response.data.data) {
+          const profileData = response.data.data;
+          console.log('Đã tải thông tin profile:', profileData);
+          
+          // Cập nhật thông tin Premium vào user
+          this.user = {
+            ...this.user,
+            is_premium: profileData.is_premium === true,
+            premium_expiry: profileData.premium_expiry,
+            fullname: profileData.fullname,
+            email: profileData.email,
+            gender: profileData.gender,
+            balance: profileData.balance,
+            name_display: profileData.name_display
+          };
+          
+          console.log('Đã cập nhật thông tin Premium:', this.user.is_premium);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải thông tin profile:', error);
       }
     },
     
