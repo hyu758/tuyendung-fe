@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { onMounted, provide, onUnmounted, ref } from 'vue';
+import { onMounted, provide, onUnmounted, ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ChatContainer from '../chat/ChatContainer.vue';
 import { useChatStore } from '../../stores/chat';

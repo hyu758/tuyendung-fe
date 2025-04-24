@@ -46,6 +46,12 @@ const routes = [
     meta: { guest: true }
   },
   {
+    path: '/reset-password/:token',
+    name: 'ResetPassword',
+    component: () => import('../views/ResetPassword.vue'),
+    meta: { guest: true }
+  },
+  {
     path: '/enterprises',
     name: 'EnterpriseList',
     component: () => import('../views/enterprise/EnterpriseList.vue')

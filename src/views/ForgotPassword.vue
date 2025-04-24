@@ -41,9 +41,9 @@
                 type="submit"
                 variant="primary"
                 size="lg"
-                label="Gửi yêu cầu đặt lại mật khẩu"
-                :loading="authStore.loading"
-                :disabled="authStore.loading"
+                :label="isSubmitting ? 'Đang gửi yêu cầu...' : 'Gửi yêu cầu đặt lại mật khẩu'"
+                :loading="isSubmitting"
+                :disabled="isSubmitting"
                 class="w-full"
               />
             </div>
@@ -80,6 +80,8 @@ import { useAuthStore } from '../stores/auth'
 import BaseInput from '../components/common/BaseInput.vue'
 import BaseButton from '../components/common/BaseButton.vue'
 import BaseAlert from '../components/common/BaseAlert.vue'
+import axios from 'axios'
+import { showSuccess, showError } from '../utils/notifications'
 
 const authStore = useAuthStore()
 
@@ -87,6 +89,17 @@ const authStore = useAuthStore()
 const email = ref('')
 const errors = ref({})
 const successMessage = ref('')
+const isSubmitting = ref(false)
+
+// Hàm hiển thị thông báo toàn cục
+const showGlobalNotification = (message, type = 'success') => {
+  // Tạo thông báo để hiển thị qua localStorage
+  localStorage.setItem('notification', JSON.stringify({
+    message,
+    type,
+    id: Date.now()
+  }))
+}
 
 // Form submission
 const handleSubmit = async () => {
@@ -105,10 +118,39 @@ const handleSubmit = async () => {
   if (!isValid) return
   
   // Submit form
-  const result = await authStore.forgotPassword(email.value)
+  isSubmitting.value = true
+  authStore.error = null
   
-  if (result.success) {
-    successMessage.value = 'Email hướng dẫn đặt lại mật khẩu đã được gửi.'
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/forgot-password/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email: email.value })
+    })
+    const data = await response.json()
+    console.log(data)
+    if (response.status === 200) {
+      successMessage.value = 'Email hướng dẫn đặt lại mật khẩu đã được gửi.'
+      showSuccess('Email hướng dẫn đặt lại mật khẩu đã được gửi thành công.')
+    } else {
+      // Hiển thị lỗi từ API
+      authStore.error = data.error || 'Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.'
+      showError(authStore.error)
+    }
+  } catch (err) {
+    console.error('Lỗi quên mật khẩu:', err)
+    
+    if (err.response) {
+      authStore.error = err.response.data.error || 'Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.'
+      showError('Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại sau.')
+    } else {
+      authStore.error = 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'
+      showError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.')
+    }
+  } finally {
+    isSubmitting.value = false
   }
 }
 
