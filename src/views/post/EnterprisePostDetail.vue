@@ -609,17 +609,22 @@ const loadData = async () => {
     // Load post details
     const postId = route.params.id
     const postResult = await postStore.fetchPostById(postId)
-    if (postResult && postResult.data && postResult.data.data) {
+    
+    console.log('API response:', postResult) // Debug
+    
+    if (postResult.success) {
+      // Lấy dữ liệu từ cấu trúc API chính xác (lưu ý API trả về data.data)
       post.value = postResult.data.data
-      // Kiểm tra quyền xem CV đã nộp
-      canViewSubmittedCVs.value = post.value.can_view_submitted_cvs === true
-    }
-    
-    // Tải CV chỉ khi có quyền xem
-    if (canViewSubmittedCVs.value) {
+      console.log('Post data:', post.value)
+      
+      // Mặc định là true vì đây là giao diện nhà tuyển dụng
+      canViewSubmittedCVs.value = post.value.can_view_applicants || true
+      
+      // Tải danh sách CV
       await cvStore.fetchCVsByPostId(postId)
+    } else {
+      console.error('Error loading post:', postResult.error)
     }
-    
   } catch (err) {
     console.error('Error loading data:', err)
   } finally {

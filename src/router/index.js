@@ -86,7 +86,8 @@ const routes = [
       {
         path: '',
         name: 'EmployerDashboard',
-        component: () => import('../views/employer/Dashboard.vue')
+        component: () => import('../views/employer/EmployerStatistics.vue'),
+        meta: { requiresAuth: true, role: 'employer' }
       },
       {
         path: 'profile',
@@ -121,7 +122,7 @@ const routes = [
         meta: { requiresAuth: true, role: 'employer' }
       },
       {
-        path: '/employer/posts/:id',
+        path: 'posts/:id',
         name: 'PostDetail',
         component: () => import('../views/post/EnterprisePostDetail.vue'),
         meta: {
@@ -142,10 +143,10 @@ const routes = [
         meta: { requiresAuth: true, role: 'employer' }
       },
       {
-        path :'notifications',
-        name : 'NotificationView',
-        component : () => import('../views/employer/NotificationView.vue'),
-        meta : {requiresAuth : true, role : 'employer'}
+        path: 'notifications',
+        name: 'NotificationView',
+        component: () => import('../views/employer/NotificationView.vue'),
+        meta: {requiresAuth: true, role: 'employer'}
       },
       {
         path: '/employer/messages',
@@ -206,6 +207,15 @@ const routes = [
     name: 'PaymentFailed',
     component: () => import('../views/PaymentResult.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/enterprise/statistics',
+    name: 'EnterpriseStatistics',
+    component: () => import('../views/enterprise/EnterpriseStatistics.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['employer', 'admin']
+    }
   },
   {
     path: '/:pathMatch(.*)*',

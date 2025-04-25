@@ -52,6 +52,16 @@
 
           <!-- Navigation Links -->
           <router-link 
+            to="/employer"
+            class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
+            :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer') }"
+            @click="mobileLinkClick"
+          >
+            <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
+            <span>Tổng quan</span>
+          </router-link>
+
+          <router-link 
             to="/employer/profile"
             class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
             :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/profile') }"

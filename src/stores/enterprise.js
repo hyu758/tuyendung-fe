@@ -225,6 +225,58 @@ export const useEnterpriseStore = defineStore('enterprise', {
       } finally {
         this.loading = false
       }
+    },
+
+    async getEnterpriseStatistics() {
+      try {
+        this.loading = true
+        this.error = null
+        const authStore = useAuthStore()
+        
+        const response = await axios.get('/api/enterprises/statistics/', {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (response.data.status === 200) {
+          return { success: true, data: response.data.data }
+        }
+        
+        throw new Error(response.data.message || 'Không thể lấy thống kê doanh nghiệp')
+      } catch (error) {
+        console.error('Error getting enterprise statistics:', error)
+        this.error = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi lấy thống kê doanh nghiệp'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async getEmployerStatistics() {
+      try {
+        this.loading = true
+        this.error = null
+        const authStore = useAuthStore()
+        
+        const response = await axios.get('/api/statistics/', {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (response.data.status === 200) {
+          return { success: true, data: response.data.data }
+        }
+        
+        throw new Error(response.data.message || 'Không thể lấy thống kê nhà tuyển dụng')
+      } catch (error) {
+        console.error('Error getting employer statistics:', error)
+        this.error = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi lấy thống kê nhà tuyển dụng'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
     }
   }
 }) 
