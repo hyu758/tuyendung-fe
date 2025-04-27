@@ -52,19 +52,7 @@
               <option value="rejected">Từ chối</option>
             </select>
           </div>
-          <div class="w-full md:w-auto">
-            <label for="date-filter" class="block text-sm font-medium text-gray-700 mb-1">Ngày ứng tuyển</label>
-            <select 
-              id="date-filter" 
-              v-model="filters.dateRange" 
-              class="border border-gray-300 rounded-md p-2 w-full focus:ring-blue-500 focus:border-blue-500">
-              <option value="">Tất cả thời gian</option>
-              <option value="last7days">7 ngày qua</option>
-              <option value="last30days">30 ngày qua</option>
-              <option value="last3months">3 tháng qua</option>
-              <option value="last6months">6 tháng qua</option>
-            </select>
-          </div>
+
           <div class="w-full md:w-auto md:ml-auto mt-2 md:mt-0">
             <button 
               @click="resetFilters" 
@@ -98,79 +86,72 @@
         </div>
 
         <div v-else>
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Thông tin ứng tuyển
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vị trí ứng tuyển
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ngày ứng tuyển
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="application in filteredApplications" :key="application.id">
-                <td class="px-6 py-4">
-                  <div class="text-sm font-medium text-gray-900">{{ application.name }}</div>
-                  <div class="text-sm text-gray-500">{{ application.email }}</div>
-                  <div class="text-sm text-gray-500">{{ application.phoneNumber }}</div>
-                  <div v-if="application.cvFileUrl" class="mt-1">
-                    <a :href="application.cvFileUrl" target="_blank" class="text-xs text-blue-600 hover:underline inline-flex items-center">
-                      <svg class="h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                      Xem CV
-                    </a>
+          <div class="p-4">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-medium text-gray-900">Việc làm đã ứng tuyển</h2>
+              <select 
+                v-model="filters.status" 
+                class="border border-gray-300 rounded-md px-3 py-1 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Tất cả trạng thái</option>
+                <option value="pending">Đang xử lý</option>
+                <option value="approved">Đã duyệt</option>
+                <option value="rejected">Từ chối</option>
+              </select>
+            </div>
+            
+            <div class="space-y-4">
+              <div v-for="application in filteredApplications" :key="application.id" 
+                  class="p-4 border border-gray-200 rounded-lg hover:shadow-md transition">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0 w-12 h-12">
+                      <img v-if="application.enterprise_logo" :src="application.enterprise_logo" 
+                          :alt="application.enterprise_name" class="w-full h-full object-cover rounded-md">
+                      <div v-else class="w-full h-full bg-gray-100 flex items-center justify-center rounded-md text-gray-500">
+                        {{ getCompanyInitials(application.enterprise_name) }}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 class="text-base font-medium text-gray-900">{{ application.post_title }}</h3>
+                      <p class="text-sm text-gray-600">{{ application.enterprise_name }}</p>
+                    </div>
                   </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{{ application.jobTitle }}</div>
-                  <div class="text-sm text-gray-500">{{ application.companyName }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900">{{ formatDate(application.appliedAt) }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-2 py-1 inline-flex text-xs leading-5 font-medium rounded-full" :class="getStatusClass(application.status)">
+                  <span class="px-2 py-1 text-xs rounded-full" :class="getStatusClass(application.status)">
                     {{ getStatusText(application.status) }}
                   </span>
-                  <div v-if="application.note" class="mt-1">
-                    <span class="text-xs text-gray-500">{{ application.note }}</span>
+                </div>
+                
+                <div class="mt-4 text-sm text-gray-500">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p>Thời gian ứng tuyển: {{ formatDate(application.created_at) }}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                      <a v-if="application.cv_file_url" 
+                         :href="application.cv_file_url" 
+                         target="_blank"
+                         class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        <font-awesome-icon icon="file-pdf" class="mr-1" />
+                        CV tải lên
+                      </a>
+                      <button
+                        @click="chatWithEmployer(application.user)"
+                        class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        <font-awesome-icon icon="comment" class="mr-1" />
+                        Nhắn tin
+                      </button>
+                      <router-link 
+                        :to="{ name: 'JobDetail', params: { id: application.post } }"
+                        class="inline-flex items-center px-3 py-1 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+                        <font-awesome-icon icon="eye" class="mr-1" />
+                        Xem việc làm
+                      </router-link>
+                    </div>
                   </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex space-x-2">
-                    <base-button
-                      type="chat"
-                      variant="secondary"
-                      size="sm"
-                      @click="chatWithEmployer(application.job.user_id)"
-                      class="p-2"
-                      title="Chat với nhà tuyển dụng"
-                    />
-                    <base-button
-                      type="link"
-                      variant="primary"
-                      size="sm"
-                      :to="{ name: 'job-detail', params: { id: application.job.id } }"
-                      class="p-2"
-                      title="Xem chi tiết công việc"
-                    />
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -243,7 +224,7 @@
                     </div>
                     <div>
                       <p class="text-sm text-gray-600">Ngày ứng tuyển:</p>
-                      <p class="text-sm font-medium">{{ formatDate(selectedApplication.appliedAt) }}</p>
+                      <p class="text-sm font-medium">{{ formatDate(selectedApplication.created_at) }}</p>
                     </div>
                   </div>
                 </div>
@@ -253,11 +234,11 @@
                 <div class="mt-2 border-t border-gray-200 pt-2">
                   <div class="mb-3">
                     <p class="text-sm text-gray-600">Vị trí:</p>
-                    <p class="text-sm font-medium">{{ selectedApplication.jobTitle }}</p>
+                    <p class="text-sm font-medium">{{ selectedApplication.post_title }}</p>
                   </div>
                   <div>
                     <p class="text-sm text-gray-600">Công ty:</p>
-                    <p class="text-sm font-medium">{{ selectedApplication.companyName }}</p>
+                    <p class="text-sm font-medium">{{ selectedApplication.enterprise_name }}</p>
                   </div>
                 </div>
               </div>
@@ -267,7 +248,7 @@
                   <span class="px-2 py-1 inline-flex text-xs leading-5 font-medium rounded-full mr-2" :class="getStatusClass(selectedApplication.status)">
                     {{ getStatusText(selectedApplication.status) }}
                   </span>
-                  <span v-if="selectedApplication.isViewed" class="text-xs text-blue-600">
+                  <span v-if="selectedApplication.is_viewed" class="text-xs text-blue-600">
                     (Đã xem)
                   </span>
                   <span v-else class="text-xs text-gray-500">
@@ -285,8 +266,8 @@
                   <p class="text-sm whitespace-pre-wrap">{{ selectedApplication.description }}</p>
                 </div>
               </div>
-              <div v-if="selectedApplication.cvFileUrl" class="mt-4">
-                <a :href="selectedApplication.cvFileUrl" target="_blank" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <div v-if="selectedApplication.cv_file_url" class="mt-4">
+                <a :href="selectedApplication.cv_file_url" target="_blank" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                   <svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
@@ -339,30 +320,13 @@ const fetchApplications = async () => {
   
   // Kiểm tra token
   const token = localStorage.getItem('token');
-  console.log('Token hiện tại:', token ? 'Có token' : 'Không có token');
   
   try {
-    console.log('Đang gọi API để lấy danh sách đơn ứng tuyển...');
     const response = await candidateService.getApplications();
-    console.log('Phản hồi API:', response.data);
     
-    // Dữ liệu trả về từ API sẽ nằm trong response.data.results
-    applications.value = response.data.data.results.map(cv => ({
-      id: cv.id,
-      jobId: cv.post,
-      jobTitle: cv.post_title || 'Vị trí ứng tuyển #' + cv.post,
-      jobLocation: cv.post_location || 'Không xác định',
-      companyName: cv.company_name || 'Công ty tuyển dụng',
-      companyLogo: cv.company_logo || null,
-      appliedAt: cv.created_at,
-      status: cv.status,
-      isViewed: cv.is_viewed,
-      name: cv.name,
-      email: cv.email,
-      phoneNumber: cv.phone_number,
-      description: cv.description,
-      cvFileUrl: cv.cv_file_url,
-      note: cv.note
+    applications.value = response.data.data.results.map(app => ({
+      ...app,
+      jobId: app.post
     }));
     updateStatistics();
   } catch (error) {
@@ -403,12 +367,24 @@ const fetchApplications = async () => {
 
 // Cập nhật thống kê
 const updateStatistics = () => {
+  // Đặt lại giá trị thống kê
   statistics.value = {
     total: applications.value.length,
-    pending: applications.value.filter(app => app.status === 'pending').length,
-    approved: applications.value.filter(app => app.status === 'approved').length,
-    rejected: applications.value.filter(app => app.status === 'rejected').length
+    pending: 0,
+    approved: 0,
+    rejected: 0
   };
+  
+  // Tính toán số lượng đơn ứng tuyển theo trạng thái
+  applications.value.forEach(app => {
+    if (app.status === 'pending') {
+      statistics.value.pending++;
+    } else if (app.status === 'approved') {
+      statistics.value.approved++;
+    } else if (app.status === 'rejected') {
+      statistics.value.rejected++;
+    }
+  });
 };
 
 // Lọc ứng dụng dựa trên bộ lọc
@@ -441,12 +417,12 @@ const filteredApplications = computed(() => {
     }
 
     if (startDate) {
-      result = result.filter(app => new Date(app.appliedAt) >= startDate);
+      result = result.filter(app => new Date(app.created_at) >= startDate);
     }
   }
 
   // Sắp xếp theo ngày mới nhất
-  return result.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+  return result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 });
 
 // Đặt lại bộ lọc
