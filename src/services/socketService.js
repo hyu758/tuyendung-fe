@@ -14,7 +14,10 @@ class SocketService {
     this.notificationStore = null;
     this.useSocketIO = false; // Flag để quyết định dùng Socket.IO hay WebSocket thuần
     this.connectionAttempts = 0;
-    this.maxConnectionAttempts = 3;
+    this.maxConnectionAttempts = 5; // Tăng số lần thử
+    
+    // Vô hiệu hóa Socket.IO hoàn toàn
+    this.enableSocketIO = false;
   }
 
   // Khởi tạo kết nối WebSocket
@@ -31,18 +34,26 @@ class SocketService {
     // Lấy store notification
     this.notificationStore = useNotificationStore();
 
-    // Thử kết nối WebSocket
+    // Chỉ sử dụng WebSocket thuần, không dùng Socket.IO
+    this.useSocketIO = false;
     this.connectWebSocket();
   }
 
-  // Kết nối socket.io
+  // Kết nối socket.io - Không sử dụng nữa
   connectSocketIO() {
+    if (!this.enableSocketIO) {
+      console.log('Socket.IO đã bị vô hiệu hóa');
+      this.connecting = false;
+      this.tryAlternativeConnection();
+      return;
+    }
+    
     try {
       console.log('Đang thử kết nối qua Socket.IO tới:', API_URL);
       this.useSocketIO = true;
       
       this.socket = io(API_URL, {
-        path: '/ws/socket.io/',
+        path: '/socket.io/',
         transports: ['websocket'],
         autoConnect: true,
         reconnection: true,
@@ -162,12 +173,19 @@ class SocketService {
       return;
     }
 
-    if (this.useSocketIO) {
+    if (this.useSocketIO && this.enableSocketIO) {
       console.log('Socket.IO thất bại, chuyển sang WebSocket thuần');
       this.connectWebSocket();
     } else {
-      console.log('WebSocket thuần thất bại, chuyển sang Socket.IO');
-      this.connectSocketIO();
+      console.log('WebSocket thuần thất bại, không thử Socket.IO');
+      // Chỉ tăng số lần thử và thử lại WebSocket
+      this.connectionAttempts++;
+      
+      // Thử lại WebSocket sau 3 giây
+      setTimeout(() => {
+        console.log('Thử kết nối lại WebSocket...');
+        this.connectWebSocket();
+      }, 3000);
     }
   }
 
