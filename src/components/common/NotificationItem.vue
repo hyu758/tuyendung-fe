@@ -26,6 +26,7 @@
 import { computed } from 'vue';
 import { useNotificationStore } from '../../stores/notification';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
 
 const props = defineProps({
   notification: {
@@ -109,12 +110,6 @@ const handleClick = async () => {
     await notificationStore.markAsRead(props.notification.id);
   }
   
-  // Nếu có link trực tiếp, ưu tiên sử dụng
-  if (props.notification.link) {
-    router.push(props.notification.link);
-    return;
-  }
-  
   // Xử lý chuyển hướng dựa vào loại thông báo nếu không có link
   switch (props.notification.notification_type) {
     case 'cv_status_changed':
@@ -127,7 +122,11 @@ const handleClick = async () => {
       router.push(`/my-applications?cv_id=${props.notification.object_id}`);
       break;
     case 'message_received':
-      router.push(`/messages?conversation_id=${props.notification.object_id}`);
+      if (useAuthStore().isCandidate) {
+        router.push(`candidate/messages?conversation_id=${props.notification.object_id}`);
+      } else {
+        router.push(`employer/messages?conversation_id=${props.notification.object_id}`);
+      }
       break;
     case 'cv_viewed':
       router.push(`/job-detail?cv_id=${props.notification.object_id}`);

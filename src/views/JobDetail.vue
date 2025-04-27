@@ -174,21 +174,21 @@
                   <span class="text-yellow-600 font-medium">Nâng cấp để nhắn tin</span>
                 </base-button>
               </div>
-              <div v-if="authStore.isLoggedIn && job.appliedDate" class="hidden sm:flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-100 shadow-sm">
+              <div v-if="authStore.isLoggedIn && job.latest_application_date" class="hidden sm:flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-100 shadow-sm">
                 <font-awesome-icon icon="check-circle" class="text-green-500" />
                 <div class="text-gray-700 text-sm">
-                  <span>Đã ứng tuyển: {{ job.appliedDate }}</span>
-                  <a href="#" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</a>
+                  <span>Đã ứng tuyển: {{ job.latest_application_date }}</span>
+                  <a href="my-applications" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</a>
                 </div>
               </div>
             </div>
             
             <!-- Hiển thị thông báo đã ứng tuyển trên mobile -->
-            <div v-if="authStore.isLoggedIn && job.appliedDate" class="block sm:hidden mt-4 flex items-center gap-2 bg-green-50 px-4 py-3 rounded-lg border border-green-100 shadow-sm">
+            <div v-if="authStore.isLoggedIn && job.latest_application_date" class="sm:hidden mt-4 flex items-center gap-2 bg-green-50 px-4 py-3 rounded-lg border border-green-100 shadow-sm">
               <font-awesome-icon icon="check-circle" class="text-green-500" />
               <div class="text-gray-700 text-sm">
-                <span>Đã ứng tuyển: {{ job.appliedDate }}</span>
-                <a href="#" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</a>
+                <span>Đã ứng tuyển: {{ job.latest_application_date }}</span>
+                <a href="my-applications" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</a>
               </div>
             </div>
           </div>
@@ -891,7 +891,7 @@ const showToast = (message, type = 'success') => {
 
 // Kiểm tra xem job đã được ứng tuyển chưa
 const isApplied = computed(() => {
-  return !!job.value?.appliedDate
+  return !!job.value?.latest_application_date
 })
 
 // Kiểm tra quyền chat với nhà tuyển dụng

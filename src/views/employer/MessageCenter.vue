@@ -17,45 +17,22 @@
                 Quản lý và trả lời tin nhắn của ứng viên
               </p>
             </div>
-            <div v-if="unreadCount > 0 && authStore.userInfo?.is_premium" class="mt-4 ml-11">
+            <div v-if="unreadCount > 0" class="mt-4 ml-11">
               <div class="inline-flex items-center bg-red-100 text-red-600 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
                 <font-awesome-icon icon="envelope" class="mr-2" />
                 {{ unreadCount }} tin nhắn chưa đọc
               </div>
             </div>
-            
-            <!-- Thông báo cho người dùng không phải Premium -->
-            <div v-if="!authStore.userInfo?.is_premium" class="mt-3 ml-11 flex items-center">
-              <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-medium inline-flex items-center">
-                <i class="fas fa-crown text-yellow-600 mr-2"></i>
-                Tính năng dành cho người dùng Premium
-              </div>
-            </div>
-          </div>
-          
-          <!-- Nếu không phải Premium, hiển thị thông báo nâng cấp bao phủ phần nội dung -->
-          <div v-if="!authStore.userInfo?.is_premium" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10" style="top: 180px;">
-            <div class="text-center px-4 py-6 max-w-md mx-auto">
-              <div class="w-24 h-24 mb-4 flex items-center justify-center bg-yellow-50 rounded-full mx-auto">
-                <i class="fas fa-crown text-yellow-500 text-4xl"></i>
-              </div>
-              <h2 class="text-xl font-bold text-gray-800 mb-2">Tính năng dành cho người dùng Premium</h2>
-              <p class="text-gray-600 mb-6">Để có thể nhắn tin với ứng viên, bạn cần nâng cấp tài khoản lên gói Premium.</p>
-              <router-link to="/pricing" class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 mx-auto w-max hover:shadow-lg transition duration-300">
-                <i class="fas fa-crown"></i>
-                Nâng cấp Premium ngay
-              </router-link>
-            </div>
           </div>
           
           <!-- Main chat container -->
-          <div v-if="!isEmpty && authStore.userInfo?.is_premium" class="h-[calc(100vh-220px)]">
+          <div v-if="!isEmpty" class="h-[calc(100vh-220px)]">
             <chat-container />
           </div>
           
           <!-- Empty state (sẽ hiển thị khi không có cuộc trò chuyện nào) -->
-          <div v-if="(isEmpty && authStore.userInfo?.is_premium) || !authStore.userInfo?.is_premium" class="h-[calc(100vh-220px)] flex items-center justify-center">
-            <div v-if="isEmpty && authStore.userInfo?.is_premium" class="text-center max-w-md mx-auto p-8 bg-white/60 backdrop-blur-sm rounded-xl shadow-md">
+          <div v-if="isEmpty" class="h-[calc(100vh-220px)] flex items-center justify-center">
+            <div class="text-center max-w-md mx-auto p-8 bg-white/60 backdrop-blur-sm rounded-xl shadow-md">
               <div class="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <font-awesome-icon icon="comments" class="text-indigo-500 text-3xl" />
               </div>
@@ -81,11 +58,30 @@ import ChatContainer from '../chat/ChatContainer.vue';
 import { useChatStore } from '../../stores/chat';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useAuthStore } from '@/stores/auth'
+import socketService from '../../services/socketService';
 
 const chatStore = useChatStore();
 const authStore = useAuthStore()
 const unreadCount = computed(() => chatStore.unreadCount);
 const isEmpty = ref(false);
+
+// Xử lý tin nhắn socket
+const handleSocketMessage = (data) => {
+  console.log('Nhận được tin nhắn socket trong MessageCenter:', data);
+  
+  // Xử lý tin nhắn mới
+  if (data.type === 'new_message' || (data.data && data.data.type === 'new_message')) {
+    const messageData = data.data ? data.data : data;
+    
+    // Cập nhật danh sách tin nhắn
+    if (messageData.message) {
+      chatStore.addMessage(messageData.message);
+    }
+    
+    // Cập nhật số lượng tin nhắn chưa đọc
+    chatStore.fetchUnreadMessages();
+  }
+};
 
 // Theo dõi thay đổi trong danh sách cuộc trò chuyện
 watch(() => chatStore.conversations, (conversations) => {
@@ -93,6 +89,14 @@ watch(() => chatStore.conversations, (conversations) => {
 }, { immediate: true });
 
 onMounted(async () => {
+  // Khởi tạo kết nối socket
+  if (!socketService.connected) {
+    socketService.init();
+  }
+  
+  // Đăng ký lắng nghe tin nhắn socket
+  socketService.onMessage(handleSocketMessage);
+  
   // Reset store để tránh xung đột dữ liệu từ các màn hình khác
   chatStore.resetStore();
   
@@ -114,6 +118,8 @@ onMounted(async () => {
     // Xóa interval khi component unmounted
     onUnmounted(() => {
       clearInterval(intervalId);
+      // Hủy đăng ký sự kiện socket
+      socketService.offMessage(handleSocketMessage);
     });
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu cho MessageCenter:', error);
