@@ -188,6 +188,101 @@
         </div>
       </section>
 
+      <!-- Phần doanh nghiệp Pro -->
+      <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+          <!-- Banner tiêu đề Thương hiệu lớn tiêu biểu -->
+          <div class="bg-amber-100 rounded-xl overflow-hidden shadow-md mb-8">
+            <div class="p-6 md:p-8">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">Thương hiệu lớn tiêu biểu</h2>
+                  <p class="text-gray-700 max-w-3xl">Những thương hiệu tuyển dụng đã khẳng định được vị thế trên thị trường.</p>
+                </div>
+                <div class="hidden md:block">
+                  <div class="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-full font-semibold shadow-sm w-fit">
+                    Pro Company
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab filter ngành nghề -->
+          <div class="flex overflow-x-auto gap-2 mb-6 scrollbar-hide pb-2">
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium shadow-sm whitespace-nowrap flex-shrink-0">
+              Tất cả
+            </button>
+            <button 
+              v-for="category in categories.slice(0, 8)" 
+              :key="category.id"
+              @click="searchByCategory(category.name)"
+              class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 hover:text-gray-900 transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              {{ category.name }}
+            </button>
+          </div>
+
+          <!-- Premium companies grid -->
+          <div v-if="loadingPremium" class="flex justify-center py-12">
+            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          
+          <div v-else-if="premiumEnterprises.length === 0" 
+            class="text-center py-16 border border-gray-200 rounded-xl"
+          >
+            <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+              <font-awesome-icon icon="building" class="text-gray-400 text-2xl" />
+            </div>
+            <p class="text-gray-500">Chưa có doanh nghiệp Pro</p>
+          </div>
+          
+          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <router-link
+              v-for="enterprise in premiumEnterprises" 
+              :key="enterprise.id"
+              :to="`/enterprises/${enterprise.id}`"
+              class="bg-white rounded-lg p-4 shadow hover:shadow-lg transition-shadow flex flex-col items-center border border-gray-100 group"
+            >
+              <div class="w-20 h-20 rounded-lg overflow-hidden bg-white mb-3 border border-gray-100 flex items-center justify-center">
+                <img 
+                  v-if="enterprise.logo_url" 
+                  :src="enterprise.logo_url" 
+                  :alt="enterprise.company_name"
+                  class="max-w-full max-h-full object-contain p-1" 
+                  @error="handleImageError"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center bg-gray-50">
+                  <font-awesome-icon icon="building" class="text-gray-400 text-xl" />
+                </div>
+              </div>
+              <h3 class="text-sm font-medium text-center text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-1">
+                {{ enterprise.company_name }}
+              </h3>
+              <p class="text-xs text-gray-500 line-clamp-1 mt-1">
+                {{ enterprise.field_of_activity }}
+              </p>
+            </router-link>
+          </div>
+
+          <!-- Controls di chuyển cho mobile -->
+          <div class="flex justify-center mt-6 md:hidden gap-2">
+            <button 
+              class="w-8 h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-300"
+              aria-label="Trang trước"
+            >
+              <font-awesome-icon icon="chevron-left" />
+            </button>
+            <button 
+              class="w-8 h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-300"
+              aria-label="Trang sau"
+            >
+              <font-awesome-icon icon="chevron-right" />
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- Công việc nổi bật -->
       <section class="py-16 bg-gray-50">
         <div class="container mx-auto px-4">
@@ -232,8 +327,6 @@
           </div>
         </div>
       </section>
-
-      
 
       <!-- Thông tin cho nhà tuyển dụng -->
       <section class="py-16 relative bg-gray-900 text-white overflow-hidden">
@@ -341,7 +434,9 @@ import JobCard from '../components/common/JobCard.vue'
 import { usePostStore } from '../stores/post'
 import { useFieldStore } from '../stores/field'
 import { useAuthStore } from '../stores/auth'
+import { useEnterpriseStore } from '../stores/enterprise'
 import SelectRole from './auth/SelectRole.vue'
+import axios from 'axios'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -351,6 +446,11 @@ const searchKeyword = ref('')
 const searchLocation = ref('')
 const loading = ref(true)
 const featuredJobs = ref([])
+
+// Premium Enterprises
+const premiumEnterprises = ref([])
+const loadingPremium = ref(true)
+const premiumSlider = ref(null)
 
 // Dữ liệu mẫu (thường sẽ được lấy từ API)
 const locations = [
@@ -382,6 +482,39 @@ const fetchPosts = async () =>{
   }
 }
 
+// Fetch Premium Enterprises
+const fetchPremiumEnterprises = async () => {
+  loadingPremium.value = true
+  try {
+    const enterpriseStore = useEnterpriseStore()
+    const result = await enterpriseStore.fetchPremiumEnterprises()
+    if (result.success) {
+      premiumEnterprises.value = result.data
+    }
+    loadingPremium.value = false
+  } catch (error) {
+    console.error('Không thể lấy danh sách doanh nghiệp premium:', error)
+    loadingPremium.value = false
+  }
+}
+
+// Xử lý sự kiện scroll cho slider
+const scrollPremium = (direction) => {
+  if (!premiumSlider.value) return
+  
+  const scrollAmount = 200
+  if (direction === 'left') {
+    premiumSlider.value.scrollLeft -= scrollAmount
+  } else {
+    premiumSlider.value.scrollLeft += scrollAmount
+  }
+}
+
+// Handle image errors
+const handleImageError = (e) => {
+  e.target.src = '/default-company-logo.png'
+}
+
 // Lifecycle hooks
 onMounted(async () => {
   const fieldStore = useFieldStore();
@@ -392,6 +525,7 @@ onMounted(async () => {
       categories.value = result.data;
     }
     await fetchPosts();
+    await fetchPremiumEnterprises();
     
     loading.value = false
   } catch (error) {
@@ -447,5 +581,38 @@ const handleSaveJob = (jobId) => {
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* CSS cho phần Premium Enterprises */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  scroll-behavior: smooth;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Responsive CSS cho phần Premium */
+@media (max-width: 768px) {
+  .premium-enterprise-card {
+    min-width: 130px;
+    max-width: 130px;
+  }
+}
+
+@media (max-width: 640px) {
+  .premium-enterprise-card {
+    min-width: 120px;
+    max-width: 120px;
+  }
 }
 </style> 

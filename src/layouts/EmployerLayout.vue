@@ -135,7 +135,7 @@
           
           <!-- Mua Premium -->
           <router-link 
-            to="premium"
+            to="/employer/premium"
             class="flex items-center px-4 py-2 mt-2 bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-700 hover:from-yellow-100 hover:to-yellow-200 rounded-md border border-yellow-200 group"
             :class="{ 'bg-yellow-100 text-yellow-800': isCurrentRoute('/employer/premium') }"
             @click="mobileLinkClick"

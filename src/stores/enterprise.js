@@ -277,6 +277,22 @@ export const useEnterpriseStore = defineStore('enterprise', {
       } finally {
         this.loading = false
       }
+    },
+    async fetchPremiumEnterprises() {
+      try {
+        this.loading = true
+        const response = await axios.get('/api/enterprises/premium')
+        if (response.data && response.data.status === 200) {
+          return { success: true, data: response.data.data.results }
+        }
+        throw new Error(response.data.message || 'Không thể lấy danh sách doanh nghiệp Premium')
+      } catch (error) {
+        console.error('Error fetching premium enterprises:', error)
+        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách doanh nghiệp Premium'
+        return { success: false, error: this.error }
+      } finally {
+        this.loading = false
+      }
     }
   }
 }) 

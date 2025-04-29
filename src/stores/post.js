@@ -10,10 +10,10 @@ export const usePostStore = defineStore('post', {
   }),
 
   actions: {
-    async fetchPosts(page = 1, pageSize = 10) {
+    async fetchPosts(page = 1, pageSize = 10, sort = "-created_at") {
       try {
         this.loading = true
-        const response = await axios.get(`/api/posts?page=${page}&page_size=${pageSize}`)
+        const response = await axios.get(`/api/posts?page=${page}&page_size=${pageSize}&sort=${sort}`)
         return {
           success: true,
           data: response.data

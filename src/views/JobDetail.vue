@@ -230,6 +230,7 @@
           <!-- Right column -->
           <div class="space-y-6">
             <!-- Company info -->
+             <!-- Nếu doanh nghiệp là premium thì hiện pro company -->
             <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
               <div class="p-4 md:p-6">
                 <div class="flex items-center mb-6">
@@ -239,11 +240,15 @@
                     class="w-14 h-14 md:w-16 md:h-16 object-contain bg-white rounded p-1" 
                     @error="handleImageError"
                   />
+                  
                   <div class="ml-3">
                     <h3 class="font-bold text-gray-900 text-sm md:text-base">{{ job.enterprise_name }}</h3>
-                    <div class="text-gray-600 text-xs md:text-sm mt-1">{{ job.field_name }}</div>
+                    <div v-if="job.is_enterprise_premium">
+                      <span class="inline-flex items-center px-2 py-1 bg-amber-400 text-white rounded-full text-xs font-semibold shadow">Pro Company</span> 
+                    </div>
                   </div>
                 </div>
+                
 
                 <div class="space-y-4 text-gray-600 text-sm md:text-base">
                   <div class="flex items-start">
@@ -339,22 +344,6 @@
                       <i class="fas fa-arrow-right text-xs"></i>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Skills -->
-            <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:shadow-xl transition-all duration-300">
-              <div class="p-4 md:p-6">
-                <h3 class="font-bold text-gray-900 mb-4 text-base md:text-lg">Kỹ năng cần có</h3>
-                <div class="flex flex-wrap gap-2">
-                  <span 
-                    v-for="skill in job.skills" 
-                    :key="skill"
-                    class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs md:text-sm hover:bg-gray-200 transition-colors cursor-pointer"
-                  >
-                    {{ skill }}
-                  </span>
                 </div>
               </div>
             </div>
