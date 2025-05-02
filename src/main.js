@@ -8,6 +8,10 @@ import axios from 'axios'
 import socketService from './services/socketService'
 import { useAuthStore } from './stores/auth'
 
+// Toast Notification
+import Toast from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
+
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -26,10 +30,16 @@ import {
   faFilePdf,
   faFileWord,
   faCircleNotch,
+  faBookmark,
+  faMoneyBillWave,
+  faLocationDot
 } from '@fortawesome/free-solid-svg-icons'
 import { 
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle 
 } from '@fortawesome/free-brands-svg-icons'
+import {
+  faHeart as farHeart
+} from '@fortawesome/free-regular-svg-icons'
 
 // Thêm icons vào thư viện
 library.add(
@@ -48,6 +58,10 @@ library.add(
   faFilePdf,
   faFileWord,
   faCircleNotch,
+  faBookmark,
+  faMoneyBillWave,
+  faLocationDot,
+  farHeart
 )
 
 // Cấu hình Axios
@@ -151,6 +165,20 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
+app.use(Toast, {
+  position: "bottom-right",
+  timeout: 3000,
+  closeOnClick: true,
+  pauseOnFocusLoss: true,
+  pauseOnHover: true,
+  draggable: true,
+  draggablePercent: 0.6,
+  showCloseButtonOnHover: false,
+  hideProgressBar: false,
+  closeButton: "button",
+  icon: true,
+  rtl: false
+})
 app.component('font-awesome-icon', FontAwesomeIcon)
 
 // Đăng ký directive toàn cục

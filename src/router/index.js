@@ -180,6 +180,12 @@ const routes = [
     meta: { requiresAuth: true, role: 'candidate' }
   },
   {
+    path: '/saved-jobs',
+    name: 'SavedJobs',
+    component: () => import('../views/candidate/SavedJobs.vue'),
+    meta: { requiresAuth: true, role: 'candidate' }
+  },
+  {
     path: '/candidate/messages',
     name: 'candidate-messages',
     component: () => import('../views/candidate/MessageCenter.vue'),

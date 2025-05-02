@@ -151,9 +151,20 @@
           <div v-else>
             <div class="space-y-4">
               <div v-for="job in jobs" :key="job.id"
-                class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all transform hover:-translate-y-1 border border-gray-100">
-                <router-link :to="`/job/${job.id}`" class="block">
-                  <div class="p-5">
+                class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all transform hover:-translate-y-1 border border-gray-100"
+              >
+                <div class="relative">
+                  <!-- Nút save ở góc phải -->
+                  <button 
+                    @click="handleSaveJob(job)"
+                    class="absolute top-4 right-4 z-10 text-gray-400 hover:text-red-500 transition-colors focus:outline-none bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm"
+                    :class="{ 'text-red-500': job.isSaved }"
+                  >
+                    <i :class="job.isSaved ? 'fas fa-heart' : 'far fa-heart'"></i>
+                  </button>
+
+                  <!-- Nội dung card -->
+                  <router-link :to="`/job/${job.id}`" class="block p-5">
                     <div class="flex flex-col md:flex-row md:items-center">
                       <!-- Logo công ty -->
                       <div class="mr-5 mb-4 md:mb-0">
@@ -170,15 +181,14 @@
 
                       <!-- Thông tin chính -->
                       <div class="flex-grow">
-                        <h3
-                          class="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 hover:text-blue-600 transition-colors">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 hover:text-blue-600 transition-colors">
                           {{ job.title }}
                         </h3>
                         <p class="text-gray-600 text-sm mb-1">{{ job.enterprise_name || 'Công ty ẩn danh' }}</p>
                         <div v-if="job?.is_enterprise_premium">
-                          <span
-                            class="inline-flex items-center px-2 py-1 bg-amber-400 text-white rounded-full text-xs font-semibold shadow">Pro
-                            Company</span>
+                          <span class="inline-flex items-center px-2 py-1 bg-amber-400 text-white rounded-full text-xs font-semibold shadow">
+                            Pro Company
+                          </span>
                         </div>
                         <!-- Tags -->
                         <div class="flex flex-wrap gap-2 mt-3">
@@ -212,50 +222,74 @@
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  <!-- Footer -->
-                  <div class="px-5 py-3 bg-gray-50 flex justify-between items-center">
-                    <div class="text-sm text-gray-500 line-clamp-1 mr-4">
-                    </div>
-                    <div class="flex-shrink-0">
-                      <button @click.stop="handleSaveJob(job.id)"
-                        class="text-blue-600 hover:text-blue-800 transition-colors focus:outline-none"
-                        :class="{ 'text-yellow-500 hover:text-yellow-600': job.isSaved }">
-                        <i class="fas" :class="job.isSaved ? 'fa-bookmark' : 'fa-bookmark'"></i>
-                      </button>
-                    </div>
-                  </div>
-                </router-link>
+                  </router-link>
+                </div>
               </div>
             </div>
 
             <!-- Phân trang -->
             <div v-if="totalPages > 1" class="flex justify-center mt-10">
-              <nav class="flex items-center">
+              <nav class="flex items-center space-x-2">
+                <!-- Nút Previous -->
                 <button
-                  class="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors mr-2"
-                  :disabled="currentPage === 1" :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }"
-                  @click="changePage(currentPage - 1)">
+                  class="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                  :disabled="currentPage === 1"
+                  :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }"
+                  @click="changePage(currentPage - 1)"
+                >
                   <i class="fas fa-chevron-left text-gray-500"></i>
                 </button>
 
-                <div class="flex items-center space-x-2">
-                  <button v-for="page in displayedPages" :key="page" @click="changePage(page)"
-                    class="flex items-center justify-center w-10 h-10 rounded-lg transition-colors"
-                    :class="currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-300 hover:bg-gray-50 text-gray-700'">
-                    {{ page }}
-                  </button>
-                </div>
-
+                <!-- Nút trang đầu nếu không hiển thị -->
                 <button
-                  class="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors ml-2"
+                  v-if="!displayedPages.includes(1)"
+                  @click="changePage(1)"
+                  class="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700"
+                >
+                  1
+                </button>
+
+                <!-- Dấu ... bên trái -->
+                <span v-if="displayedPages[0] > 2" class="px-2">...</span>
+
+                <!-- Các nút số trang -->
+                <button
+                  v-for="page in displayedPages"
+                  :key="page"
+                  @click="changePage(page)"
+                  class="flex items-center justify-center w-10 h-10 rounded-lg transition-colors"
+                  :class="currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-300 hover:bg-gray-50 text-gray-700'"
+                >
+                  {{ page }}
+                </button>
+
+                <!-- Dấu ... bên phải -->
+                <span v-if="displayedPages[displayedPages.length - 1] < totalPages - 1" class="px-2">...</span>
+
+                <!-- Nút trang cuối nếu không hiển thị -->
+                <button
+                  v-if="!displayedPages.includes(totalPages)"
+                  @click="changePage(totalPages)"
+                  class="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700"
+                >
+                  {{ totalPages }}
+                </button>
+
+                <!-- Nút Next -->
+                <button
+                  class="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
                   :disabled="currentPage === totalPages"
                   :class="{ 'opacity-50 cursor-not-allowed': currentPage === totalPages }"
-                  @click="changePage(currentPage + 1)">
+                  @click="changePage(currentPage + 1)"
+                >
                   <i class="fas fa-chevron-right text-gray-500"></i>
                 </button>
               </nav>
+
+              <!-- Hiển thị thông tin phân trang -->
+              <div class="text-sm text-gray-500 ml-4 flex items-center">
+                Trang {{ currentPage }}/{{ totalPages }} ({{ total }} kết quả)
+              </div>
             </div>
           </div>
         </div>
@@ -267,19 +301,22 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import JobCard from '../components/common/JobCard.vue'
 import JobFilter from '../components/common/JobFilter.vue'
-import { useAddressStore } from '../stores/address'
+import { usePostStore } from '../stores/post'
+import { useToast } from 'vue-toastification'
 import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
+const postStore = usePostStore()
+const toast = useToast()
 
 // State
 const loading = ref(false)
 const jobs = ref([])
 const currentPage = ref(1)
-const itemsPerPage = 6
+const pageSize = ref(10)
+const total = ref(0)
 const sortQuery = reactive({
   sort_by: route.query.sort_by || 'created_at',
   sort_order: 'desc'
@@ -304,24 +341,23 @@ const searchQuery = reactive({
 })
 
 // Tính tổng số trang
-const totalPages = computed(() => {
-  return Math.ceil(jobs.value.length / itemsPerPage)
-})
+const totalPages = ref(1)
 
 // Hiển thị số trang tối đa 5 trang
 const displayedPages = computed(() => {
-  if (totalPages.value <= 5) {
-    return Array.from({ length: totalPages.value }, (_, i) => i + 1)
+  const maxVisiblePages = 5
+  const halfVisible = Math.floor(maxVisiblePages / 2)
+  const totalPagesValue = totalPages.value
+
+  let startPage = Math.max(currentPage.value - halfVisible, 1)
+  let endPage = startPage + maxVisiblePages - 1
+
+  if (endPage > totalPagesValue) {
+    endPage = totalPagesValue
+    startPage = Math.max(endPage - maxVisiblePages + 1, 1)
   }
 
-  let start = Math.max(currentPage.value - 2, 1)
-  let end = Math.min(start + 4, totalPages.value)
-
-  if (end === totalPages.value) {
-    start = Math.max(end - 4, 1)
-  }
-
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+  return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i)
 })
 
 // Lấy viết tắt tên công ty khi không có logo
@@ -410,36 +446,37 @@ const loadJobsFromQuery = async () => {
   try {
     const response = await axios.get('/api/posts/search/', { params: searchQuery })
     const data = response.data.data
+    console.log(data)
 
     // Cập nhật danh sách công việc
-    jobs.value = data.results.map(job => {
+    jobs.value = data.results.map(job => ({
+      id: job.id,
+      title: job.title,
+      location: `${job.city}${job.district ? `, ${job.district}` : ''}`,
+      type_working: job.type_working,
+      salary_min: job.salary_min,
+      salary_max: job.salary_max,
+      publishDate: new Date(job.created_at),
+      experience: job.experience,
+      description: job.description,
+      required: job.required,
+      interest: job.interest,
+      isFeatured: false,
+      isSaved: job.is_saved || false,
+      is_enterprise_premium: job.is_enterprise_premium,
+      enterprise_name: job.enterprise_name || '',
+      enterprise_logo: job.enterprise_logo || '',
+    }))
 
-      return {
-        id: job.id,
-        title: job.title,
-        location: `${job.city}${job.district ? `, ${job.district}` : ''}`,
-        type_working: job.type_working,
-        salary_min: job.salary_min,
-        salary_max: job.salary_max,
-        publishDate: new Date(job.created_at),
-        experience: job.experience,
-        description: job.description,
-        required: job.required,
-        interest: job.interest,
-        isFeatured: false,
-        isSaved: false,
-        is_enterprise_premium: job.is_enterprise_premium,
-        enterprise_name: job.enterprise_name || '',
-        enterprise_logo: job.enterprise_logo || '',
-      }
-    })
-
-    // Cập nhật tổng số trang
-    totalPages.value = Math.ceil(data.total / searchQuery.page_size)
-    currentPage.value = searchQuery.page
+    // Cập nhật thông tin phân trang
+    totalPages.value = data.total_pages
+    currentPage.value = data.page
+    pageSize.value = data.page_size
+    total.value = data.total
 
   } catch (error) {
     console.error('Không thể lấy danh sách việc làm:', error)
+    toast.error('Có lỗi xảy ra khi tải danh sách việc làm')
   } finally {
     loading.value = false
   }
@@ -497,6 +534,8 @@ const resetFilters = () => {
 }
 
 const changePage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  
   searchQuery.page = page
   router.push({
     path: '/job-search',
@@ -504,11 +543,33 @@ const changePage = (page) => {
   })
 }
 
-const handleSaveJob = (jobId) => {
-  // Trong thực tế, sẽ gọi API để lưu/bỏ lưu công việc
-  const jobIndex = jobs.value.findIndex(job => job.id === jobId)
-  if (jobIndex !== -1) {
-    jobs.value[jobIndex].isSaved = !jobs.value[jobIndex].isSaved
+const handleSaveJob = async (job) => {
+  try {
+    const jobIndex = jobs.value.findIndex(j => j.id === job.id)
+    if (jobIndex === -1) return
+
+    if (!jobs.value[jobIndex].isSaved) {
+      // Lưu job
+      const result = await postStore.savePost(job.id)
+      if (result.success) {
+        jobs.value[jobIndex].isSaved = true
+        toast.success('Đã lưu việc làm thành công')
+      } else {
+        toast.error(result.error)
+      }
+    } else {
+      // Bỏ lưu job
+      const result = await postStore.deleteSavedPostByPostId(job.id)
+      if (result.success) {
+        jobs.value[jobIndex].isSaved = false
+        toast.success('Đã bỏ lưu việc làm thành công')
+      } else {
+        toast.error(result.error)
+      }
+    }
+  } catch (error) {
+    console.error('Error handling save job:', error)
+    toast.error('Có lỗi xảy ra khi thực hiện thao tác')
   }
 }
 

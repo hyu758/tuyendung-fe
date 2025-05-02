@@ -121,6 +121,77 @@ export const usePostStore = defineStore('post', {
           error: error.response?.data?.message || 'Có lỗi xảy ra khi thay đổi trạng thái bài đăng'
         }
       }
+    },
+
+    // Lấy danh sách tin đã lưu
+    async fetchSavedPosts() {
+      try {
+        this.loading = true
+        const response = await axios.get('/api/saved-posts/')
+        return {
+          success: true,
+          data: response.data
+        }
+      } catch (error) {
+        console.error('Error fetching saved posts:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách tin đã lưu'
+        }
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Lưu tin tuyển dụng
+    async savePost(postId) {
+      try {
+        const response = await axios.post('/api/saved-posts/save/', { post_id: postId })
+        return {
+          success: true,
+          data: response.data
+        }
+      } catch (error) {
+        console.error('Error saving post:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi lưu tin tuyển dụng'
+        }
+      }
+    },
+
+    // Xóa tin đã lưu theo ID của saved post
+    async deleteSavedPost(savedPostId) {
+      try {
+        const response = await axios.delete(`/api/saved-posts/${savedPostId}/delete/`)
+        return {
+          success: true,
+          data: response.data
+        }
+      } catch (error) {
+        console.error('Error deleting saved post:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi xóa tin đã lưu'
+        }
+      }
+    },
+
+    // Xóa tin đã lưu theo ID của bài đăng
+    async deleteSavedPostByPostId(postId) {
+      try {
+        const response = await axios.delete(`/api/saved-posts/post/${postId}/delete/`)
+        return {
+          success: true,
+          data: response.data
+        }
+      } catch (error) {
+        console.error('Error deleting saved post:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi xóa tin đã lưu'
+        }
+      }
     }
   }
 }) 
