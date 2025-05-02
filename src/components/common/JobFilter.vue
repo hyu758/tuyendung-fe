@@ -232,6 +232,24 @@
         </div>
       </div>
       
+      <!-- Tùy chọn chỉ hiển thị việc làm phù hợp -->
+      <div v-if="hasCriteria" class="mt-3">
+        <div class="bg-blue-50 rounded-lg p-3 border border-blue-100">
+          <div class="flex items-center">
+            <input
+              id="only-matching"
+              v-model="filters.onlyMatching"
+              type="checkbox"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors"
+            />
+            <label for="only-matching" class="ml-2 block text-sm text-blue-800 font-medium cursor-pointer w-full">
+              Chỉ hiển thị việc làm phù hợp
+            </label>
+          </div>
+          <p class="mt-1 text-xs text-blue-600 pl-6">Chỉ hiển thị các việc làm phù hợp với tiêu chí của bạn</p>
+        </div>
+      </div>
+      
       <!-- Nút lọc và xóa bộ lọc -->
       <div class="grid grid-cols-2 gap-3 pt-2">
         <button
@@ -270,16 +288,33 @@
 import { ref, reactive, defineEmits, onMounted } from 'vue'
 import { useAddressStore } from '@/stores/address'
 import { useFieldStore } from '@/stores/field'
+import { useAuthStore } from '@/stores/auth'
+import axios from 'axios'
 
 const emit = defineEmits(['filter', 'close'])
 
 // Các dữ liệu cho bộ lọc
 const locations = ref([])
 const categories = ref([])
+const hasCriteria = ref(false)
 
 // Load dữ liệu từ API
 async function loadData() {
   try {
+    // Kiểm tra xem người dùng đã đăng nhập và có tiêu chí hay không
+    const authStore = useAuthStore()
+    if (authStore.isAuthenticated) {
+      try {
+        const response = await axios.get('/api/criteria/')
+        if (response.data.status === 200) {
+          hasCriteria.value = true
+        }
+      } catch (err) {
+        // Không có tiêu chí
+        hasCriteria.value = false
+      }
+    }
+
     // Load locations
     const addressStore = useAddressStore()
     const provinces = await addressStore.fetchProvinces()
@@ -327,7 +362,8 @@ const filters = reactive({
   position: '',
   type_working: [],
   salary_type: '',
-  experience: ''
+  experience: '',
+  onlyMatching: false
 })
 
 // Định dạng tiền tệ
@@ -363,7 +399,8 @@ const applyFilters = () => {
     salary_min,
     salary_max,
     is_salary_negotiable,
-    experience: filters.experience
+    experience: filters.experience,
+    all: !filters.onlyMatching
   }
   emit('filter', filterParams)
 }
@@ -382,6 +419,7 @@ const resetFilters = () => {
   filters.type_working = []
   filters.salary_type = ''
   filters.experience = ''
+  filters.onlyMatching = false
   
   emit('filter', {
     q: '',
@@ -391,7 +429,8 @@ const resetFilters = () => {
     salary_min: '',
     salary_max: '',
     is_salary_negotiable: false,
-    experience: ''
+    experience: '',
+    all: true
   })
 }
 </script>

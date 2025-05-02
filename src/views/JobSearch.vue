@@ -152,6 +152,7 @@
             <div class="space-y-4">
               <div v-for="job in jobs" :key="job.id"
                 class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all transform hover:-translate-y-1 border border-gray-100"
+                :class="{'border-l-4 border-l-green-500': job.matchesCriteria}"
               >
                 <div class="relative">
                   <!-- Nút save ở góc phải -->
@@ -185,10 +186,18 @@
                           {{ job.title }}
                         </h3>
                         <p class="text-gray-600 text-sm mb-1">{{ job.enterprise_name || 'Công ty ẩn danh' }}</p>
-                        <div v-if="job?.is_enterprise_premium">
-                          <span class="inline-flex items-center px-2 py-1 bg-amber-400 text-white rounded-full text-xs font-semibold shadow">
-                            Pro Company
-                          </span>
+                        <div class="flex gap-2 items-center">
+                          <div v-if="job?.is_enterprise_premium">
+                            <span class="inline-flex items-center px-2 py-1 bg-amber-400 text-white rounded-full text-xs font-semibold shadow">
+                              Pro Company
+                            </span>
+                          </div>
+                          <div v-if="job.matchesCriteria">
+                            <span class="inline-flex items-center px-2 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow">
+                              <i class="fas fa-check-circle mr-1"></i>
+                              Phù hợp
+                            </span>
+                          </div>
                         </div>
                         <!-- Tags -->
                         <div class="flex flex-wrap gap-2 mt-3">
@@ -305,11 +314,13 @@ import JobFilter from '../components/common/JobFilter.vue'
 import { usePostStore } from '../stores/post'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const postStore = usePostStore()
 const toast = useToast()
+const authStore = useAuthStore()
 
 // State
 const loading = ref(false)
@@ -324,6 +335,8 @@ const sortQuery = reactive({
 
 const locations = ref([])
 const isFilterVisible = ref(false)
+const hasCriteria = ref(false)
+const isCriteriaLoading = ref(false)
 
 // Truy vấn tìm kiếm
 const searchQuery = reactive({
@@ -334,10 +347,13 @@ const searchQuery = reactive({
   type_working: route.query.type_working || '',
   salary_min: route.query.salary_min || '',
   salary_max: route.query.salary_max || '',
+  scales: route.query.scales || '',
+  field: route.query.field || '',
   page: route.query.page || 1,
   page_size: route.query.page_size || 10,
   sort_by: route.query.sort_by || 'created_at',
-  sort_order: 'desc'
+  sort_order: 'desc',
+  all: route.query.all !== 'false' // Mặc định là true nếu không được chỉ định hoặc không phải 'false'
 })
 
 // Tính tổng số trang
@@ -409,8 +425,61 @@ const formatDate = (date) => {
   }
 }
 
+// Fetch user criteria and apply to search
+const fetchUserCriteria = async () => {
+  // Chỉ thực hiện khi người dùng đã đăng nhập
+  if (!authStore.isAuthenticated) return;
+  
+  isCriteriaLoading.value = true;
+  
+  try {
+    const response = await axios.get('/api/criteria/');
+    
+    if (response.data.status === 200) {
+      const criteria = response.data.data;
+      hasCriteria.value = true;
+      
+      // Điền thông tin từ tiêu chí vào tham số tìm kiếm (nếu chưa có giá trị)
+      if (!searchQuery.city && criteria.city) searchQuery.city = criteria.city;
+      if (!searchQuery.experience && criteria.experience) searchQuery.experience = criteria.experience;
+      if (!searchQuery.type_working && criteria.type_working) searchQuery.type_working = criteria.type_working;
+      if (!searchQuery.scales && criteria.scales) searchQuery.scales = criteria.scales;
+      if (!searchQuery.salary_min && criteria.salary_min) searchQuery.salary_min = criteria.salary_min;
+      
+      // Nếu có field, lấy ID hoặc tên field
+      if (!searchQuery.field && criteria.field) {
+        if (typeof criteria.field === 'object') {
+          searchQuery.field = criteria.field.id;
+        } else {
+          searchQuery.field = criteria.field;
+        }
+      }
+      
+      // Nếu có position, lấy ID hoặc tên position
+      if (!searchQuery.position && criteria.position) {
+        if (typeof criteria.position === 'object') {
+          searchQuery.position = criteria.position.id;
+        } else {
+          searchQuery.position = criteria.position;
+        }
+      }
+    }
+  } catch (err) {
+    // Nếu không có tiêu chí, đó không phải là lỗi
+    if (err.response?.status !== 404) {
+      console.error('Lỗi khi lấy tiêu chí tìm việc:', err);
+    }
+  } finally {
+    isCriteriaLoading.value = false;
+  }
+};
+
 onMounted(async () => {
-  loadJobsFromQuery()
+  // Trước tiên, thử lấy tiêu chí từ người dùng
+  await fetchUserCriteria();
+  
+  // Sau đó tải việc làm dựa trên truy vấn (có thể đã được điền từ tiêu chí)
+  loadJobsFromQuery();
 })
 
 // Watch route changes
@@ -426,6 +495,7 @@ watch(() => route.query, (newQuery) => {
   searchQuery.page_size = newQuery.page_size || 10
   searchQuery.sort_by = newQuery.sort_by || 'created-at'
   searchQuery.sort_order = newQuery.sort_order || 'desc'
+  searchQuery.all = newQuery.all !== 'false' // Mặc định là true nếu không được chỉ định hoặc không phải 'false'
   loadJobsFromQuery()
 }, { deep: true })
 
@@ -466,6 +536,7 @@ const loadJobsFromQuery = async () => {
       is_enterprise_premium: job.is_enterprise_premium,
       enterprise_name: job.enterprise_name || '',
       enterprise_logo: job.enterprise_logo || '',
+      matchesCriteria: hasCriteria.value && !isCriteriaLoading.value && job.matches_criteria || false
     }))
 
     // Cập nhật thông tin phân trang
@@ -493,10 +564,13 @@ const searchJobs = () => {
       type_working: searchQuery.type_working,
       salary_min: searchQuery.salary_min,
       salary_max: searchQuery.salary_max,
+      scales: searchQuery.scales,
+      field: searchQuery.field,
       page: 1,
       page_size: searchQuery.page_size,
       sort_by: searchQuery.sort_by,
-      sort_order: searchQuery.sort_order
+      sort_order: searchQuery.sort_order,
+      all: searchQuery.all
     }
   })
 }
@@ -511,10 +585,30 @@ const applyFilters = (filters) => {
   searchQuery.salary_min = filters.salary_min || searchQuery.salary_min
   searchQuery.salary_max = filters.salary_max || searchQuery.salary_max
   searchQuery.negotiable = filters.is_salary_negotiable || searchQuery.negotiable
+  searchQuery.scales = filters.scales || searchQuery.scales
+  searchQuery.field = filters.field || searchQuery.field
+  searchQuery.all = filters.all !== undefined ? filters.all : searchQuery.all
   searchQuery.page = 1 // Reset về trang 1 khi áp dụng bộ lọc mới
 
-  // Gọi API tìm kiếm với bộ lọc mới
-  loadJobsFromQuery()
+  // Nếu all=false, xóa các tiêu chí không được chọn
+  if (searchQuery.all === false) {
+    // Chỉ giữ lại các giá trị đã được chọn rõ ràng
+    if (!filters.q) searchQuery.q = ''
+    if (!filters.city) searchQuery.city = ''
+    if (!filters.position) searchQuery.position = ''
+    if (!filters.experience) searchQuery.experience = ''
+    if (!filters.type_working) searchQuery.type_working = ''
+    if (!filters.salary_min) searchQuery.salary_min = ''
+    if (!filters.salary_max) searchQuery.salary_max = ''
+    if (!filters.scales) searchQuery.scales = ''
+    if (!filters.field) searchQuery.field = ''
+  }
+
+  // Gọi router.push để cập nhật URL
+  router.push({
+    path: '/job-search',
+    query: { ...searchQuery }
+  })
 }
 
 const resetFilters = () => {
