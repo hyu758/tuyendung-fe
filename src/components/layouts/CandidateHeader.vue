@@ -196,33 +196,46 @@
                 class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-20 border border-gray-200"
               >
                 <!-- Menu cá nhân -->
-                <div>
+                <div class="py-1" role="none">
                   <router-link 
                     to="/profile" 
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    role="menuitem"
                   >
-                    <i class="fas fa-user mr-2"></i> Hồ sơ cá nhân
+                    <i class="fas fa-user-circle mr-2"></i>
+                    Hồ sơ cá nhân
                   </router-link>
-                  
                   <router-link 
                     to="/my-applications" 
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    role="menuitem"
                   >
-                    <i class="fas fa-file-alt mr-2"></i> Đơn ứng tuyển
+                    <i class="fas fa-clipboard-list mr-2"></i>
+                    Việc đã ứng tuyển
                   </router-link>
-                  
                   <router-link 
                     to="/saved-jobs" 
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    role="menuitem"
                   >
-                    <i class="fas fa-bookmark mr-2"></i> Việc đã lưu
+                    <i class="fas fa-heart mr-2"></i>
+                    Việc đã lưu
                   </router-link>
-                  
                   <router-link 
-                    to="/premium" 
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    to="/my-criteria" 
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    role="menuitem"
                   >
-                    <i class="fas fa-crown mr-2 text-yellow-500"></i> Nâng cấp Premium
+                    <i class="fas fa-sliders-h mr-2"></i>
+                    Tiêu chí tìm việc
+                  </router-link>
+                  <router-link 
+                    to="/job-recommendations" 
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    role="menuitem"
+                  >
+                    <i class="fas fa-thumbs-up mr-2"></i>
+                    Việc làm gợi ý
                   </router-link>
                 </div>
                 

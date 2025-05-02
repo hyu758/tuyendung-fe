@@ -224,6 +224,26 @@ const routes = [
     }
   },
   {
+    path: '/my-criteria',
+    name: 'MyCriteria',
+    component: () => import('../views/candidate/MyCriteria.vue'),
+    meta: {
+      requiresAuth: true,
+      candidateOnly: true,
+      title: 'Tiêu chí tìm việc'
+    }
+  },
+  {
+    path: '/job-recommendations',
+    name: 'JobRecommendations',
+    component: () => import('../views/candidate/JobRecommendations.vue'),
+    meta: {
+      requiresAuth: true,
+      candidateOnly: true,
+      title: 'Việc làm gợi ý'
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')
