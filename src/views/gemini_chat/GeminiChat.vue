@@ -22,13 +22,26 @@
         <div v-else class="chat-sessions">
           <div 
             v-for="session in chatSessions" 
-            :key="session.session_id" 
-            :class="['chat-session-item', { active: currentSession?.session_id === session.session_id }]"
-            @click="loadChatSession(session.session_id)"
+            :key="session.id" 
+            :class="['chat-session-item group', { active: currentSession?.id === session.id, 'new_chat': session.isNew }]"
+            @click="loadChatSession(session.id)"
           >
-            <div class="flex items-center w-full">
-              <i class="fas fa-comment-dots mr-2 text-indigo-600"></i>
-              <div class="truncate flex-1">{{ session.title }}</div>
+            <div class="flex items-center w-full justify-between">
+              <div class="truncate flex-1">
+                <div class="flex items-center">
+                  <i class="fas fa-comment-dots mr-2 text-indigo-600"></i>
+                  <span class="truncate">{{ session.title }}</span>
+                </div>
+              </div>
+              <div class="actions opacity-0 group-hover:opacity-100">
+                <button 
+                  v-if="currentSession?.id === session.id"
+                  @click.stop="openEditTitleDialog(session)" 
+                  class="edit-title-btn text-gray-500 hover:text-indigo-600"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
             </div>
             <div class="text-xs text-gray-500 mt-1">
               {{ formatDate(session.updated_at) }}
@@ -73,7 +86,7 @@
                 <i :class="[message.role === 'user' ? 'fas fa-user' : 'fas fa-robot', 'avatar-icon']"></i>
               </div>
               <div class="message-content">
-                <div class="message-sender">{{ message.role === 'user' ? 'Bạn' : 'Trợ lý AI' }}</div>
+                <div class="message-sender">{{ message.role === 'user' ? 'Bạn' : 'JobHub AI' }}</div>
                 <div class="message-text" v-html="formatMessage(message.content)"></div>
                 <div class="message-time">{{ formatTime(message.created_at) }}</div>
               </div>
@@ -84,7 +97,7 @@
                 <i class="fas fa-robot avatar-icon"></i>
               </div>
               <div class="message-content">
-                <div class="message-sender">Trợ lý AI</div>
+                <div class="message-sender">JobHub AI</div>
                 <div class="typing-indicator">
                   <span></span>
                   <span></span>
@@ -116,7 +129,36 @@
         </div>
         
         <div v-if="!isAuthenticated" class="auth-prompt">
-          <p>Vui lòng <router-link to="/login" class="text-indigo-600 hover:underline">đăng nhập</router-link> để sử dụng trợ lý AI</p>
+          <p>Vui lòng <router-link to="/login" class="text-indigo-600 hover:underline">đăng nhập</router-link> để sử dụng JobHub AI</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hộp thoại chỉnh sửa tiêu đề -->
+    <div v-if="showEditTitleDialog" class="edit-title-dialog">
+      <div class="edit-title-content">
+        <div class="edit-title-header">
+          <h2>Đổi tên phiên chat</h2>
+          <button @click="cancelEditTitle" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="edit-title-body">
+          <input 
+            type="text" 
+            v-model="editedTitle" 
+            placeholder="Nhập tiêu đề mới"
+            class="edit-title-input"
+            @keydown.enter="updateChatTitle"
+          />
+          <div v-if="editTitleError" class="text-red-500 text-sm mt-1">{{ editTitleError }}</div>
+        </div>
+        <div class="edit-title-footer">
+          <button @click="cancelEditTitle" class="cancel-btn">Hủy</button>
+          <button @click="updateChatTitle" class="save-btn" :disabled="isUpdatingTitle">
+            <span v-if="isUpdatingTitle">Đang lưu...</span>
+            <span v-else>Lưu</span>
+          </button>
         </div>
       </div>
     </div>
@@ -146,6 +188,10 @@ export default {
     const chatSessions = ref([]);
     const messagesContainer = ref(null);
     const messageInput = ref(null);
+    const showEditTitleDialog = ref(false);
+    const editedTitle = ref('');
+    const editTitleError = ref('');
+    const isUpdatingTitle = ref(false);
     
     // Xử lý gửi tin nhắn
     const sendMessage = async () => {
@@ -182,10 +228,13 @@ export default {
       isLoading.value = true;
       isTyping.value = true;
       
+      // Lưu trữ session_id trước khi gửi để theo dõi thay đổi
+      const currentSessionId = currentSession.value.id;
+      
       try {
         const response = await axios.post('/api/gemini-chat/send-message/', {
           message: messageText,
-          session_id: currentSession.value.session_id
+          session_id: currentSession.value.id
         });
         
         isTyping.value = false;
@@ -197,8 +246,20 @@ export default {
           created_at: new Date().toISOString()
         });
         
-        // Cập nhật danh sách phiên chat
-        await fetchChatSessions();
+        // Nếu đây là phiên chat mới, cập nhật lại tiêu đề
+        if (currentSession.value.title === "Phiên chat mới") {
+          // Cập nhật danh sách phiên chat để lấy tiêu đề mới
+          await fetchChatSessions();
+          
+          // Tìm phiên chat đã cập nhật trong danh sách
+          const updatedSession = chatSessions.value.find(session => session.id === currentSessionId);
+          if (updatedSession) {
+            currentSession.value.title = updatedSession.title;
+          }
+        } else {
+          // Cập nhật danh sách phiên chat
+          await fetchChatSessions();
+        }
       } catch (error) {
         isTyping.value = false;
         console.error('Lỗi khi gửi tin nhắn:', error);
@@ -247,7 +308,24 @@ export default {
       
       try {
         const response = await axios.get('/api/gemini-chat/sessions/');
-        chatSessions.value = response.data.results;
+        // Sắp xếp phiên chat mới nhất lên đầu
+        const sortedSessions = response.data.results.sort((a, b) => {
+          return new Date(b.updated_at) - new Date(a.updated_at);
+        });
+        
+        // Nếu đã có dữ liệu phiên chat, kiểm tra xem có phiên chat mới không
+        if (chatSessions.value.length > 0) {
+          // Nếu có phiên chat mới được thêm vào, thêm animation để hiển thị mượt mà
+          const existingIds = chatSessions.value.map(session => session.id);
+          const newSessions = sortedSessions.filter(session => !existingIds.includes(session.id));
+          
+          // Đánh dấu phiên chat mới để thêm hiệu ứng
+          newSessions.forEach(session => {
+            session.isNew = true;
+          });
+        }
+        
+        chatSessions.value = sortedSessions;
       } catch (error) {
         console.error('Lỗi khi lấy danh sách phiên chat:', error);
       } finally {
@@ -257,6 +335,10 @@ export default {
     
     // Tải phiên chat
     const loadChatSession = async (sessionId) => {
+      if (!sessionId) {
+        return;
+      }
+      
       isLoading.value = true;
       
       try {
@@ -280,8 +362,41 @@ export default {
     
     // Format tin nhắn với markdown
     const formatMessage = (content) => {
-      // Chuyển đổi markdown sang HTML và làm sạch
-      return DOMPurify.sanitize(marked.parse(content));
+      // Cấu hình marked để bật autolink và cho phép HTML
+      marked.setOptions({
+        gfm: true,
+        breaks: true,
+        pedantic: false,
+        smartLists: true,
+        smartypants: false,
+        xhtml: false
+      });
+
+      // Định dạng tin nhắn bằng marked (Markdown to HTML)
+      let formattedMessage = marked.parse(content);
+
+      // Sử dụng DOMPurify để làm sạch HTML nhưng cho phép một số thẻ và thuộc tính
+      const config = {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'ol', 'li', 'br', 'span', 'div', 'img', 'pre', 'code', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'id', 'class', 'style', 'src', 'alt', 'title'],
+        ALLOW_DATA_ATTR: true,
+        ADD_ATTR: ['target'],
+      };
+
+      // Chuyển đổi các ID công việc thành liên kết
+      formattedMessage = formattedMessage.replace(
+        /\[ID: (\d+)\]\(job\/(\d+)\)/g,
+        '<a href="/job/$2" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>'
+      );
+
+      // Chuyển đổi các tiêu đề việc làm thành liên kết
+      formattedMessage = formattedMessage.replace(
+        /\[([^\]]+)\]\(job\/(\d+)\)/g,
+        '<a href="/job/$2" target="_blank" rel="noopener noreferrer">$1</a>'
+      );
+
+      // Làm sạch HTML đầu ra
+      return DOMPurify.sanitize(formattedMessage, config);
     };
     
     // Format thời gian
@@ -332,6 +447,40 @@ export default {
       }
     });
     
+    // Hộp thoại chỉnh sửa tiêu đề
+    const openEditTitleDialog = (session) => {
+      editedTitle.value = session.title;
+      showEditTitleDialog.value = true;
+    };
+    
+    const cancelEditTitle = () => {
+      showEditTitleDialog.value = false;
+    };
+    
+    const updateChatTitle = async () => {
+      if (!editedTitle.value.trim()) {
+        editTitleError.value = 'Vui lòng nhập tiêu đề mới';
+        return;
+      }
+      
+      isUpdatingTitle.value = true;
+      
+      try {
+        const response = await axios.put(`/api/gemini-chat/sessions/${currentSession.value.id}/update-title/`, {
+          title: editedTitle.value
+        });
+        
+        currentSession.value.title = editedTitle.value;
+        await fetchChatSessions();
+        showEditTitleDialog.value = false;
+      } catch (error) {
+        console.error('Lỗi khi cập nhật tiêu đề phiên chat:', error);
+        editTitleError.value = 'Xin lỗi, đã xảy ra lỗi khi cập nhật tiêu đề phiên chat. Vui lòng thử lại sau.';
+      } finally {
+        isUpdatingTitle.value = false;
+      }
+    };
+    
     return {
       message,
       isLoading,
@@ -349,7 +498,14 @@ export default {
       formatMessage,
       formatTime,
       formatDate,
-      setMessage
+      setMessage,
+      showEditTitleDialog,
+      editedTitle,
+      editTitleError,
+      isUpdatingTitle,
+      openEditTitleDialog,
+      cancelEditTitle,
+      updateChatTitle
     };
   }
 };
@@ -415,7 +571,8 @@ export default {
   padding: 0.75rem 1rem;
   cursor: pointer;
   border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .chat-session-item:hover {
@@ -425,6 +582,43 @@ export default {
 .chat-session-item.active {
   background-color: #eff6ff;
   border-left: 3px solid #4f46e5;
+}
+
+.chat-session-item.new_chat {
+  animation: slideDown 0.5s ease forwards, highlight 2s ease;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes highlight {
+  0% { background-color: #eff6ff; }
+  70% { background-color: #eff6ff; }
+  100% { background-color: transparent; }
+}
+
+.chat-session-item .actions {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.chat-session-item:hover .actions {
+  opacity: 1;
+}
+
+.edit-title-btn {
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.edit-title-btn:hover {
+  background-color: #e5e7eb;
 }
 
 .chat-content {
@@ -693,5 +887,109 @@ export default {
   .chat-sidebar {
     display: none;
   }
+}
+
+.edit-title-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-title-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.edit-title-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.edit-title-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #9ca3af;
+  cursor: pointer;
+}
+
+.edit-title-body {
+  margin-bottom: 1rem;
+}
+
+.edit-title-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  resize: none;
+}
+
+.edit-title-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background-color: #f3f4f6;
+}
+
+.save-btn {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.save-btn:disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.message-text :deep(a) {
+  color: #4f46e5;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.message-text :deep(a):hover {
+  text-decoration: underline;
+  color: #4338ca;
+}
+
+.user-message .message-text :deep(a) {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.user-message .message-text :deep(a):hover {
+  color: #e5e7eb;
 }
 </style> 

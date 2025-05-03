@@ -20,7 +20,7 @@
               Công ty
             </router-link>
             <router-link to="/gemini-chat" class="text-gray-700 hover:text-blue-600 font-medium flex items-center">
-              <i class="fas fa-robot text-indigo-600 mr-1"></i> Trợ lý AI
+              <i class="fas fa-robot text-indigo-600 mr-1"></i> JobHub AI
             </router-link>
             <router-link to="/premium" class="text-gray-700 hover:text-blue-600 font-medium flex items-center">
               <i class="fas fa-crown text-yellow-500 mr-1"></i> Premium
@@ -243,7 +243,7 @@
                     role="menuitem"
                   >
                     <i class="fas fa-robot mr-2"></i>
-                    Trợ lý AI
+                    JobHub AI
                   </router-link>
                 </div>
                 
@@ -315,7 +315,7 @@
                 <i class="fas fa-building mr-2"></i> Công ty
               </router-link>
               <router-link to="/gemini-chat" class="block text-gray-700 hover:text-blue-600 font-medium" @click="closeMobileMenu">
-                <i class="fas fa-robot mr-2"></i> Trợ lý AI
+                <i class="fas fa-robot mr-2"></i> JobHub AI
               </router-link>
               <router-link to="/premium" class="block text-gray-700 hover:text-blue-600 font-medium" @click="closeMobileMenu">
                 <i class="fas fa-crown mr-2"></i> Premium
