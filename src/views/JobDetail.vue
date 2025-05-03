@@ -253,7 +253,7 @@
                 <div class="space-y-4 text-gray-600 text-sm md:text-base">
                   <div class="flex items-start">
                     <font-awesome-icon icon="map-marker-alt" class="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
-                    <span>{{ job.detail_address }}</span>
+                    <span>{{ job.enterprise_address }}</span>
                   </div>
                   <router-link 
                     :to="{ name: 'EnterpriseDetail', params: { id: job.enterprise } }" 
