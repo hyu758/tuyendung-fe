@@ -19,8 +19,8 @@
             <router-link to="/enterprises" class="text-gray-700 hover:text-blue-600 font-medium">
               Công ty
             </router-link>
-            <router-link to="/blog" class="text-gray-700 hover:text-blue-600 font-medium">
-              Blog
+            <router-link to="/gemini-chat" class="text-gray-700 hover:text-blue-600 font-medium flex items-center">
+              <i class="fas fa-robot text-indigo-600 mr-1"></i> Trợ lý AI
             </router-link>
             <router-link to="/premium" class="text-gray-700 hover:text-blue-600 font-medium flex items-center">
               <i class="fas fa-crown text-yellow-500 mr-1"></i> Premium
@@ -237,6 +237,14 @@
                     <i class="fas fa-thumbs-up mr-2"></i>
                     Việc làm gợi ý
                   </router-link>
+                  <router-link 
+                    to="/gemini-chat" 
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    role="menuitem"
+                  >
+                    <i class="fas fa-robot mr-2"></i>
+                    Trợ lý AI
+                  </router-link>
                 </div>
                 
                 <div class="border-t border-gray-100 my-1"></div>
@@ -306,8 +314,8 @@
               <router-link to="/enterprises" class="block text-gray-700 hover:text-blue-600 font-medium" @click="closeMobileMenu">
                 <i class="fas fa-building mr-2"></i> Công ty
               </router-link>
-              <router-link to="/blog" class="block text-gray-700 hover:text-blue-600 font-medium" @click="closeMobileMenu">
-                <i class="fas fa-newspaper mr-2"></i> Blog
+              <router-link to="/gemini-chat" class="block text-gray-700 hover:text-blue-600 font-medium" @click="closeMobileMenu">
+                <i class="fas fa-robot mr-2"></i> Trợ lý AI
               </router-link>
               <router-link to="/premium" class="block text-gray-700 hover:text-blue-600 font-medium" @click="closeMobileMenu">
                 <i class="fas fa-crown mr-2"></i> Premium

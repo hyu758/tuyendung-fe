@@ -224,6 +224,14 @@ const routes = [
     }
   },
   {
+    path: '/gemini-chat',
+    name: 'GeminiChat',
+    component: () => import('../views/gemini_chat/GeminiChat.vue'),
+    meta: {
+      title: 'Trợ lý AI'
+    }
+  },
+  {
     path: '/my-criteria',
     name: 'MyCriteria',
     component: () => import('../views/candidate/MyCriteria.vue'),
