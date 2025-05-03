@@ -248,9 +248,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
-import axios from 'axios'
+import { usePostStore } from '@/stores/post'
 
 const toast = useToast()
+const postStore = usePostStore()
 
 // State
 const loading = ref(true)
@@ -361,26 +362,23 @@ const fetchRecommendedJobs = async () => {
   loading.value = true;
   
   try {
-    const response = await axios.get('/api/enterprises/posts/recommended/', {
-      params: {
-        page: currentPage.value,
-        page_size: pageSize.value
+    const result = await postStore.fetchRecommendedPosts(currentPage.value, pageSize.value);
+    
+    if (result.success) {
+      recommendedJobs.value = result.data.results || [];
+      totalItems.value = result.data.count || 0;
+      totalPages.value = Math.ceil(totalItems.value / pageSize.value);
+    } else {
+      // Kiểm tra nếu lỗi là do không có tiêu chí
+      if (result.noCriteria) {
+        noCriteria.value = true;
+      } else {
+        toast.error(result.error || 'Không thể lấy việc làm gợi ý. Vui lòng thử lại sau.');
       }
-    });
-    
-    recommendedJobs.value = response.data.results;
-    totalItems.value = response.data.count;
-    totalPages.value = Math.ceil(totalItems.value / pageSize.value);
-    
+    }
   } catch (error) {
     console.error('Error fetching recommended jobs:', error);
-    
-    // Check if error is due to no criteria
-    if (error.response?.status === 404 && error.response?.data?.message?.includes('No criteria found')) {
-      noCriteria.value = true;
-    } else {
-      toast.error('Không thể lấy việc làm gợi ý. Vui lòng thử lại sau.');
-    }
+    toast.error('Có lỗi xảy ra khi tải danh sách việc làm gợi ý.');
   } finally {
     loading.value = false;
   }
@@ -391,16 +389,23 @@ const toggleSaveJob = async (job) => {
   try {
     if (job.is_saved) {
       // Unsave the job
-      await axios.delete(`/api/enterprises/saved-posts/post/${job.id}/delete/`);
-      toast.success('Đã bỏ lưu bài đăng');
+      const result = await postStore.deleteSavedPostByPostId(job.id);
+      if (result.success) {
+        toast.success('Đã bỏ lưu bài đăng');
+        job.is_saved = false;
+      } else {
+        toast.error(result.error || 'Không thể bỏ lưu bài đăng.');
+      }
     } else {
       // Save the job
-      await axios.post('/api/enterprises/saved-posts/save/', { post_id: job.id });
-      toast.success('Đã lưu bài đăng');
+      const result = await postStore.savePost(job.id);
+      if (result.success) {
+        toast.success('Đã lưu bài đăng');
+        job.is_saved = true;
+      } else {
+        toast.error(result.error || 'Không thể lưu bài đăng.');
+      }
     }
-    
-    // Toggle the is_saved property
-    job.is_saved = !job.is_saved;
   } catch (error) {
     console.error('Error toggling saved status:', error);
     toast.error('Không thể thực hiện thao tác. Vui lòng thử lại sau.');

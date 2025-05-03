@@ -32,7 +32,12 @@ import {
   faCircleNotch,
   faBookmark,
   faMoneyBillWave,
-  faLocationDot
+  faLocationDot,
+  faIndustry,
+  faUserTie,
+  faLaptopHouse,
+  faCoins,
+  faPlusCircle
 } from '@fortawesome/free-solid-svg-icons'
 import { 
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle 
@@ -40,6 +45,23 @@ import {
 import {
   faHeart as farHeart
 } from '@fortawesome/free-regular-svg-icons'
+
+// Import thêm các icon cần thiết cho CriteriaForm
+library.add(
+  faMapMarkerAlt,
+  faBriefcase, 
+  faIndustry,
+  faUserTie,
+  faBuilding,
+  faLaptopHouse,
+  faMoneyBillWave,
+  faCoins,
+  faInfoCircle,
+  faTimes,
+  faSave,
+  faPlusCircle,
+  faChevronDown
+)
 
 // Thêm icons vào thư viện
 library.add(
@@ -81,31 +103,28 @@ const processQueue = (error, token = null) => {
   failedQueue = []
 }
 
+// Interceptor cho request
 axios.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
   if (token) {
-    // Thêm log để debug
-    console.log('Gửi yêu cầu với token');
     config.headers.Authorization = `Bearer ${token}`
-  } else {
-    console.log('Không có token trong localStorage');
   }
   return config
 })
 
-// Xử lý lỗi response toàn cầu
+// Xử lý lỗi response toàn cầu với cơ chế refresh token tốt hơn
 axios.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config
 
-    // Nếu lỗi không phải 401 hoặc request đã retry
+    // Nếu lỗi không phải 401 hoặc request đã retry, reject luôn
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error)
     }
 
+    // Nếu đang trong quá trình refresh token, thêm request vào hàng đợi
     if (isRefreshing) {
-      // Nếu đang refresh token, thêm request vào hàng đợi
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject })
       })
@@ -116,41 +135,46 @@ axios.interceptors.response.use(
         .catch(err => Promise.reject(err))
     }
 
+    // Đánh dấu request này đang được retry và bắt đầu quá trình refresh
     originalRequest._retry = true
     isRefreshing = true
 
-    const refreshToken = localStorage.getItem('refreshToken')
-    if (!refreshToken) {
-      // Nếu không có refresh token, đăng xuất
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('username')
-      router.push('/login')
-      return Promise.reject(error)
-    }
-
     try {
-      // Gọi API refresh token
-      const response = await axios.post('/auth/refresh', {
-        refresh_token: refreshToken
-      })
-
-      const { token } = response.data
-      localStorage.setItem('token', token)
+      // Lấy authStore để sử dụng hàm refreshToken
+      const { useAuthStore } = await import('./stores/auth')
+      const authStore = useAuthStore()
       
-      // Cập nhật token cho request hiện tại và các request trong hàng đợi
-      originalRequest.headers.Authorization = `Bearer ${token}`
-      processQueue(null, token)
+      // Thử refresh token
+      const refreshSuccess = await authStore.refreshToken()
       
-      return axios(originalRequest)
-    } catch (err) {
-      processQueue(err, null)
-      // Nếu refresh token cũng hết hạn, đăng xuất
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('username')
-      router.push('/login')
-      return Promise.reject(err)
+      if (refreshSuccess) {
+        // Nếu refresh thành công, lấy token mới và retry tất cả request trong hàng đợi
+        const newToken = authStore.token
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        processQueue(null, newToken)
+        
+        return axios(originalRequest)
+      } else {
+        // Nếu refresh thất bại, đăng xuất và reject tất cả request
+        authStore.logout(true)
+        processQueue(new Error('Token refresh failed'), null)
+        return Promise.reject(error)
+      }
+    } catch (refreshError) {
+      // Xử lý lỗi khi refresh token
+      console.error('Error during token refresh:', refreshError)
+      
+      // Lấy authStore để đăng xuất
+      const { useAuthStore } = await import('./stores/auth')
+      const authStore = useAuthStore()
+      
+      // Đăng xuất và thông báo
+      authStore.createNotification('error', 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại')
+      authStore.logout(true)
+      
+      // Reject tất cả request trong hàng đợi
+      processQueue(refreshError, null)
+      return Promise.reject(refreshError)
     } finally {
       isRefreshing = false
     }

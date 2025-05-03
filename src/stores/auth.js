@@ -305,10 +305,16 @@ export const useAuthStore = defineStore('auth', {
         
         // Giải mã token
         const decoded = this.decodedToken;
-        console.log('Decoded token:', decoded);
         
         if (!decoded) {
           console.error('Không thể giải mã token');
+          return false;
+        }
+        
+        // Kiểm tra token đã hết hạn chưa
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (decoded.exp && currentTime >= decoded.exp) {
+          console.log('Token đã hết hạn khi cập nhật thông tin');
           return false;
         }
         
@@ -427,21 +433,33 @@ export const useAuthStore = defineStore('auth', {
     async refreshToken() {
       try {
         const refreshToken = localStorage.getItem('refreshToken')
-        if (!refreshToken) return false
+        if (!refreshToken) {
+          console.log('Không tìm thấy refresh token');
+          return false;
+        }
         
-        const response = await axios.post('/api/token-refresh/', {
+        console.log('Đang thử refresh token...');
+        const response = await axios.post('/api/token/refresh/', {
           refresh: refreshToken
-        })
+        });
         
         if (response.data.access) {
-          this.token = response.data.access
-          localStorage.setItem('token', response.data.access)
-          return true
+          console.log('Refresh token thành công, token mới:', response.data.access.substring(0, 20) + '...');
+          this.token = response.data.access;
+          localStorage.setItem('token', response.data.access);
+          
+          // Cập nhật thông tin người dùng từ token mới
+          this.updateUserFromToken();
+          
+          return true;
         }
-        return false
+        
+        console.log('Refresh token không trả về access token mới');
+        return false;
       } catch (error) {
-        console.error('Không thể làm mới token:', error)
-        return false
+        console.error('Lỗi khi refresh token:', error);
+        this.createNotification('error', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+        return false;
       }
     },
     
@@ -476,6 +494,56 @@ export const useAuthStore = defineStore('auth', {
         message: this.error,
         show: true
       }))
+    },
+    
+    // Thêm một action mới để kiểm tra tính hợp lệ của token và thời hạn token
+    async checkTokenValidity() {
+      console.log('Đang kiểm tra tính hợp lệ của token...');
+      
+      try {
+        if (!this.token) {
+          console.log('Không có token, không cần kiểm tra');
+          return false;
+        }
+        
+        // Lấy decoded token để kiểm tra thời hạn
+        const decoded = this.decodedToken;
+        if (!decoded || !decoded.exp) {
+          console.log('Token không hợp lệ hoặc không có thời hạn');
+          this.logout(true);
+          return false;
+        }
+        
+        // Kiểm tra token đã hết hạn chưa
+        const currentTime = Math.floor(Date.now() / 1000); // Thời gian hiện tại (giây)
+        const tokenExp = decoded.exp; // Thời gian hết hạn của token (giây)
+        
+        console.log('Token expires at:', new Date(tokenExp * 1000).toLocaleString());
+        console.log('Current time:', new Date(currentTime * 1000).toLocaleString());
+        
+        // Nếu token gần hết hạn (còn dưới 5 phút) hoặc đã hết hạn, thử refresh
+        if (tokenExp - currentTime < 300 || currentTime >= tokenExp) {
+          console.log('Token đã hết hạn hoặc gần hết hạn, thử refresh token...');
+          const refreshed = await this.refreshToken();
+          
+          if (!refreshed) {
+            console.log('Không thể refresh token, tiến hành đăng xuất');
+            this.createNotification('error', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+            this.logout(true);
+            return false;
+          }
+          
+          console.log('Đã refresh token thành công');
+          return true;
+        }
+        
+        console.log('Token vẫn còn hiệu lực');
+        return true;
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra token:', error);
+        this.logout(true);
+        return false;
+      }
     }
   }
 }) 

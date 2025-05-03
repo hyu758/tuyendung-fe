@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed, provide, watchEffect } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed, provide, watchEffect, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { usePremiumStore } from './stores/premium'
@@ -7,12 +7,14 @@ import CandidateHeader from './components/layouts/CandidateHeader.vue'
 import BaseAlert from './components/common/BaseAlert.vue'
 import socketService from './services/socketService'
 import ChatManager from './components/chat/ChatManager.vue'
+import { useToast } from 'vue-toastification'
 
 
 const route = useRoute()
 const authStore = useAuthStore()
 const premiumStore = usePremiumStore()
 const chatManager = ref(null)
+const toast = useToast()
 
 
 const notification = ref({
@@ -33,7 +35,26 @@ watch(() => authStore.isAuthenticated, (newValue) => {
   }
 })
 
+// Kiểm tra token khi app khởi động
 onMounted(async () => {
+  console.log('App mounted, checking authentication...')
+  
+  // Nếu có token trong localStorage, kiểm tra tính hợp lệ
+  if (authStore.token || localStorage.getItem('token')) {
+    console.log('Token found, checking validity...')
+    const isValid = await authStore.checkTokenValidity()
+    
+    if (!isValid) {
+      console.log('Token invalid or expired')
+      // Không cần logout ở đây vì checkTokenValidity đã xử lý
+    } else {
+      console.log('Token valid')
+    }
+  }
+  
+  // Thiết lập kiểm tra token định kỳ (15 phút kiểm tra một lần)
+  startTokenCheckInterval()
+  
   if (localStorage.getItem('token') && !authStore.user) {
     console.log('App mounted - Initializing user data from token')
     await authStore.updateUserFromToken()
@@ -53,12 +74,18 @@ onMounted(async () => {
   watchEffect(() => {
     console.log('App.vue - chatManager ref:', chatManager.value)
   })
+  
+  // Hiển thị thông báo khi component được mounted
+  showStoredNotification()
 })
 
 // Xóa sự kiện khi component bị hủy
 onUnmounted(() => {
   window.removeEventListener('popstate', checkNotification)
   socketService.disconnect()
+  if (tokenCheckInterval) {
+    clearInterval(tokenCheckInterval)
+  }
 })
 
 // Hàm kiểm tra hạn Premium và xử lý khi hết hạn
@@ -138,6 +165,44 @@ provide('openChat', openChat)
 
 // Cung cấp chatManager ref trực tiếp cho các component con
 provide('chatManager', chatManager)
+
+// Biến để lưu interval ID
+let tokenCheckInterval = null
+
+// Hàm bắt đầu kiểm tra token định kỳ
+const startTokenCheckInterval = () => {
+  // Xóa interval cũ nếu có
+  if (tokenCheckInterval) {
+    clearInterval(tokenCheckInterval)
+  }
+  
+  // Thiết lập interval mới (15 phút = 900000ms)
+  tokenCheckInterval = setInterval(async () => {
+    console.log('Periodic token check...')
+    if (authStore.isAuthenticated) {
+      await authStore.checkTokenValidity()
+    }
+  }, 900000) // 15 phút
+}
+
+// Hiển thị thông báo nếu có lưu trong localStorage
+const showStoredNotification = () => {
+  const notificationJson = localStorage.getItem('notification')
+  if (notificationJson) {
+    try {
+      const notification = JSON.parse(notificationJson)
+      if (notification.show) {
+        toast[notification.type](notification.message)
+        
+        // Xóa thông báo sau khi hiển thị
+        notification.show = false
+        localStorage.setItem('notification', JSON.stringify(notification))
+      }
+    } catch (e) {
+      console.error('Error parsing notification:', e)
+    }
+  }
+}
 </script>
 
 <template>

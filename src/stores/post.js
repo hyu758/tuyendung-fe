@@ -192,6 +192,39 @@ export const usePostStore = defineStore('post', {
           error: error.response?.data?.message || 'Có lỗi xảy ra khi xóa tin đã lưu'
         }
       }
+    },
+
+    // Thêm action mới để lấy danh sách việc làm được gợi ý
+    async fetchRecommendedPosts(page = 1, pageSize = 10) {
+      try {
+        this.loading = true
+        const response = await axios.get('/api/posts/recommended/', {
+          params: {
+            page: page,
+            page_size: pageSize
+          }
+        })
+        return {
+          success: true,
+          data: response.data
+        }
+      } catch (error) {
+        console.error('Error fetching recommended posts:', error)
+        // Kiểm tra lỗi 404 - không tìm thấy tiêu chí
+        if (error.response?.status === 404 && error.response?.data?.message?.includes('No criteria found')) {
+          return {
+            success: false,
+            noCriteria: true,
+            error: 'Không tìm thấy tiêu chí tìm việc'
+          }
+        }
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách việc làm gợi ý'
+        }
+      } finally {
+        this.loading = false
+      }
     }
   }
 }) 

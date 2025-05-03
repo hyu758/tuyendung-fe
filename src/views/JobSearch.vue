@@ -425,9 +425,7 @@ const formatDate = (date) => {
   }
 }
 
-// Fetch user criteria and apply to search
 const fetchUserCriteria = async () => {
-  // Chỉ thực hiện khi người dùng đã đăng nhập
   if (!authStore.isAuthenticated) return;
   
   isCriteriaLoading.value = true;
