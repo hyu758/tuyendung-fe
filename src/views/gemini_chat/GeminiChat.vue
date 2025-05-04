@@ -88,7 +88,7 @@
               <div class="message-content">
                 <div class="message-sender">{{ message.role === 'user' ? 'Bạn' : 'JobHub AI' }}</div>
                 <div class="message-text" v-html="formatMessage(message.content)"></div>
-                <div class="message-time">{{ formatTime(message.created_at) }}</div>
+                <div class="message-time">{{ formatTime(message.timestamp) }}</div>
               </div>
             </div>
             

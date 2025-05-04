@@ -271,13 +271,24 @@ class SocketService {
       recipient: parseInt(messageData.recipient_id, 10),
       content: messageData.content,
       is_read: messageData.is_read || false,
-      created_at: messageData.created_at || new Date().toISOString()
+      created_at: messageData.created_at || new Date().toISOString(),
+      recipient_fullname: messageData.recipient_fullname || null
     };
     
     console.log('💬 Tin nhắn mới được chuyển đổi:', newMessage);
     
     // Xác định người dùng hiện tại
     const currentUserId = chatStore.userInfo?.user_id;
+    if (!currentUserId) {
+      console.error('Không có thông tin người dùng hiện tại, không thể xử lý tin nhắn');
+      return;
+    }
+    
+    // Kiểm tra xem tin nhắn có liên quan đến người dùng hiện tại không
+    if (newMessage.sender !== currentUserId && newMessage.recipient !== currentUserId) {
+      console.log('❌ Tin nhắn không liên quan đến người dùng hiện tại, bỏ qua');
+      return;
+    }
     
     // Đảm bảo rằng người gửi hoặc người nhận tương ứng với ID cuộc trò chuyện đang mở
     const otherPartyId = currentUserId === newMessage.sender 
@@ -286,6 +297,43 @@ class SocketService {
     
     console.log('ID của bên còn lại trong cuộc trò chuyện:', otherPartyId);
     console.log('So sánh với ID cuộc trò chuyện đang mở:', chatStore.activeConversation);
+    
+    // Lưu thông tin recipient_fullname vào userInfoCache từ tin nhắn socket nếu có
+    if (newMessage.recipient_fullname) {
+      // Xác định ID người dùng cần lưu thông tin
+      const targetUserId = currentUserId === newMessage.sender 
+                         ? newMessage.recipient 
+                         : newMessage.sender;
+                         
+      if (!chatStore.userInfoCache[targetUserId]) {
+        chatStore.userInfoCache[targetUserId] = {
+          user_id: targetUserId,
+          fullname: newMessage.recipient_fullname,
+          avatar: null
+        };
+        console.log(`Đã lưu thông tin người dùng ${targetUserId} vào cache từ socket: ${newMessage.recipient_fullname}`);
+      }
+    }
+    
+    // Kiểm tra tin nhắn thuộc về cuộc trò chuyện nào (từ người gửi hoặc người nhận) rồi mới cập nhật
+    // Cập nhật lastMessages trước khi thêm tin nhắn vào store
+    if (newMessage.sender === currentUserId || newMessage.recipient === currentUserId) {
+      // Chắc chắn otherPartyId là số
+      const otherPartyIdNum = typeof otherPartyId === 'string' ? parseInt(otherPartyId, 10) : otherPartyId;
+      
+      // Kiểm tra xem có tin nhắn cũ trong lastMessages không
+      const oldMessage = chatStore.lastMessages[otherPartyIdNum];
+      
+      // Chỉ cập nhật nếu tin nhắn mới hơn tin nhắn cũ
+      if (!oldMessage || new Date(newMessage.created_at) > new Date(oldMessage.created_at)) {
+        chatStore.lastMessages[otherPartyIdNum] = newMessage;
+        console.log(`✅ Đã cập nhật tin nhắn cuối cùng trong lastMessages cho người dùng ${otherPartyIdNum}: "${newMessage.content}"`);
+      } else {
+        console.log(`⚠️ Không cập nhật lastMessages vì tin nhắn cũ hơn tin nhắn hiện tại cho ${otherPartyIdNum}`);
+      }
+    } else {
+      console.log('❌ Tin nhắn không thuộc về người dùng hiện tại, không cập nhật lastMessages');
+    }
     
     // Thêm tin nhắn mới vào store - bất kể tin nhắn của ai
     const result = chatStore.addMessage(newMessage);
@@ -312,6 +360,15 @@ class SocketService {
       // Đưa cuộc trò chuyện lên đầu
       chatStore.sortConversationToTop(newMessage);
     }
+    
+    // Luôn tải tin nhắn mới nhất cho tất cả cuộc trò chuyện để cập nhật giao diện
+    // Lưu ý: Điều này đảm bảo danh sách cuộc trò chuyện luôn có tin nhắn mới nhất
+    setTimeout(() => {
+      console.log('🔄 Đang tải tin nhắn mới nhất cho tất cả cuộc trò chuyện sau khi nhận tin nhắn mới');
+      chatStore.fetchLatestMessages().then(() => {
+        console.log('✅ Đã cập nhật tin nhắn mới nhất cho tất cả cuộc trò chuyện');
+      });
+    }, 500);
     
     // Hiển thị thông báo mới (chỉ khi là người nhận tin nhắn)
     if (currentUserId === newMessage.recipient) {

@@ -109,7 +109,11 @@ export const chatService = {
   },
   getLatestMessages() {
     console.log('Gọi API lấy tin nhắn mới nhất cho tất cả cuộc trò chuyện');
-    return axios.get('/api/messages/latest/')
+    return axios.get('/api/messages/latest/', {
+      params: {
+        separate_by_user: true  // Thêm tham số để API server lọc tin nhắn theo từng người
+      }
+    });
   },
   sendMessage(recipientId, content) {
     console.log('Gửi tin nhắn đến recipientId:', recipientId);

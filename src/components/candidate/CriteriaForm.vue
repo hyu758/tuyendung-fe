@@ -9,82 +9,82 @@
     
     <form v-else @submit.prevent="submitForm" class="space-y-8 bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Thành phố -->
-        <div class="form-group">
+      <!-- Thành phố -->
+      <div class="form-group">
           <label for="city" class="block text-sm font-medium text-gray-700 mb-1">
             <font-awesome-icon icon="map-marker-alt" class="text-blue-500 mr-1" /> Thành phố
           </label>
           <div class="relative">
-            <select
-              id="city"
-              v-model="form.city"
+        <select
+          id="city"
+          v-model="form.city"
               class="block w-full rounded-lg border-gray-300 pl-3 pr-10 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all bg-white shadow-sm appearance-none"
-            >
-              <option value="">Chọn thành phố</option>
-              <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-            </select>
+        >
+          <option value="">Chọn thành phố</option>
+          <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+        </select>
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <font-awesome-icon icon="chevron-down" class="text-gray-400 text-xs" />
             </div>
           </div>
-        </div>
+      </div>
 
-        <!-- Kinh nghiệm -->
-        <div class="form-group">
+      <!-- Kinh nghiệm -->
+      <div class="form-group">
           <label for="experience" class="block text-sm font-medium text-gray-700 mb-1">
             <font-awesome-icon icon="briefcase" class="text-blue-500 mr-1" /> Kinh nghiệm
           </label>
           <div class="relative">
-            <select
-              id="experience"
-              v-model="form.experience"
+        <select
+          id="experience"
+          v-model="form.experience"
               class="block w-full rounded-lg border-gray-300 pl-3 pr-10 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all bg-white shadow-sm appearance-none"
-            >
-              <option value="">Chọn kinh nghiệm</option>
-              <option v-for="exp in experiences" :key="exp" :value="exp">{{ exp }}</option>
-            </select>
+        >
+          <option value="">Chọn kinh nghiệm</option>
+          <option v-for="exp in experiences" :key="exp" :value="exp">{{ exp }}</option>
+        </select>
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <font-awesome-icon icon="chevron-down" class="text-gray-400 text-xs" />
             </div>
           </div>
-        </div>
+      </div>
 
-        <!-- Lĩnh vực -->
-        <div class="form-group">
+      <!-- Lĩnh vực -->
+      <div class="form-group">
           <label for="field" class="block text-sm font-medium text-gray-700 mb-1">
             <font-awesome-icon icon="industry" class="text-blue-500 mr-1" /> Lĩnh vực
           </label>
           <div class="relative">
-            <select
-              id="field"
-              v-model="form.field"
-              @change="loadPositions"
+        <select
+          id="field"
+          v-model="form.field"
+          @change="loadPositions"
               class="block w-full rounded-lg border-gray-300 pl-3 pr-10 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all bg-white shadow-sm appearance-none"
-            >
-              <option value="">Chọn lĩnh vực</option>
-              <option v-for="field in fields" :key="field.id" :value="field.id">{{ field.name }}</option>
-            </select>
+        >
+          <option value="">Chọn lĩnh vực</option>
+          <option v-for="field in fields" :key="field.id" :value="field.id">{{ field.name }}</option>
+        </select>
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <font-awesome-icon icon="chevron-down" class="text-gray-400 text-xs" />
             </div>
           </div>
-        </div>
+      </div>
 
-        <!-- Vị trí -->
-        <div class="form-group">
+      <!-- Vị trí -->
+      <div class="form-group">
           <label for="position" class="block text-sm font-medium text-gray-700 mb-1">
             <font-awesome-icon icon="user-tie" class="text-blue-500 mr-1" /> Vị trí công việc
           </label>
           <div class="relative">
-            <select
-              id="position"
-              v-model="form.position"
+        <select
+          id="position"
+          v-model="form.position"
               class="block w-full rounded-lg border-gray-300 pl-3 pr-10 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all bg-white shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none"
-              :disabled="!form.field"
-            >
-              <option value="">Chọn vị trí công việc</option>
-              <option v-for="position in positions" :key="position.id" :value="position.id">{{ position.name }}</option>
-            </select>
+          :disabled="!form.field"
+        >
+          <option value="">Chọn vị trí công việc</option>
+          <option v-for="position in positions" :key="position.id" :value="position.id">{{ position.name }}</option>
+        </select>
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <font-awesome-icon icon="chevron-down" class="text-gray-400 text-xs" />
             </div>
@@ -92,42 +92,42 @@
           <p v-if="!form.field" class="text-sm text-gray-500 mt-1.5 flex items-center">
             <font-awesome-icon icon="info-circle" class="mr-1 text-blue-400" /> Vui lòng chọn lĩnh vực trước
           </p>
-        </div>
+      </div>
 
-        <!-- Quy mô công ty -->
-        <div class="form-group">
+      <!-- Quy mô công ty -->
+      <div class="form-group">
           <label for="scales" class="block text-sm font-medium text-gray-700 mb-1">
             <font-awesome-icon icon="building" class="text-blue-500 mr-1" /> Quy mô công ty
           </label>
           <div class="relative">
-            <select
-              id="scales"
-              v-model="form.scales"
+        <select
+          id="scales"
+          v-model="form.scales"
               class="block w-full rounded-lg border-gray-300 pl-3 pr-10 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all bg-white shadow-sm appearance-none"
-            >
-              <option value="">Chọn quy mô</option>
-              <option v-for="scale in scales" :key="scale" :value="scale">{{ scale }}</option>
-            </select>
+        >
+          <option value="">Chọn quy mô</option>
+          <option v-for="scale in scales" :key="scale" :value="scale">{{ scale }}</option>
+        </select>
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <font-awesome-icon icon="chevron-down" class="text-gray-400 text-xs" />
             </div>
           </div>
-        </div>
+      </div>
 
-        <!-- Hình thức làm việc -->
-        <div class="form-group">
+      <!-- Hình thức làm việc -->
+      <div class="form-group">
           <label for="type_working" class="block text-sm font-medium text-gray-700 mb-1">
             <font-awesome-icon icon="laptop-house" class="text-blue-500 mr-1" /> Hình thức làm việc
           </label>
           <div class="relative">
-            <select
-              id="type_working"
-              v-model="form.type_working"
+        <select
+          id="type_working"
+          v-model="form.type_working"
               class="block w-full rounded-lg border-gray-300 pl-3 pr-10 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all bg-white shadow-sm appearance-none"
-            >
-              <option value="">Chọn hình thức làm việc</option>
-              <option v-for="type in workingTypes" :key="type" :value="type">{{ type }}</option>
-            </select>
+        >
+          <option value="">Chọn hình thức làm việc</option>
+          <option v-for="type in workingTypes" :key="type" :value="type">{{ type }}</option>
+        </select>
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <font-awesome-icon icon="chevron-down" class="text-gray-400 text-xs" />
             </div>
@@ -144,15 +144,15 @@
           <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <font-awesome-icon icon="coins" class="text-gray-400" />
           </div>
-          <input
-            id="salary_min"
-            v-model.number="form.salary_min"
-            type="number"
-            min="0"
-            step="1000000"
+        <input
+          id="salary_min"
+          v-model.number="form.salary_min"
+          type="number"
+          min="0"
+          step="1000000"
             class="block w-full rounded-lg border-gray-300 pl-10 pr-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all bg-white shadow-sm"
-            placeholder="Nhập mức lương tối thiểu"
-          />
+          placeholder="Nhập mức lương tối thiểu"
+        />
         </div>
         <p class="text-sm text-blue-600 font-medium mt-2 flex items-center">
           <font-awesome-icon icon="info-circle" class="mr-1" /> {{ formatSalaryDisplay(form.salary_min) }}
@@ -451,4 +451,4 @@ select.appearance-none::-ms-expand {
     padding: 0 1rem;
   }
 }
-</style>
+</style> 
