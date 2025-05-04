@@ -1,0 +1,1 @@
+function s(){return{addToast:t=>{const a={id:Date.now(),type:t.type||"info",message:t.message,duration:t.duration||3e3,timestamp:new Date().toISOString()};localStorage.setItem("toast-message",JSON.stringify(a))}}}export{s as u};
