@@ -122,21 +122,16 @@ const handleSubmit = async () => {
   authStore.error = null
   
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/forgot-password/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email: email.value })
+    const response = await axios.post('/api/forgot-password/', {
+      email: email.value
     })
-    const data = await response.json()
-    console.log(data)
+    console.log(response)
     if (response.status === 200) {
       successMessage.value = 'Email hướng dẫn đặt lại mật khẩu đã được gửi.'
       showSuccess('Email hướng dẫn đặt lại mật khẩu đã được gửi thành công.')
     } else {
       // Hiển thị lỗi từ API
-      authStore.error = data.error || 'Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.'
+      authStore.error = response.data.error || 'Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.'
       showError(authStore.error)
     }
   } catch (err) {

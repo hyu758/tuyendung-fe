@@ -147,15 +147,10 @@ const handleSubmit = async () => {
   error.value = ''
   
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/reset-password/${token.value}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ password: password.value })
+    const response = await axios.post(`/api/reset-password/${token.value}`, {
+      password: password.value
     })
-    const data = await response.json();
-    console.log(data)
+    const data = response.data;
     if (data.status === 200) {
       successMessage.value = 'Mật khẩu đã được đặt lại thành công.'
       showSuccess('Mật khẩu đã được đặt lại thành công. Bạn có thể đăng nhập ngay bây giờ.')
