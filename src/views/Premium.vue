@@ -3,7 +3,18 @@
   <div class="premium-page">
     <div class="container mx-auto px-4 py-8">
       <h1 class="text-3xl font-bold text-center mb-8">Nâng cấp tài khoản Premium</h1>
-      
+      <!-- Test Account Info -->
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8 text-center">
+        <h2 class="text-xl font-semibold text-yellow-800 mb-2">Chức năng này đang trong giai đoạn thử nghiệm</h2>
+        <p class="text-yellow-700 mb-2">Dưới đây là thông tin tài khoản test để trải nghiệm thanh toán:</p>
+        <div class="text-left max-w-md mx-auto">
+          <p class="text-yellow-700"><span class="font-semibold">Ngân hàng:</span> NCB</p>
+          <p class="text-yellow-700"><span class="font-semibold">Số thẻ:</span> 9704198526191432198</p>
+          <p class="text-yellow-700"><span class="font-semibold">Tên chủ thẻ:</span> NGUYEN VAN A</p>
+          <p class="text-yellow-700"><span class="font-semibold">Ngày phát hành:</span> 07/15</p>
+          <p class="text-yellow-700"><span class="font-semibold">Mật khẩu OTP:</span> 123456</p>
+        </div>
+      </div>
       <!-- Premium Status -->
       <div v-if="premiumStore.isPremium" class="bg-green-50 border border-green-200 rounded-lg p-6 mb-8 text-center">
         <div class="flex items-center justify-center mb-4">
