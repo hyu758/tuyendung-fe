@@ -5,78 +5,46 @@
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Đăng nhập</h1>
         <p class="text-gray-600">Đăng nhập để tiếp tục với JobHub</p>
       </div>
-      
+
       <div class="bg-white py-8 px-6 shadow rounded-lg">
-        <BaseAlert
-          v-if="authStore.error"
-          variant="error"
-          :message="authStore.error"
-          :show="!!authStore.error"
-          dismissible
-          @dismiss="authStore.error = null"
-          class="mb-6"
-        />
-        
+        <BaseAlert v-if="authStore.error" variant="error" :message="authStore.error" :show="!!authStore.error"
+          dismissible @dismiss="authStore.error = null" class="mb-6" />
+
         <form @submit.prevent="handleSubmit">
           <div class="space-y-6">
-            <BaseInput
-              v-model="username"
-              type="text"
-              label="Tên đăng nhập"
-              placeholder="Tên đăng nhập của bạn"
-              autocomplete="username"
-              required
-              prefixIcon="user"
-              :error="errors.username"
-              class="transform transition-all duration-200 focus-within:scale-105"
-            />
-            
-            <BaseInput
-              v-model="password"
-              type="password"
-              label="Mật khẩu"
-              placeholder="Mật khẩu của bạn"
-              autocomplete="current-password"
-              required
-              prefixIcon="lock"
-              :error="errors.password"
-              class="transform transition-all duration-200 focus-within:scale-105"
-            />
-            
+            <BaseInput v-model="username" type="text" label="Tên đăng nhập" placeholder="Tên đăng nhập của bạn"
+              autocomplete="username" required prefixIcon="user" :error="errors.username"
+              class="transform transition-all duration-200 focus-within:scale-105" />
+
+            <BaseInput v-model="password" type="password" label="Mật khẩu" placeholder="Mật khẩu của bạn"
+              autocomplete="current-password" required prefixIcon="lock" :error="errors.password"
+              class="transform transition-all duration-200 focus-within:scale-105" />
+
             <div class="flex items-center justify-between">
               <div class="flex items-center">
-                <input
-                  id="remember_me"
-                  type="checkbox"
-                  v-model="rememberMe"
-                  class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all"
-                />
+                <input id="remember_me" type="checkbox" v-model="rememberMe"
+                  class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all" />
                 <label for="remember_me" class="ml-2 block text-sm text-gray-700">
                   Ghi nhớ đăng nhập
                 </label>
               </div>
-              
+
               <div class="text-sm">
-                <router-link to="/forgot-password" class="font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                <router-link to="/forgot-password"
+                  class="font-medium text-blue-600 hover:text-blue-800 transition-colors">
                   Quên mật khẩu?
                 </router-link>
               </div>
             </div>
-            
+
             <div>
-              <BaseButton
-                type="submit"
-                variant="primary"
-                size="lg"
-                label="Đăng nhập"
-                :loading="authStore.loading"
+              <BaseButton type="submit" variant="primary" size="lg" label="Đăng nhập" :loading="authStore.loading"
                 :disabled="authStore.loading"
-                class="w-full transform transition-all duration-300 hover:shadow-lg hover:scale-105 rounded-lg py-4 text-lg font-bold"
-              />
+                class="w-full transform transition-all duration-300 hover:shadow-lg hover:scale-105 rounded-lg py-4 text-lg font-bold" />
             </div>
           </div>
         </form>
-        
+
         <div class="mt-6">
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
@@ -86,19 +54,14 @@
               <span class="px-2 bg-white text-gray-500">Hoặc đăng nhập với</span>
             </div>
           </div>
-          
+
           <div class="mt-6">
-            <BaseButton
-              variant="light"
-              class="w-full"
-              :icon="['fab', 'google']"
-              label="Google"
-              @click="loginWithGoogle"
-            />
+            <BaseButton variant="light" class="w-full" :icon="['fab', 'google']" label="Google"
+              @click="loginWithGoogle" />
           </div>
         </div>
       </div>
-      
+
       <div class="mt-6 text-center">
         <p class="text-sm text-gray-600">
           Chưa có tài khoản?
@@ -140,7 +103,7 @@ const errors = ref({})
 onMounted(() => {
   // Reset any previous errors
   authStore.error = null
-  
+
   // Check if user is already authenticated
   if (authStore.isAuthenticated) {
     // Redirect based on role
@@ -160,19 +123,19 @@ const handleSubmit = async () => {
   errors.value = {}
   authStore.error = null
   let isValid = true
-  
+
   if (!username.value) {
     errors.value.username = 'Tên đăng nhập không được để trống'
     isValid = false
   }
-  
+
   if (!password.value) {
     errors.value.password = 'Mật khẩu không được để trống'
     isValid = false
   }
-  
+
   if (!isValid) return
-  
+
   try {
     const result = await authStore.login({
       email: username.value,
@@ -189,10 +152,14 @@ const handleSubmit = async () => {
 // Social login methods
 const loginWithGoogle = () => {
   try {
-    window.location.href = 'http://localhost:8000/api/auth/login/google-oauth2/';
+    const isProd = import.meta.env.PROD
+    const baseURL = isProd
+      ? import.meta.env.VITE_API_URL || 'https://api.tuyendungtlu.site'
+      : 'http://127.0.0.1:8000'
+    window.location.href = baseURL + '/api/auth/login/google-oauth2/';
   } catch (error) {
     console.error('Lỗi khi bắt đầu đăng nhập với Google:', error);
     authStore.error = 'Có lỗi xảy ra khi bắt đầu đăng nhập Google';
   }
 }
-</script> 
+</script>

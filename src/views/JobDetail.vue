@@ -178,7 +178,7 @@
                 <font-awesome-icon icon="check-circle" class="text-green-500" />
                 <div class="text-gray-700 text-sm">
                   <span>Đã ứng tuyển: {{ job.latest_application_date }}</span>
-                  <a href="my-applications" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</a>
+                  <router-link to="/my-applications" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</router-link>
                 </div>
               </div>
             </div>
@@ -188,7 +188,7 @@
               <font-awesome-icon icon="check-circle" class="text-green-500" />
               <div class="text-gray-700 text-sm">
                 <span>Đã ứng tuyển: {{ job.latest_application_date }}</span>
-                <a href="my-applications" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</a>
+                <router-link to="/my-applications" class="text-blue-600 hover:underline ml-2 font-medium">Xem CV</router-link>
               </div>
             </div>
           </div>

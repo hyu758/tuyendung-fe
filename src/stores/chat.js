@@ -7,7 +7,7 @@ export const useChatStore = defineStore('chat', {
   state: () => ({
     conversations: [],
     activeConversation: null,
-    messages: [],
+    messagesByUser: {}, // Lưu tin nhắn theo từng userId
     lastMessages: {}, // Map lưu tin nhắn cuối cùng của mỗi cuộc trò chuyện
     loading: false,
     error: null,
@@ -21,9 +21,9 @@ export const useChatStore = defineStore('chat', {
   getters: {
     hasConversations: (state) => state.conversations.length > 0,
     sortedMessages: (state) => {
-      return [...state.messages].sort((a, b) => 
-        new Date(a.created_at) - new Date(b.created_at)
-      )
+      const userId = state.activeConversation;
+      const messages = state.messagesByUser[userId] || [];
+      return [...messages].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     },
     hasUnreadMessages: (state) => state.unreadCount > 0
   },
@@ -137,69 +137,44 @@ export const useChatStore = defineStore('chat', {
     
     async fetchMessages(userId, refresh = false) {
       console.log('fetchMessages được gọi với userId:', userId, 'refresh:', refresh);
-      
-      // Nếu đang tải tin nhắn cho người dùng này, bỏ qua để tránh gọi nhiều lần
       if (this.loading && this.activeConversation === userId) {
         console.log(`Đang tải tin nhắn cho ${userId}, bỏ qua yêu cầu trùng lặp`);
         return [];
       }
-      
-      // Đặt activeConversation trước để tránh các cuộc gọi song song khác
       this.activeConversation = userId;
-      
       if (refresh) {
-        // Đặt về trang 1 và đánh dấu có thể tải thêm
         this.page = 1;
         this.hasMoreMessages = true;
-        
-        // Khi refresh, không xóa tin nhắn ngay lập tức để giữ UI
-        // Tin nhắn cũ sẽ được thay thế sau khi có dữ liệu mới
+        // Reset messages cho user này
+        this.messagesByUser[userId] = [];
       }
-      
       if (!this.hasMoreMessages && !refresh) return [];
-      
       this.loading = true;
       this.error = null;
-      
       try {
-        // Số trang cần tải trong lần đầu tiên (nếu refresh)
         const initialPages = refresh ? 2 : 1;
-        const limit = 20; // Số lượng tin nhắn mỗi trang
-        
-        // Mảng chứa tất cả tin nhắn mới
+        const limit = 20;
         let allNewMessages = [];
         let hasMorePagesAvailable = true;
-        
-        // Tải nhiều trang cùng một lúc nếu là refresh
         const fetchPromises = [];
-        
         for (let i = 0; i < initialPages && hasMorePagesAvailable; i++) {
           const currentPage = refresh ? i + 1 : this.page;
-          
-          // Thêm promise vào mảng
           fetchPromises.push(
             chatService.getMessages(userId, {
-              page: currentPage,
+            page: currentPage,
               limit: limit
             }).then(response => {
               const pageMessages = response.data.data.results || [];
               const totalPages = response.data.data.total_pages || 0;
-              
               console.log(`Đã tải ${pageMessages.length} tin nhắn từ trang ${currentPage}/${totalPages}`);
-              
-              // Cập nhật thông tin lastMessages nếu đây là trang đầu tiên
               if (currentPage === 1 && pageMessages.length > 0) {
-                const latestMsg = pageMessages[0]; // Tin nhắn mới nhất ở đầu
-                
-                // Lưu thông tin recipient_fullname vào userInfoCache nếu có
+                const latestMsg = pageMessages[0];
                 if (latestMsg.recipient_fullname) {
                   const currentUserId = this.userInfo?.user_id;
                   if (currentUserId) {
-                    // Xác định người dùng cần lưu thông tin
                     const otherUserId = latestMsg.sender === currentUserId 
                       ? latestMsg.recipient 
                       : latestMsg.sender;
-                    
                     if (!this.userInfoCache[otherUserId]) {
                       this.userInfoCache[otherUserId] = {
                         user_id: otherUserId,
@@ -210,22 +185,14 @@ export const useChatStore = defineStore('chat', {
                     }
                   }
                 }
-                
-                // Cập nhật tin nhắn mới nhất
                 this.lastMessages[userId] = latestMsg;
                 console.log('Cập nhật tin nhắn cuối cùng:', latestMsg.content);
               }
-              
-              // Kiểm tra xem còn trang nào tiếp theo không
               hasMorePagesAvailable = currentPage < totalPages;
-              
-              // Cập nhật hasMoreMessages cho lần tải tiếp theo
               if (currentPage === this.page) {
                 this.hasMoreMessages = hasMorePagesAvailable;
-                // Tăng page lên 1 cho lần tải tiếp theo
                 this.page = currentPage + 1;
               }
-              
               return pageMessages;
             }).catch(error => {
               console.error(`Lỗi khi tải trang ${currentPage}:`, error);
@@ -233,40 +200,22 @@ export const useChatStore = defineStore('chat', {
             })
           );
         }
-        
-        // Đợi tất cả các promise hoàn thành
         const resultsArray = await Promise.all(fetchPromises);
-        
-        // Gộp tất cả tin nhắn từ các trang
         allNewMessages = resultsArray.flat();
-        
+        if (!this.messagesByUser[userId]) this.messagesByUser[userId] = [];
         if (refresh) {
-          // Nếu là refresh, thay thế danh sách tin nhắn cũ
-          // Tạo một Set để theo dõi ID tin nhắn
-          const messageIds = new Set(allNewMessages.map(msg => msg.id));
-          
-          // Giữ lại những tin nhắn cũ mà không có trong danh sách mới (nếu cần)
-          const oldMessagesToKeep = this.messages.filter(msg => !messageIds.has(msg.id));
-          
-          // Kết hợp tin nhắn mới và tin nhắn cũ cần giữ lại
-          this.messages = [...allNewMessages, ...oldMessagesToKeep];
-          
-          // Sắp xếp lại theo thời gian tăng dần (cũ nhất lên đầu)
-          this.messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+          // Thay thế toàn bộ tin nhắn cũ
+          this.messagesByUser[userId] = [...allNewMessages];
+          this.messagesByUser[userId].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         } else {
-          // Nếu không phải refresh, thêm tin nhắn mới vào đầu danh sách hiện tại
-          // Loại bỏ trùng lặp
-          const messageIds = new Set(this.messages.map(msg => msg.id));
+          // Thêm tin nhắn mới vào đầu danh sách hiện tại, loại bỏ trùng lặp
+          const messageIds = new Set(this.messagesByUser[userId].map(msg => msg.id));
           const uniqueNewMessages = allNewMessages.filter(msg => !messageIds.has(msg.id));
-          
-          // Thêm vào và sắp xếp lại
-          this.messages = [...this.messages, ...uniqueNewMessages].sort(
+          this.messagesByUser[userId] = [...this.messagesByUser[userId], ...uniqueNewMessages].sort(
             (a, b) => new Date(a.created_at) - new Date(b.created_at)
           );
         }
-        
-        console.log('Số lượng tin nhắn sau khi tải:', this.messages.length);
-        
+        console.log('Số lượng tin nhắn sau khi tải:', this.messagesByUser[userId].length);
         return allNewMessages;
       } catch (error) {
         console.error('Lỗi khi lấy tin nhắn:', error);
@@ -328,16 +277,16 @@ export const useChatStore = defineStore('chat', {
         console.log('Đã đánh dấu tin nhắn đã đọc trên server:', numericMessageId);
         
         // Tìm tin nhắn trong danh sách
-        const messageIndex = this.messages.findIndex(message => message.id === numericMessageId);
+        const messageIndex = this.messagesByUser[this.activeConversation].findIndex(message => message.id === numericMessageId);
         console.log('Vị trí tin nhắn trong danh sách:', messageIndex);
         
         if (messageIndex !== -1) {
           // Cập nhật tin nhắn là đã đọc trong store
-          this.messages[messageIndex].is_read = true;
+          this.messagesByUser[this.activeConversation][messageIndex].is_read = true;
           console.log('Đã cập nhật trạng thái tin nhắn trong store');
           
           // Cập nhật tin nhắn trong lastMessages nếu cần
-          const message = this.messages[messageIndex];
+          const message = this.messagesByUser[this.activeConversation][messageIndex];
           const otherUserId = message.sender;
           if (this.lastMessages[otherUserId] && this.lastMessages[otherUserId].id === numericMessageId) {
             this.lastMessages[otherUserId].is_read = true;
@@ -357,7 +306,7 @@ export const useChatStore = defineStore('chat', {
     resetStore() {
       this.conversations = []
       this.activeConversation = null
-      this.messages = []
+      this.messagesByUser = {}
       this.lastMessages = {}
       this.loading = false
       this.error = null
@@ -370,7 +319,7 @@ export const useChatStore = defineStore('chat', {
       console.log('Reset activeConversation từ:', this.activeConversation, 'thành null');
       // Reset các trạng thái liên quan đến cuộc trò chuyện hiện tại
       this.activeConversation = null;
-      this.messages = [];
+      this.messagesByUser = {};
       this.page = 1;
       this.hasMoreMessages = true;
       this.loading = false;
@@ -401,20 +350,15 @@ export const useChatStore = defineStore('chat', {
     },
     
     addMessage(message) {
-      // Lưu ý: đảm bảo id message là số
+      const userId = this.activeConversation;
+      if (!userId) return false;
+      if (!this.messagesByUser[userId]) this.messagesByUser[userId] = [];
       const messageId = typeof message.id === 'string' ? parseInt(message.id, 10) : message.id;
-      
-      // Kiểm tra xem tin nhắn có tồn tại chưa
-      const existingMessageIndex = this.messages.findIndex(m => {
+      const existingMessageIndex = this.messagesByUser[userId].findIndex(m => {
         const mId = typeof m.id === 'string' ? parseInt(m.id, 10) : m.id;
         return mId === messageId;
       });
-      
-      console.log('Đang thêm tin nhắn mới vào store. ID:', messageId, 'Đã tồn tại:', existingMessageIndex !== -1);
-      console.log('Tin nhắn hiện tại trong store:', this.messages.length);
-      
       if (existingMessageIndex === -1) {
-        // Đảm bảo created_at là đối tượng Date
         if (typeof message.created_at === 'string') {
           try {
             const date = new Date(message.created_at);
@@ -422,64 +366,23 @@ export const useChatStore = defineStore('chat', {
               message.created_at = date.toISOString();
             }
           } catch (e) {
-            console.error('Lỗi chuyển đổi thời gian tin nhắn:', e);
             message.created_at = new Date().toISOString();
           }
         } else {
           message.created_at = new Date().toISOString();
         }
-        
-        // Thêm tin nhắn mới vào danh sách
-        this.messages.push(message);
-        console.log('Đã thêm tin nhắn mới vào store. Số lượng tin nhắn hiện tại:', this.messages.length);
-        
-        // Cập nhật tin nhắn cuối cùng nếu cần
-        const currentUserId = this.userInfo?.user_id;
-        if (currentUserId) {
-          // Xác định ID của người đối thoại trong cuộc trò chuyện này
-          const otherUserId = message.sender === currentUserId
-            ? message.recipient
-            : message.sender;
-          
-          // Đảm bảo otherUserId là số
-          const otherUserIdNum = typeof otherUserId === 'string' ? parseInt(otherUserId, 10) : otherUserId;
-          
-          // Chỉ cập nhật lastMessages nếu tin nhắn thuộc về cuộc trò chuyện giữa currentUser và otherUser
-          const isPartOfConversation = 
-            (message.sender === currentUserId && message.recipient === otherUserIdNum) ||
-            (message.sender === otherUserIdNum && message.recipient === currentUserId);
-          
-          if (isPartOfConversation) {
-            console.log(`Kiểm tra cập nhật tin nhắn cuối cùng cho ${otherUserIdNum}:`, message.content);
-            
-            // Lấy tin nhắn cũ (nếu có)
-            const oldMessage = this.lastMessages[otherUserIdNum];
-            
-            // Cập nhật lastMessages nếu tin nhắn này mới hơn hoặc chưa có tin nhắn cũ
-            if (!oldMessage || new Date(message.created_at) > new Date(oldMessage.created_at)) {
-              this.lastMessages[otherUserIdNum] = message;
-              console.log(`✅ Đã cập nhật tin nhắn cuối cùng cho ${otherUserIdNum}:`, message.content);
-            } else {
-              console.log(`⚠️ Không cập nhật lastMessages vì tin nhắn cũ hơn tin nhắn hiện tại cho ${otherUserIdNum}`);
-            }
-          } else {
-            console.log(`⚠️ Tin nhắn không thuộc về cuộc trò chuyện giữa ${currentUserId} và ${otherUserIdNum}:`, message);
-          }
-        }
-        
+        this.messagesByUser[userId].push(message);
+        this.messagesByUser[userId].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         // Đảm bảo cuộc trò chuyện này có tin nhắn mới nhất lên đầu trong danh sách
         this.sortConversationToTop(message);
-        
         // Cập nhật số lượng tin nhắn chưa đọc nếu cần
         if (this.userInfo && message.recipient === this.userInfo.user_id && !message.is_read) {
           this.unreadCount++;
           console.log('Tăng số lượng tin nhắn chưa đọc lên:', this.unreadCount);
         }
-        
-        return true; // Đã thêm tin nhắn mới
+        return true;
       } else {
-        console.log('Tin nhắn đã tồn tại trong store, không thêm lại');
-        return false; // Không thêm vì đã tồn tại
+        return false;
       }
     },
     

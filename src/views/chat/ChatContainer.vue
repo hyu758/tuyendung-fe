@@ -18,7 +18,7 @@
       </div>
       
       <div class="flex-1 overflow-y-auto">
-        <div v-if="chatStore.loading && !activeConversationId" class="p-4 text-center">
+        <div v-if="chatStore.loading && !chatStore.activeConversation" class="p-4 text-center">
           <i class="fas fa-circle-notch fa-spin text-blue-500 text-xl"></i>
           <p class="mt-2 text-gray-500">Đang tải danh sách...</p>
         </div>
@@ -38,7 +38,7 @@
             :last-message-time="conversation.lastMessageTime"
             :unread-count="conversation.unreadCount"
             :is-online="conversation.isOnline"
-            :is-active="activeConversationId === conversation.userId"
+            :is-active="chatStore.activeConversation === conversation.userId"
             :userId="conversation.userId"
             @select="selectConversation(conversation.userId)"
           />
@@ -48,21 +48,21 @@
     
     <!-- Phần hiển thị tin nhắn -->
     <div class="w-2/3 flex flex-col">
-      <template v-if="activeConversationId">
+      <template v-if="chatStore.activeConversation">
         <!-- Header cuộc trò chuyện -->
         <div class="py-3 px-4 border-b border-gray-100 flex items-center justify-between bg-white shadow-sm">
           <div class="flex items-center">
             <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden mr-3">
-              <template v-if="activeConversation?.avatar">
-                <img :src="activeConversation.avatar" alt="Avatar" class="w-full h-full object-cover" />
+              <template v-if="chatStore.activeConversation?.avatar">
+                <img :src="chatStore.activeConversation.avatar" alt="Avatar" class="w-full h-full object-cover" />
               </template>
               <template v-else>
                 <i class="fas fa-user text-blue-500"></i>
               </template>
             </div>
             <div>
-              <h3 class="font-medium text-gray-800">{{ activeConversation?.displayName }}</h3>
-              <p v-if="activeConversation?.isOnline" class="text-xs text-green-500">
+              <h3 class="font-medium text-gray-800">{{ chatStore.activeConversation?.displayName }}</h3>
+              <p v-if="chatStore.activeConversation?.isOnline" class="text-xs text-green-500">
                 <i class="fas fa-circle mr-1 text-[8px]"></i> Đang hoạt động
               </p>
             </div>
@@ -77,7 +77,7 @@
         >
           <!-- Nút cuộn xuống -->
           <button 
-            v-if="!isAtBottom && chatStore.messages.length > 5"
+            v-if="!isAtBottom && chatStore.sortedMessages.length > 5"
             @click="scrollToBottom" 
             class="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-md z-10 transition-colors"
             title="Cuộn xuống tin nhắn mới nhất"
@@ -90,13 +90,13 @@
             <p class="text-xs text-gray-500">Đang tải thêm tin nhắn cũ hơn...</p>
           </div>
           
-          <div v-if="chatStore.loading && !chatStore.messages.length" class="my-auto text-center">
+          <div v-if="chatStore.loading && !chatStore.sortedMessages.length" class="my-auto text-center">
             <i class="fas fa-circle-notch fa-spin text-blue-500 text-xl"></i>
             <p class="mt-2 text-gray-500">Đang tải tin nhắn...</p>
             <p class="text-xs text-gray-400 mt-1">Đang tải nhiều trang để hiển thị đầy đủ cuộc trò chuyện</p>
           </div>
           
-          <div v-else-if="!chatStore.messages.length" class="my-auto text-center py-12">
+          <div v-else-if="!chatStore.sortedMessages.length" class="my-auto text-center py-12">
             <i class="fas fa-comment-dots text-gray-300 text-5xl mb-3"></i>
             <p class="mt-2 text-gray-500">Chưa có tin nhắn. Hãy gửi tin nhắn đầu tiên!</p>
           </div>
@@ -113,7 +113,7 @@
               />
             </div>
             
-            <div v-if="chatStore.loading && chatStore.messages.length" class="py-2 text-center">
+            <div v-if="chatStore.loading && chatStore.sortedMessages.length" class="py-2 text-center">
               <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
               <p class="text-xs text-gray-500">Đang tải tin nhắn...</p>
             </div>
@@ -202,7 +202,7 @@ const processedConversations = computed(() => {
         displayName: userInfo?.fullname || `Người dùng #${otherUserIdNum}`,
         avatar: userInfo?.avatar || null,
         isOnline: false,
-        lastMessage: lastMessage?.content || '',
+        lastMessage: lastMessage?.content || '', 
         lastMessageTime: lastMessage?.created_at || '',
         unreadCount: 0 // Để đơn giản, chỉ hiển thị số chưa đọc nếu cần
       });
@@ -228,10 +228,10 @@ const filteredConversations = computed(() => {
 
 // Lấy thông tin cuộc trò chuyện đang được chọn
 const activeConversation = computed(() => {
-  if (!activeConversationId.value) return null;
+  if (!chatStore.activeConversation) return null;
   
   return processedConversations.value.find(
-    conv => conv.userId === activeConversationId.value
+    conv => conv.userId === chatStore.activeConversation
   );
 });
 
@@ -244,18 +244,15 @@ const getDisplayName = (conversation) => {
 // Chọn một cuộc trò chuyện
 const selectConversation = async (userId) => {
   console.log('Đang chọn cuộc trò chuyện với userId:', userId);
-  if (activeConversationId.value === userId && chatStore.messages.length > 0) {
+  chatStore.activeConversation = userId;
+  activeConversationId.value = userId;
+  if (chatStore.activeConversation === userId && chatStore.sortedMessages.length > 0) {
     console.log('Cuộc trò chuyện này đã được chọn và có tin nhắn, không tải lại');
     return;
   }
-  // Reset toàn bộ state liên quan đến messages
-  activeConversationId.value = userId;
-  chatStore.messages = [];
   chatStore.page = 1;
   chatStore.hasMoreMessages = true;
-  chatStore.loading = true;
   try {
-    // Chỉ fetch user info nếu chưa có
     let shouldFetchUserInfo = !chatStore.userInfoCache[userId];
     let userInfoPromise = null;
     if (shouldFetchUserInfo) {
@@ -272,10 +269,10 @@ const selectConversation = async (userId) => {
     ].filter(Boolean));
     await markMessagesAsRead();
     await nextTick();
-    setTimeout(() => {
-      scrollToBottom();
-      console.log('Đã cuộn xuống tin nhắn mới nhất sau khi chọn cuộc trò chuyện');
-    }, 100);
+  setTimeout(() => {
+    scrollToBottom();
+    console.log('Đã cuộn xuống tin nhắn mới nhất sau khi chọn cuộc trò chuyện');
+  }, 100);
   } catch (error) {
     console.error('Lỗi khi tải tin nhắn:', error);
   } finally {
@@ -286,7 +283,7 @@ const selectConversation = async (userId) => {
 // Đánh dấu tin nhắn đã đọc
 const markMessagesAsRead = async () => {
   // Lọc các tin nhắn chưa đọc từ người khác
-  const unreadMessages = chatStore.messages.filter(
+  const unreadMessages = chatStore.sortedMessages.filter(
     msg => !msg.is_read && msg.sender !== currentUserId.value
   );
   
@@ -306,17 +303,17 @@ const markMessagesAsRead = async () => {
 
 // Gửi tin nhắn mới
 const sendMessage = async (content) => {
-  if (!activeConversationId.value) return;
+  if (!chatStore.activeConversation) return;
   
   try {
     // Gửi tin nhắn và lấy kết quả trả về
-    const newMessage = await chatStore.sendMessage(activeConversationId.value, content);
+    const newMessage = await chatStore.sendMessage(chatStore.activeConversation, content);
     console.log('📤 Đã gửi tin nhắn mới:', newMessage);
     
     // Cập nhật tin nhắn mới nhất và thời gian cho cuộc trò chuyện hiện tại
     // (Đảm bảo UI được cập nhật ngay lập tức)
     const currentConversation = processedConversations.value.find(
-      conv => conv.userId === activeConversationId.value
+      conv => conv.userId === chatStore.activeConversation
     );
     
     if (currentConversation) {
@@ -379,7 +376,7 @@ const scrollToBottom = () => {
 
 // Xử lý sự kiện cuộn để tải thêm tin nhắn cũ
 const handleScroll = async () => {
-  if (!messagesContainer.value || !activeConversationId.value) return;
+  if (!messagesContainer.value || !chatStore.activeConversation) return;
   
   const { scrollTop, clientHeight, scrollHeight } = messagesContainer.value;
   
@@ -398,7 +395,7 @@ const handleScroll = async () => {
     
     try {
       // Chỉ tải 1 trang khi cuộn lên vì đã tải nhiều trang lúc đầu
-      await chatStore.fetchMessages(activeConversationId.value);
+      await chatStore.fetchMessages(chatStore.activeConversation);
       
       // Đợi DOM cập nhật
       await nextTick();
@@ -488,27 +485,20 @@ watch(() => chatStore.activeConversation, (newConversation, oldConversation) => 
 });
 
 // Thêm theo dõi thay đổi tin nhắn để cập nhật danh sách cuộc trò chuyện
-watch(() => chatStore.messages, (newMessages, oldMessages) => {
+watch(() => chatStore.sortedMessages, (newMessages, oldMessages) => {
   console.log('Tin nhắn thay đổi, danh sách cuộc trò chuyện sẽ được cập nhật');
   
   // Kiểm tra nếu có tin nhắn mới được thêm vào
   if (newMessages.length > oldMessages.length) {
-    const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
+    const latestMessage = newMessages[newMessages.length - 1];
     
     // Kiểm tra nếu tin nhắn mới thuộc cuộc trò chuyện đang mở
-    if (latestMessage) {
-      const otherPartyId = latestMessage.sender === currentUserId.value 
-                         ? latestMessage.recipient 
-                         : latestMessage.sender;
-                         
-      // Nếu là tin nhắn mới trong cuộc trò chuyện đang mở
-      if (activeConversationId.value === otherPartyId) {
+    if (chatStore.activeConversation === latestMessage.sender) {
         console.log('Tin nhắn mới thuộc cuộc trò chuyện đang mở');
         
         // Đánh dấu tin nhắn đã đọc nếu người dùng hiện tại là người nhận
         if (latestMessage.recipient === currentUserId.value && !latestMessage.is_read) {
           chatStore.markMessageAsRead(latestMessage.id);
-        }
       }
     }
   }
@@ -525,7 +515,7 @@ const handleSocketMessage = (data) => {
     chatStore.addMessage(message);
     
     // Nếu cuộc trò chuyện đang mở, đánh dấu là đã đọc
-    if (activeConversationId.value === message.sender) {
+    if (chatStore.activeConversation === message.sender) {
       chatStore.markMessageAsRead(message.id);
       
       // Cập nhật tin nhắn mới nhất cho cuộc trò chuyện đang mở
