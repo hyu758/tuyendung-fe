@@ -142,6 +142,19 @@ const handleSubmit = async () => {
       password: password.value,
       remember: rememberMe.value
     })
+    
+    // Xử lý các lỗi cụ thể từ backend
+    if (!result?.success && result?.errors) {
+      // Gán lỗi từ backend vào biến errors
+      Object.keys(result.errors).forEach(field => {
+        if (field === 'username' || field === 'password' || field === 'account') {
+          // Chọn thông báo lỗi đầu tiên cho mỗi trường
+          errors.value[field] = Array.isArray(result.errors[field]) 
+            ? result.errors[field][0] 
+            : result.errors[field];
+        }
+      });
+    }
   } catch (error) {
     console.error('Lỗi khi đăng nhập:', error)
     authStore.error = 'Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.'

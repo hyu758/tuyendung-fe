@@ -141,12 +141,14 @@ export const useAuthStore = defineStore('auth', {
           
           // Chuyển hướng tùy theo role của người dùng
           router.push('/')
+          return { success: true }
         } else {
           throw new Error('Không nhận được token từ server')
         }
       } catch (error) {
-        this.handleError(error, 'Đăng nhập thất bại')
-        return false
+        // Cải thiện xử lý lỗi để trả về thông tin lỗi cụ thể
+        const errorDetails = this.handleError(error, 'Đăng nhập thất bại')
+        return { success: false, errors: errorDetails.errors }
       } finally {
         this.loading = false
       }
@@ -227,11 +229,9 @@ export const useAuthStore = defineStore('auth', {
         }
       } catch (error) {
         console.error('Đăng ký thất bại:', error)
-        const errorMessage = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.'
-        this.createNotification('error', errorMessage)
-        this.error = errorMessage
-        
-        return { success: false, error: this.error }
+        // Cải thiện xử lý lỗi để trả về thông tin lỗi cụ thể
+        const errorDetails = this.handleError(error, 'Đăng ký thất bại')
+        return { success: false, error: this.error, errors: errorDetails.errors }
       } finally {
         this.loading = false
       }
@@ -485,15 +485,36 @@ export const useAuthStore = defineStore('auth', {
     },
     
     handleError(error, defaultMessage) {
-      console.error(defaultMessage + ':', error)
-      this.error = error.response?.data?.message || defaultMessage
+      console.error(`Error: ${defaultMessage}`, error)
+      let errorMessage = defaultMessage
+      let fieldErrors = {}
       
-      // Thêm thông báo lỗi đăng nhập
-      localStorage.setItem('notification', JSON.stringify({
-        type: 'error',
-        message: this.error,
-        show: true
-      }))
+      if (error.response) {
+        // Phản hồi từ server với status code không thành công
+        const data = error.response.data
+        
+        // Nếu có trường message trong phản hồi, sử dụng nó
+        if (data.message) {
+          errorMessage = data.message
+        }
+        
+        // Nếu có trường errors, lưu lại để hiển thị lỗi cụ thể cho từng trường
+        if (data.errors) {
+          fieldErrors = data.errors
+        }
+        
+        console.log('Server response errors:', data.errors)
+      } else if (error.request) {
+        // Yêu cầu đã được gửi nhưng không nhận được phản hồi
+        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet.'
+      }
+      
+      this.error = errorMessage
+      
+      return {
+        message: errorMessage,
+        errors: fieldErrors
+      }
     },
     
     // Thêm một action mới để kiểm tra tính hợp lệ của token và thời hạn token

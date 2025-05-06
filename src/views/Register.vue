@@ -248,15 +248,42 @@ const handleSubmit = async () => {
     if (result.success) {
       successMessage.value = result.message || 'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.'
       
-      // Nếu là nhà tuyển dụng, chuyển hướng đến trang employer
-      if (registerType.value === 'recruiter') {
-        router.push('/employer')
-      } else {
-        router.push('/job-search')
+      // Reset form sau khi đăng ký thành công
+      username.value = ''
+      email.value = ''
+      password.value = ''
+      confirmPassword.value = ''
+      fullname.value = ''
+      acceptTerms.value = false
+      
+      // Chuyển hướng đến trang kích hoạt sau 3 giây
+      setTimeout(() => {
+        router.push({
+          name: 'Login'
+        })
+      }, 3000)
+    } else {
+      // Xử lý các lỗi chi tiết từ backend
+      if (result.errors) {
+        // Gán lỗi từ backend vào biến errors của component
+        Object.keys(result.errors).forEach(field => {
+          if (field in errors.value || ['username', 'email', 'password', 'fullname'].includes(field)) {
+            // Chọn thông báo lỗi đầu tiên cho mỗi trường
+            errors.value[field] = Array.isArray(result.errors[field]) 
+              ? result.errors[field][0] 
+              : result.errors[field];
+          }
+        });
+      }
+      
+      // Nếu không có lỗi cụ thể, hiển thị lỗi chung
+      if (Object.keys(errors.value).length === 0 && result.error) {
+        authStore.error = result.error
       }
     }
   } catch (error) {
-    console.error('Lỗi đăng ký:', error)
+    console.error('Lỗi khi đăng ký:', error)
+    authStore.error = 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.'
   }
 }
 
