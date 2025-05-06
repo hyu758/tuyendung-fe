@@ -434,33 +434,10 @@ const fetchUserCriteria = async () => {
     const response = await axios.get('/api/criteria/');
     
     if (response.data.status === 200) {
-      const criteria = response.data.data;
       hasCriteria.value = true;
       
-      // Điền thông tin từ tiêu chí vào tham số tìm kiếm (nếu chưa có giá trị)
-      if (!searchQuery.city && criteria.city) searchQuery.city = criteria.city;
-      if (!searchQuery.experience && criteria.experience) searchQuery.experience = criteria.experience;
-      if (!searchQuery.type_working && criteria.type_working) searchQuery.type_working = criteria.type_working;
-      if (!searchQuery.scales && criteria.scales) searchQuery.scales = criteria.scales;
-      if (!searchQuery.salary_min && criteria.salary_min) searchQuery.salary_min = criteria.salary_min;
-      
-      // Nếu có field, lấy ID hoặc tên field
-      if (!searchQuery.field && criteria.field) {
-        if (typeof criteria.field === 'object') {
-          searchQuery.field = criteria.field.id;
-        } else {
-          searchQuery.field = criteria.field;
-        }
-      }
-      
-      // Nếu có position, lấy ID hoặc tên position
-      if (!searchQuery.position && criteria.position) {
-        if (typeof criteria.position === 'object') {
-          searchQuery.position = criteria.position.id;
-        } else {
-          searchQuery.position = criteria.position;
-        }
-      }
+      // Không còn tự động điền thông tin từ criteria vào searchQuery nữa
+      // Chỉ đánh dấu là người dùng có criteria
     }
   } catch (err) {
     // Nếu không có tiêu chí, đó không phải là lỗi
@@ -552,64 +529,65 @@ const loadJobsFromQuery = async () => {
 }
 
 const searchJobs = () => {
+  // Chỉ sử dụng q từ nhập liệu và các tham số cố định
+  const newQuery = {
+    page: 1,
+    page_size: 10,
+    sort_by: 'created_at',
+    sort_order: 'desc',
+    all: true  // Luôn đảm bảo là true
+  }
+  
+  // Chỉ thêm q nếu người dùng đã nhập
+  if (searchQuery.q && searchQuery.q.trim()) {
+    newQuery.q = searchQuery.q.trim()
+  }
+  
+  // Cập nhật searchQuery để sử dụng cho các thao tác API sau này
+  Object.assign(searchQuery, newQuery)
+  
+  // Chuyển hướng với URL hoàn toàn mới
   router.push({
     path: '/job-search',
-    query: {
-      q: searchQuery.q,
-      city: searchQuery.city,
-      position: searchQuery.position,
-      experience: searchQuery.experience,
-      type_working: searchQuery.type_working,
-      salary_min: searchQuery.salary_min,
-      salary_max: searchQuery.salary_max,
-      scales: searchQuery.scales,
-      field: searchQuery.field,
-      page: 1,
-      page_size: searchQuery.page_size,
-      sort_by: searchQuery.sort_by,
-      sort_order: searchQuery.sort_order,
-      all: searchQuery.all
-    }
+    query: newQuery
   })
 }
 
 const applyFilters = (filters) => {
-  // Cập nhật query với các bộ lọc mới
-  searchQuery.q = filters.q || searchQuery.q
-  searchQuery.city = filters.city || searchQuery.city
-  searchQuery.position = filters.position || searchQuery.position
-  searchQuery.experience = filters.experience || searchQuery.experience
-  searchQuery.type_working = filters.type_working || searchQuery.type_working
-  searchQuery.salary_min = filters.salary_min || searchQuery.salary_min
-  searchQuery.salary_max = filters.salary_max || searchQuery.salary_max
-  searchQuery.negotiable = filters.is_salary_negotiable || searchQuery.negotiable
-  searchQuery.scales = filters.scales || searchQuery.scales
-  searchQuery.field = filters.field || searchQuery.field
-  searchQuery.all = filters.all !== undefined ? filters.all : searchQuery.all
-  searchQuery.page = 1 // Reset về trang 1 khi áp dụng bộ lọc mới
-
-  // Nếu all=false, xóa các tiêu chí không được chọn
-  if (searchQuery.all === false) {
-    // Chỉ giữ lại các giá trị đã được chọn rõ ràng
-    if (!filters.q) searchQuery.q = ''
-    if (!filters.city) searchQuery.city = ''
-    if (!filters.position) searchQuery.position = ''
-    if (!filters.experience) searchQuery.experience = ''
-    if (!filters.type_working) searchQuery.type_working = ''
-    if (!filters.salary_min) searchQuery.salary_min = ''
-    if (!filters.salary_max) searchQuery.salary_max = ''
-    if (!filters.scales) searchQuery.scales = ''
-    if (!filters.field) searchQuery.field = ''
+  // Thay vì cập nhật searchQuery hiện có, tạo mới hoàn toàn URL params từ bộ lọc được gửi đến
+  // Chỉ sử dụng các tham số cơ bản như page_size, sort_by, sort_order nếu không được cung cấp
+  const newQuery = {
+    page: 1, // Luôn reset về trang 1 khi áp dụng bộ lọc mới
+    page_size: searchQuery.page_size,
+    sort_by: filters.sort_by || searchQuery.sort_by || 'created_at',
+    sort_order: filters.sort_order || searchQuery.sort_order || 'desc',
+    all: filters.all !== undefined ? filters.all : true  // Mặc định là true
   }
 
-  // Gọi router.push để cập nhật URL
+  // Chỉ thêm các tham số có giá trị từ filters, không sử dụng giá trị cũ từ searchQuery
+  if (filters.q) newQuery.q = filters.q
+  if (filters.city) newQuery.city = filters.city
+  if (filters.position) newQuery.position = filters.position
+  if (filters.experience) newQuery.experience = filters.experience
+  if (filters.type_working) newQuery.type_working = filters.type_working
+  if (filters.salary_min) newQuery.salary_min = filters.salary_min
+  if (filters.salary_max) newQuery.salary_max = filters.salary_max
+  if (filters.negotiable) newQuery.negotiable = filters.negotiable
+  if (filters.scales) newQuery.scales = filters.scales
+  if (filters.field) newQuery.field = filters.field
+  
+  // Cập nhật searchQuery để sử dụng cho các thao tác API sau này
+  Object.assign(searchQuery, newQuery)
+  
+  // Chuyển hướng với URL hoàn toàn mới, không giữ lại bất kỳ tham số nào từ URL cũ
   router.push({
     path: '/job-search',
-    query: { ...searchQuery }
+    query: newQuery
   })
 }
 
 const resetFilters = () => {
+  // Reset tất cả các giá trị tìm kiếm trong component
   searchQuery.q = ''
   searchQuery.city = ''
   searchQuery.position = ''
@@ -617,12 +595,30 @@ const resetFilters = () => {
   searchQuery.type_working = ''
   searchQuery.salary_min = ''
   searchQuery.salary_max = ''
-  searchQuery.page = 1
-  searchQuery.sort_by = 'created_at'
+  searchQuery.negotiable = false
+  searchQuery.scales = ''
+  searchQuery.field = ''
+  
+  // Chỉ giữ lại các tham số cơ bản
+  const basicQuery = {
+    page: 1,
+    page_size: 10,
+    sort_by: 'created_at',
+    sort_order: 'desc',
+    all: true  // Luôn đảm bảo all=true
+  }
+  
+  // Cập nhật searchQuery
+  Object.assign(searchQuery, basicQuery)
+  
+  // Reset dropdown sắp xếp
+  sortQuery.sort_by = 'created_at'
 
-  sortQuery.sort_by = ''
-
-  router.push({ path: '/job-search' })
+  // Chuyển đến URL mới chỉ với tham số cơ bản
+  router.push({
+    path: '/job-search',
+    query: basicQuery
+  })
 }
 
 const changePage = (page) => {

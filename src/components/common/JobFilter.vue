@@ -232,24 +232,6 @@
         </div>
       </div>
       
-      <!-- Tùy chọn chỉ hiển thị việc làm phù hợp -->
-      <div v-if="hasCriteria" class="mt-3">
-        <div class="bg-blue-50 rounded-lg p-3 border border-blue-100">
-          <div class="flex items-center">
-            <input
-              id="only-matching"
-              v-model="filters.onlyMatching"
-              type="checkbox"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors"
-            />
-            <label for="only-matching" class="ml-2 block text-sm text-blue-800 font-medium cursor-pointer w-full">
-              Chỉ hiển thị việc làm phù hợp
-            </label>
-          </div>
-          <p class="mt-1 text-xs text-blue-600 pl-6">Chỉ hiển thị các việc làm phù hợp với tiêu chí của bạn</p>
-        </div>
-      </div>
-      
       <!-- Nút lọc và xóa bộ lọc -->
       <div class="grid grid-cols-2 gap-3 pt-2">
         <button
@@ -296,25 +278,10 @@ const emit = defineEmits(['filter', 'close'])
 // Các dữ liệu cho bộ lọc
 const locations = ref([])
 const categories = ref([])
-const hasCriteria = ref(false)
 
 // Load dữ liệu từ API
 async function loadData() {
   try {
-    // Kiểm tra xem người dùng đã đăng nhập và có tiêu chí hay không
-    const authStore = useAuthStore()
-    if (authStore.isAuthenticated) {
-      try {
-        const response = await axios.get('/api/criteria/')
-        if (response.data.status === 200) {
-          hasCriteria.value = true
-        }
-      } catch (err) {
-        // Không có tiêu chí
-        hasCriteria.value = false
-      }
-    }
-
     // Load locations
     const addressStore = useAddressStore()
     const provinces = await addressStore.fetchProvinces()
@@ -363,7 +330,6 @@ const filters = reactive({
   type_working: [],
   salary_type: '',
   experience: '',
-  onlyMatching: false
 })
 
 // Định dạng tiền tệ
@@ -377,31 +343,33 @@ const formatCurrency = (value) => {
 
 // Áp dụng bộ lọc
 const applyFilters = () => {
-  let salary_min = ''
-  let salary_max = ''
-  let is_salary_negotiable = false
-
+  // Tạo đối tượng chứa các tham số cố định
+  const filterParams = {
+    page: 1,
+    page_size: 10,
+    sort_by: 'created_at',
+    sort_order: 'desc',
+    all: true
+  }
+  
+  // Chỉ thêm các tham số có giá trị
+  if (filters.q && filters.q.trim()) filterParams.q = filters.q.trim()
+  if (filters.city) filterParams.city = filters.city
+  if (filters.position) filterParams.position = filters.position
+  if (filters.type_working.length > 0) filterParams.type_working = filters.type_working.join(',')
+  if (filters.experience) filterParams.experience = filters.experience
+  
+  // Xử lý lương
   if (filters.salary_type) {
     if (filters.salary_type === 'negotiable') {
-      is_salary_negotiable = true
+      filterParams.negotiable = 'true'
     } else {
       const [min, max] = filters.salary_type.split('-').map(Number)
-      salary_min = min * 1000000
-      salary_max = max * 1000000
+      if (min > 0) filterParams.salary_min = min
+      if (max < 999) filterParams.salary_max = max
     }
   }
-
-  const filterParams = {
-    q: filters.q,
-    city: filters.city,
-    position: filters.position,
-    type_working: filters.type_working.join(','),
-    salary_min,
-    salary_max,
-    is_salary_negotiable,
-    experience: filters.experience,
-    all: !filters.onlyMatching
-  }
+  
   emit('filter', filterParams)
 }
 
@@ -419,17 +387,13 @@ const resetFilters = () => {
   filters.type_working = []
   filters.salary_type = ''
   filters.experience = ''
-  filters.onlyMatching = false
   
+  // Khi reset, chỉ gửi tham số cố định
   emit('filter', {
-    q: '',
-    city: '',
-    position: '',
-    type_working: '',
-    salary_min: '',
-    salary_max: '',
-    is_salary_negotiable: false,
-    experience: '',
+    page: 1,
+    page_size: 10,
+    sort_by: 'created_at',
+    sort_order: 'desc',
     all: true
   })
 }
