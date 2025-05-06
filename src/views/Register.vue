@@ -225,6 +225,7 @@ const successMessage = ref('')
 const handleSubmit = async () => {
   // Reset lỗi
   errors.value = {}
+  authStore.error = null
   
   // Xác thực các trường
   validateFields()
@@ -264,14 +265,16 @@ const handleSubmit = async () => {
       }, 3000)
     } else {
       // Xử lý các lỗi chi tiết từ backend
+      console.log('Received errors from backend:', result.errors);
+      
       if (result.errors) {
         // Gán lỗi từ backend vào biến errors của component
         Object.keys(result.errors).forEach(field => {
-          if (field in errors.value || ['username', 'email', 'password', 'fullname'].includes(field)) {
-            // Chọn thông báo lỗi đầu tiên cho mỗi trường
-            errors.value[field] = Array.isArray(result.errors[field]) 
-              ? result.errors[field][0] 
-              : result.errors[field];
+          // Trường hợp lỗi là mảng, lấy thông báo đầu tiên
+          if (Array.isArray(result.errors[field])) {
+            errors.value[field] = result.errors[field][0];
+          } else {
+            errors.value[field] = result.errors[field];
           }
         });
       }

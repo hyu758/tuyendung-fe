@@ -40,7 +40,7 @@
             <template v-else>
               <span class="flex items-center">
                 <i class="fas fa-clipboard-list text-blue-500 mr-2"></i>
-                {{ jobs.length === 0 ? 'Không có kết quả' : `${jobs.length} việc làm` }}
+                {{ !loading && jobs.length === 0 ? 'Không có kết quả' : `${jobs.length} việc làm` }}
               </span>
             </template>
           </div>
@@ -96,7 +96,7 @@
                 <template v-else>
                   <span class="flex items-center">
                     <i class="fas fa-clipboard-list text-blue-500 mr-2"></i>
-                    {{ jobs.length === 0 ? 'Không có kết quả' : `Tìm thấy ${jobs.length} việc làm` }}
+                    {{ !loading && jobs.length === 0 ? 'Không có kết quả' : `Tìm thấy ${jobs.length} việc làm` }}
                   </span>
                 </template>
               </h2>
@@ -133,8 +133,8 @@
             </div>
           </div>
 
-          <!-- Hiển thị khi không có kết quả -->
-          <div v-else-if="jobs.length === 0" class="bg-white rounded-xl shadow-sm p-8 text-center">
+          <!-- Hiển thị khi không có kết quả và đã tải xong -->
+          <div v-else-if="!loading && jobs.length === 0" class="bg-white rounded-xl shadow-sm p-8 text-center">
             <div class="text-5xl text-blue-500 opacity-80 mb-4">
               <i class="fas fa-search"></i>
             </div>
@@ -487,6 +487,8 @@ watch(() => sortQuery.sort_by, () => {
 // Methods
 const loadJobsFromQuery = async () => {
   loading.value = true
+  // Đặt thời gian bắt đầu để đảm bảo thời gian tải tối thiểu
+  const startTime = Date.now()
 
   try {
     const response = await axios.get('/api/posts/search/', { params: searchQuery })
@@ -519,6 +521,12 @@ const loadJobsFromQuery = async () => {
     currentPage.value = data.page
     pageSize.value = data.page_size
     total.value = data.total
+    
+    // Đảm bảo hiển thị loading ít nhất 500ms để tránh nhấp nháy giao diện
+    const loadingTime = Date.now() - startTime
+    if (loadingTime < 500) {
+      await new Promise(resolve => setTimeout(resolve, 500 - loadingTime))
+    }
 
   } catch (error) {
     console.error('Không thể lấy danh sách việc làm:', error)

@@ -145,15 +145,24 @@ const handleSubmit = async () => {
     
     // Xử lý các lỗi cụ thể từ backend
     if (!result?.success && result?.errors) {
+      console.log('Received errors from backend:', result.errors);
+      
       // Gán lỗi từ backend vào biến errors
       Object.keys(result.errors).forEach(field => {
-        if (field === 'username' || field === 'password' || field === 'account') {
-          // Chọn thông báo lỗi đầu tiên cho mỗi trường
-          errors.value[field] = Array.isArray(result.errors[field]) 
-            ? result.errors[field][0] 
-            : result.errors[field];
+        // Trường hợp lỗi là mảng, lấy thông báo đầu tiên
+        if (Array.isArray(result.errors[field])) {
+          errors.value[field] = result.errors[field][0];
+        } else {
+          errors.value[field] = result.errors[field];
         }
       });
+      
+      // Hiển thị lỗi chung nếu có lỗi không thuộc về trường cụ thể
+      if (result.errors.account) {
+        authStore.error = Array.isArray(result.errors.account) 
+          ? result.errors.account[0] 
+          : result.errors.account;
+      }
     }
   } catch (error) {
     console.error('Lỗi khi đăng nhập:', error)

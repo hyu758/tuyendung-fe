@@ -501,9 +501,8 @@ export const useAuthStore = defineStore('auth', {
         // Nếu có trường errors, lưu lại để hiển thị lỗi cụ thể cho từng trường
         if (data.errors) {
           fieldErrors = data.errors
+          console.log('Server returned field errors:', data.errors)
         }
-        
-        console.log('Server response errors:', data.errors)
       } else if (error.request) {
         // Yêu cầu đã được gửi nhưng không nhận được phản hồi
         errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet.'
