@@ -3,7 +3,7 @@ import { useNotificationStore } from '../stores/notification';
 import { useChatStore } from '../stores/chat';
 
 // URL của WebSocket API - sử dụng giá trị mặc định nếu biến môi trường không tồn tại
-const API_URL = import.meta.env.VITE_APP_API_URL || 'https://api.tuyendungtlu.site';
+const API_URL = 'https://api.tuyendungtlu.site';
 const SOCKET_URL = API_URL.replace(/^http/, 'ws');
 
 class SocketService {
@@ -177,6 +177,7 @@ class SocketService {
       console.log('Socket.IO thất bại, chuyển sang WebSocket thuần');
       this.connectWebSocket();
     } else {
+      console.log("api_url", API_URL)
       console.log('WebSocket thuần thất bại, không thử Socket.IO');
       // Chỉ tăng số lần thử và thử lại WebSocket
       this.connectionAttempts++;
