@@ -582,11 +582,145 @@
     >
       <font-awesome-icon icon="arrow-left" class="text-gray-600" />
     </button>
+    
+    <!-- Công việc liên quan -->
+    <div v-if="!loading && job.related_posts && job.related_posts.length > 0" class="max-w-5xl mx-auto mt-8">
+      <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-6 flex items-center">
+        <font-awesome-icon icon="briefcase" class="text-blue-500 mr-2" />
+        <span>Việc làm liên quan</span>
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div 
+          v-for="relatedJob in job.related_posts" 
+          :key="relatedJob.id" 
+          class="bg-white shadow-md hover:shadow-lg rounded-lg overflow-hidden transition-all duration-300 flex flex-col"
+          :class="{'border-2 border-amber-400 shadow-amber-200': relatedJob.is_enterprise_premium}"
+        >
+          <div class="p-4 flex-1">
+            <!-- Pro badge cho doanh nghiệp premium -->
+            <div v-if="relatedJob.is_enterprise_premium" class="flex justify-end -mt-2 -mr-2 mb-1">
+              <span class="bg-amber-400 text-white text-xs font-semibold px-2 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm flex items-center">
+                <font-awesome-icon icon="crown" class="mr-1" />
+                Premium
+              </span>
+            </div>
+            
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h3 
+                  @click="navigateToJob(relatedJob.id)" 
+                  class="font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors line-clamp-2 cursor-pointer"
+                >
+                  {{ relatedJob.title }}
+                </h3>
+              </div>
+              <div>
+                <button 
+                  @click="handleSaveJob(relatedJob)"
+                  class="text-lg focus:outline-none transition-colors duration-300"
+                  :title="relatedJob.is_saved ? 'Bỏ lưu' : 'Lưu tin tuyển dụng'"
+                >
+                  <font-awesome-icon 
+                    :icon="['fas', 'heart']" 
+                    :class="relatedJob.is_saved ? 'text-red-500' : 'text-gray-300 hover:text-red-500'"
+                  />
+                </button>
+              </div>
+            </div>
+            
+            <div class="flex items-center mb-2">
+              <div class="relative w-8 h-8">
+                <img 
+                  :src="relatedJob.enterprise_logo" 
+                  alt="Company logo" 
+                  class="w-8 h-8 object-contain rounded-full mr-2" 
+                  :class="{'border border-amber-400': relatedJob.is_enterprise_premium}"
+                  @error="handleImageError"
+                />
+                <span v-if="relatedJob.is_enterprise_premium" class="absolute -right-1 -top-1 w-3 h-3 bg-amber-400 rounded-full border border-white"></span>
+              </div>
+              <p class="text-gray-700 text-sm font-medium ml-2" :class="{'text-amber-700': relatedJob.is_enterprise_premium}">
+                {{ relatedJob.enterprise_name }}
+              </p>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-2 mb-3">
+              <div class="flex items-center text-sm text-gray-500">
+                <font-awesome-icon icon="map-marker-alt" class="mr-2 text-gray-400" />
+                <span>{{ relatedJob.city }}</span>
+              </div>
+              
+              <div class="flex items-center text-sm text-gray-500">
+                <font-awesome-icon icon="briefcase" class="mr-2 text-gray-400" />
+                <span>{{ relatedJob.experience }}</span>
+              </div>
+              
+              <div class="flex items-center text-sm text-gray-500">
+                <font-awesome-icon icon="business-time" class="mr-2 text-gray-400" />
+                <span>{{ relatedJob.type_working }}</span>
+              </div>
+              
+              <div class="flex items-center text-sm" :class="{'text-amber-600 font-medium': relatedJob.is_enterprise_premium, 'text-gray-500': !relatedJob.is_enterprise_premium}">
+                <font-awesome-icon icon="money-bill-wave" class="mr-2" :class="{'text-amber-500': relatedJob.is_enterprise_premium, 'text-gray-400': !relatedJob.is_enterprise_premium}" />
+                <span>{{ getSalaryDisplay(relatedJob) }}</span>
+              </div>
+            </div>
+            
+            <div class="flex justify-between items-center mt-auto pt-2 border-t" :class="{'border-amber-100': relatedJob.is_enterprise_premium, 'border-gray-100': !relatedJob.is_enterprise_premium}">
+              <div class="text-xs text-gray-500">
+                <font-awesome-icon icon="calendar-alt" class="mr-1" />
+                <span>Hạn: {{ formatDate(relatedJob.deadline) }}</span>
+              </div>
+              <button 
+                @click="navigateToJob(relatedJob.id)" 
+                class="text-sm font-medium flex items-center"
+                :class="{'text-amber-600 hover:text-amber-800': relatedJob.is_enterprise_premium, 'text-blue-600 hover:text-blue-800': !relatedJob.is_enterprise_premium}"
+              >
+                <span>Xem chi tiết</span>
+                <font-awesome-icon icon="arrow-right" class="ml-1" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal giới hạn ứng tuyển -->
+    <div v-if="showLimitReachedModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div class="absolute inset-0 bg-black/50" @click="showLimitReachedModal = false"></div>
+      <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300"
+        :class="{'translate-y-0 opacity-100 scale-100': showLimitReachedModal, 'translate-y-4 opacity-0 scale-95': !showLimitReachedModal}">
+        <div class="p-4 md:p-6">
+          <div class="flex items-center justify-center mb-4">
+            <div class="bg-yellow-100 p-3 rounded-full">
+              <font-awesome-icon icon="exclamation-triangle" class="text-yellow-500 text-xl md:text-2xl" />
+            </div>
+          </div>
+          <h3 class="text-lg font-medium text-center text-gray-900 mb-2">Giới hạn ứng tuyển</h3>
+          <p class="text-gray-500 text-center mb-6">Bạn đã đạt giới hạn số lượng ứng tuyển trong ngày. Vui lòng thử lại vào ngày mai hoặc nâng cấp tài khoản Premium để ứng tuyển không giới hạn.</p>
+          <div class="flex flex-col sm:flex-row justify-center gap-2 sm:space-x-4">
+            <button
+              @click="showLimitReachedModal = false"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 order-2 sm:order-1"
+            >
+              Để sau
+            </button>
+            <button
+              @click="redirectToPremium"
+              class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 order-1 sm:order-2 mb-2 sm:mb-0"
+            >
+              Nâng cấp ngay
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePostStore } from '@/stores/post'
 import { useAuthStore } from '@/stores/auth'
@@ -603,6 +737,7 @@ const job = ref({})
 const loading = ref(true)
 const showApplyModal = ref(false)
 const showLoginRequiredModal = ref(false)
+const showLimitReachedModal = ref(false)
 const isDragging = ref(false)
 const cvFile = ref(null)
 const isSubmitting = ref(false)
@@ -802,23 +937,73 @@ const submitApplication = async () => {
       }
     })
     if (response.data.status === 201) {
+      // Đóng modal ứng tuyển
       closeApplyModal()
+      
+      // Cập nhật trạng thái đã ứng tuyển mà không cần reload trang
+      const currentDate = new Date()
+      const formattedDate = new Intl.DateTimeFormat('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(currentDate)
+      
+      // Cập nhật thông tin job hiện tại với thông tin mới
+      job.value = {
+        ...job.value,
+        latest_application_date: formattedDate,
+        // Cập nhật số lượng ứng viên nếu đã có thông tin về số lượng
+        total_applicants: job.value.total_applicants !== undefined ? 
+                          job.value.total_applicants + 1 : 
+                          undefined,
+        // Đánh dấu là đã có ứng viên
+        has_applicants: true
+      }
+      
+      console.log('Đã cập nhật trạng thái ứng tuyển:', job.value.latest_application_date)
+      
+      // Hiển thị toast thành công
       showToast('Ứng tuyển thành công! CV của bạn đã được gửi đến nhà tuyển dụng.', 'success')
-      job.value.appliedDate = new Date().toLocaleDateString('vi-VN')
     }
   } catch (error) {
-    console.error('Error submitting application:', error)
+    console.error('Lỗi khi gửi ứng tuyển:', error)
     
-    if (error.response?.data?.errors) {
-      const serverErrors = error.response.data.errors
-      Object.keys(serverErrors).forEach(key => {
-        if (applyErrors.hasOwnProperty(key)) {
-          applyErrors[key] = serverErrors[key]
+    // Xử lý thông báo từ API
+    if (error.response?.data) {
+      const responseData = error.response.data
+      
+      // Kiểm tra trường hợp đạt giới hạn số lượng ứng tuyển
+      if (responseData.message === 'Bạn đã đạt giới hạn số lượng ứng tuyển trong ngày') {
+        errorMessage.value = responseData.message
+        closeApplyModal()
+        showLimitReachedModal.value = true
+      } 
+      // Kiểm tra lỗi từ validator (serializer errors)
+      else if (responseData.errors) {
+        if (typeof responseData.errors === 'string') {
+          // Nếu errors là string, hiển thị nó
+          errorMessage.value = responseData.errors
+        } else {
+          // Nếu errors là object, ánh xạ các lỗi vào form
+          const serverErrors = responseData.errors
+          Object.keys(serverErrors).forEach(key => {
+            if (applyErrors.hasOwnProperty(key)) {
+              if (Array.isArray(serverErrors[key])) {
+                applyErrors[key] = serverErrors[key][0]
+              } else {
+                applyErrors[key] = serverErrors[key]
+              }
+            }
+          })
+          errorMessage.value = responseData.message || 'Vui lòng kiểm tra lại thông tin đã nhập.'
         }
-      })
-      errorMessage.value = 'Vui lòng kiểm tra lại thông tin đã nhập.'
+      } 
+      // Các lỗi khác từ server
+      else {
+        errorMessage.value = responseData.message || 'Đã xảy ra lỗi khi gửi ứng tuyển. Vui lòng thử lại sau.'
+      }
     } else {
-      errorMessage.value = 'Có lỗi xảy ra khi gửi ứng tuyển. Vui lòng thử lại sau.'
+      errorMessage.value = 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại sau.'
     }
   } finally {
     isSubmitting.value = false
@@ -1058,6 +1243,84 @@ const chatWithEmployer = () => {
     })
   }, 300)
 }
+
+// Handle save/unsave related job
+const handleSaveJob = async (relatedJob) => {
+  if (!authStore.isLoggedIn) {
+    addToast({
+      title: 'Cần đăng nhập',
+      message: 'Vui lòng đăng nhập để lưu công việc này',
+      type: 'warning'
+    })
+    router.push({ 
+      name: 'Login',
+      query: { redirect: route.fullPath } 
+    })
+    return
+  }
+  
+  try {
+    const postStore = usePostStore()
+    if (relatedJob.is_saved) {
+      // Bỏ lưu công việc
+      await postStore.deleteSavedPostByPostId(relatedJob.id)
+      relatedJob.is_saved = false
+      addToast({
+        title: 'Đã bỏ lưu',
+        message: 'Đã xóa công việc khỏi danh sách đã lưu',
+        type: 'success'
+      })
+    } else {
+      // Lưu công việc
+      await postStore.savePost(relatedJob.id)
+      relatedJob.is_saved = true
+      addToast({
+        title: 'Đã lưu',
+        message: 'Đã thêm công việc vào danh sách đã lưu',
+        type: 'success'
+      })
+    }
+  } catch (error) {
+    console.error('Lỗi khi lưu/bỏ lưu công việc:', error)
+    addToast({
+      title: 'Lỗi',
+      message: 'Đã xảy ra lỗi khi thực hiện thao tác',
+      type: 'error'
+    })
+  }
+}
+
+// Thêm phương thức để chuyển hướng đến trang nâng cấp Premium
+const redirectToPremium = () => {
+  showLimitReachedModal.value = false
+  router.push({ name: 'CandidatePremium' })
+}
+
+// Thêm phương thức chuyển hướng đến công việc chi tiết khác
+const navigateToJob = (jobId) => {
+  if (jobId === parseInt(route.params.id)) {
+    // Nếu đang ở trang công việc này rồi, chỉ cần scroll lên đầu
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    return
+  }
+  
+  // Chuyển đến công việc mới
+  router.push({ 
+    name: 'JobDetail', 
+    params: { id: jobId }
+  })
+}
+
+// Watch for route param changes to reload job data when clicking on related jobs
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId !== oldId && newId) {
+    console.log(`Job ID changed from ${oldId} to ${newId}, reloading job data...`)
+    loading.value = true
+    fetchJobDetail()
+    // Scroll to top of page
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}, { immediate: false })
 
 onMounted(() => {
   // Tải thông tin profile để cập nhật trạng thái Premium

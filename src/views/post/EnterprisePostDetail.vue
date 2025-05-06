@@ -390,7 +390,6 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ứng viên</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thông tin liên hệ</th>
                   <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                  <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
@@ -448,42 +447,6 @@
                         <i class="fas fa-download"></i>
                       </a>
                       
-                      <div class="relative inline-block">
-                        <button
-                          @click="toggleDropdown(index)"
-                          class="text-gray-400 hover:text-blue-500 transition-colors duration-200 cursor-pointer"
-                          title="Thay đổi trạng thái"
-                        >
-                          <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        
-                        <!-- Dropdown menu -->
-                        <div
-                          v-if="activeDropdownIndex === index"
-                          class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20"
-                        >
-                          <div class="py-1">
-                            <button
-                              @click="updateCVStatus(cv.id, 'pending')"
-                              class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              Chưa xử lý
-                            </button>
-                            <button
-                              @click="updateCVStatus(cv.id, 'approved')"
-                              class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              Tiếp nhận
-                            </button>
-                            <button
-                              @click="updateCVStatus(cv.id, 'rejected')"
-                              class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              Từ chối
-                            </button>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </td>
                 </tr>

@@ -37,7 +37,12 @@ import {
   faUserTie,
   faLaptopHouse,
   faCoins,
-  faPlusCircle
+  faPlusCircle,
+  faBusinessTime,
+  faCalendarAlt,
+  faArrowRight,
+  faCrown,
+  faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons'
 import { 
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle 
@@ -83,7 +88,12 @@ library.add(
   faBookmark,
   faMoneyBillWave,
   faLocationDot,
-  farHeart
+  faBusinessTime,
+  faCalendarAlt,
+  faArrowRight,
+  farHeart,
+  faCrown,
+  faExclamationTriangle
 )
 
 // Cấu hình Axios

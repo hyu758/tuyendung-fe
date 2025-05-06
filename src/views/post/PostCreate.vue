@@ -17,6 +17,15 @@
 
           <!-- Form -->
           <form @submit.prevent="handleSubmit" class="space-y-8">
+            <!-- Thông báo lỗi chung -->
+            <div v-if="errors.general" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-start">
+              <font-awesome-icon icon="exclamation-circle" class="mt-0.5 mr-2 flex-shrink-0" />
+              <div>
+                <p class="font-medium">Không thể tạo tin tuyển dụng</p>
+                <p>{{ errors.general }}</p>
+              </div>
+            </div>
+            
             <!-- Thông tin chung -->
             <div>
               <h2 class="text-lg font-medium text-gray-900 mb-4">Thông tin chung</h2>
@@ -353,6 +362,55 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal thông báo giới hạn đăng bài -->
+    <div v-if="showPostLimitModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div class="absolute inset-0 bg-black/50" @click="showPostLimitModal = false"></div>
+      <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300"
+        :class="{'translate-y-0 opacity-100 scale-100': showPostLimitModal, 'translate-y-4 opacity-0 scale-95': !showPostLimitModal}">
+        <div class="p-4 md:p-6">
+          <div class="flex items-center justify-center mb-4">
+            <div class="bg-yellow-100 p-3 rounded-full">
+              <font-awesome-icon icon="exclamation-triangle" class="text-yellow-500 text-xl md:text-2xl" />
+            </div>
+          </div>
+          <h3 class="text-lg font-medium text-center text-gray-900 mb-2">Đã đạt giới hạn đăng bài</h3>
+          <div class="text-gray-500 text-center mb-6">
+            <p class="mb-2">Bạn đã sử dụng <span class="font-bold text-blue-600">{{ postLimitInfo.currentPosts }}/{{ postLimitInfo.maxPosts }}</span> lượt đăng bài.</p>
+            <p>Vui lòng nâng cấp gói Premium để đăng thêm tin tuyển dụng và tận hưởng nhiều quyền lợi hấp dẫn khác!</p>
+          </div>
+          
+          <!-- Hiển thị tiến trình sử dụng -->
+          <div class="mb-6">
+            <div class="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                class="h-full bg-blue-600 rounded-full"
+                :style="{width: `${Math.min((postLimitInfo.currentPosts / postLimitInfo.maxPosts) * 100, 100)}%`}" 
+              ></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+              <span>0</span>
+              <span>{{ postLimitInfo.maxPosts }}</span>
+            </div>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row justify-center gap-2 sm:space-x-4">
+            <button
+              @click="showPostLimitModal = false"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 order-2 sm:order-1"
+            >
+              Để sau
+            </button>
+            <button
+              @click="redirectToPremium"
+              class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 order-1 sm:order-2 mb-2 sm:mb-0"
+            >
+              Nâng cấp Premium
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -372,6 +430,11 @@ const isSubmitting = ref(false)
 const errors = ref({})
 const fields = ref([])
 const positions = ref([])
+const showPostLimitModal = ref(false)
+const postLimitInfo = ref({
+  currentPosts: 0,
+  maxPosts: 0
+})
 
 const form = reactive({
   title: '',
@@ -496,16 +559,43 @@ const handleSubmit = async () => {
     if (result.success) {
       router.push('/employer/posts')
     } else {
-      errors.value = result.error
+      if (result.error?.code === 403 && result.error?.message?.includes('Đã đạt giới hạn đăng bài')) {
+        postLimitInfo.value = {
+          currentPosts: result.error.current_posts || 0,
+          maxPosts: result.error.max_posts || 0
+        }
+        showPostLimitModal.value = true
+      } else {
+        errors.value = result.error
+      }
     }
   } catch (err) {
-    if (err.response?.data?.errors) {
-      errors.value = err.response.data.errors
+    console.error('Error creating post:', err)
+    
+    if (err.response?.data) {
+      const responseData = err.response.data
+      
+      if (responseData.code === 403 && responseData.message?.includes('Đã đạt giới hạn đăng bài')) {
+        postLimitInfo.value = {
+          currentPosts: responseData.current_posts || 0,
+          maxPosts: responseData.max_posts || 0
+        }
+        showPostLimitModal.value = true
+      } else if (responseData.errors) {
+        errors.value = responseData.errors
+      } else {
+        errors.value = { general: responseData.message || 'Có lỗi xảy ra khi tạo tin tuyển dụng' }
+      }
     } else {
-      console.error('Error creating post:', err)
+      errors.value = { general: 'Không thể kết nối tới máy chủ. Vui lòng thử lại sau.' }
     }
   } finally {
     isSubmitting.value = false
   }
+}
+
+const redirectToPremium = () => {
+  showPostLimitModal.value = false
+  router.push({ name: 'EmployerPremium' })
 }
 </script> 
