@@ -40,7 +40,7 @@
             <template v-else>
               <span class="flex items-center">
                 <i class="fas fa-clipboard-list text-blue-500 mr-2"></i>
-                {{ !loading && jobs.length === 0 ? 'Không có kết quả' : `${jobs.length} việc làm` }}
+                {{ jobs.length === 0 ? 'Không có kết quả' : `${jobs.length} việc làm` }}
               </span>
             </template>
           </div>
@@ -96,7 +96,7 @@
                 <template v-else>
                   <span class="flex items-center">
                     <i class="fas fa-clipboard-list text-blue-500 mr-2"></i>
-                    {{ !loading && jobs.length === 0 ? 'Không có kết quả' : `Tìm thấy ${jobs.length} việc làm` }}
+                    {{ jobs.length === 0 ? 'Không có kết quả' : `Tìm thấy ${jobs.length} việc làm` }}
                   </span>
                 </template>
               </h2>
@@ -134,7 +134,7 @@
           </div>
 
           <!-- Hiển thị khi không có kết quả và đã tải xong -->
-          <div v-else-if="!loading && jobs.length === 0" class="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div v-if="!loading && jobs.length === 0" class="bg-white rounded-xl shadow-sm p-8 text-center">
             <div class="text-5xl text-blue-500 opacity-80 mb-4">
               <i class="fas fa-search"></i>
             </div>
@@ -148,11 +148,11 @@
           </div>
 
           <!-- Danh sách công việc -->
-          <div v-else>
+          <div v-if="!loading && jobs.length > 0">
             <div class="space-y-4">
               <div v-for="job in jobs" :key="job.id"
                 class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all transform hover:-translate-y-1 border border-gray-100"
-                :class="{'border-l-4 border-l-green-500': job.matchesCriteria}"
+                :class="{'border-l-4 border-l-green-500': job.matchesCriteria === true}"
               >
                 <div class="relative">
                   <!-- Nút save ở góc phải -->
@@ -323,7 +323,8 @@ const toast = useToast()
 const authStore = useAuthStore()
 
 // State
-const loading = ref(false)
+const loading = ref(true)
+const initialLoading = ref(true)
 const jobs = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -435,6 +436,7 @@ const fetchUserCriteria = async () => {
     
     if (response.data.status === 200) {
       hasCriteria.value = true;
+      console.log('User has criteria:', hasCriteria.value);
       
       // Không còn tự động điền thông tin từ criteria vào searchQuery nữa
       // Chỉ đánh dấu là người dùng có criteria
@@ -444,12 +446,17 @@ const fetchUserCriteria = async () => {
     if (err.response?.status !== 404) {
       console.error('Lỗi khi lấy tiêu chí tìm việc:', err);
     }
+    console.log('User does not have criteria or error occurred');
   } finally {
     isCriteriaLoading.value = false;
+    console.log('Criteria loading completed, isCriteriaLoading:', isCriteriaLoading.value);
   }
 };
 
 onMounted(async () => {
+  // Đặt initialLoading = true cho lần tải đầu tiên
+  initialLoading.value = true
+  
   // Trước tiên, thử lấy tiêu chí từ người dùng
   await fetchUserCriteria();
   
@@ -486,17 +493,35 @@ watch(() => sortQuery.sort_by, () => {
 
 // Methods
 const loadJobsFromQuery = async () => {
+  // Đặt initialLoading = true chỉ khi là lần gọi đầu tiên
+  if (initialLoading.value) {
+    initialLoading.value = true
+  }
+  
+  // Luôn đặt loading = true khi bắt đầu tải
   loading.value = true
+  
   // Đặt thời gian bắt đầu để đảm bảo thời gian tải tối thiểu
   const startTime = Date.now()
 
   try {
     const response = await axios.get('/api/posts/search/', { params: searchQuery })
     const data = response.data.data
-    console.log(data)
+    console.log('API response data:', data)
+    
+    // Kiểm tra các giá trị matches_criteria từ backend
+    if (data.results && data.results.length > 0) {
+      console.log('Sample matches_criteria values:', 
+        data.results.map(job => ({
+          id: job.id,
+          title: job.title,
+          matches_criteria: job.matches_criteria
+        }))
+      )
+    }
 
-    // Cập nhật danh sách công việc
-    jobs.value = data.results.map(job => ({
+    // Chuẩn bị kết quả mới trước khi gán vào state
+    const newJobs = data.results.map(job => ({
       id: job.id,
       title: job.title,
       location: `${job.city}${job.district ? `, ${job.district}` : ''}`,
@@ -513,30 +538,46 @@ const loadJobsFromQuery = async () => {
       is_enterprise_premium: job.is_enterprise_premium,
       enterprise_name: job.enterprise_name || '',
       enterprise_logo: job.enterprise_logo || '',
-      matchesCriteria: hasCriteria.value && !isCriteriaLoading.value && job.matches_criteria || false
+      matchesCriteria: job.matches_criteria === true
     }))
 
-    // Cập nhật thông tin phân trang
-    totalPages.value = data.total_pages
-    currentPage.value = data.page
-    pageSize.value = data.page_size
-    total.value = data.total
+    // Chuẩn bị thông tin phân trang
+    const newTotalPages = data.total_pages
+    const newCurrentPage = data.page
+    const newPageSize = data.page_size
+    const newTotal = data.total
     
-    // Đảm bảo hiển thị loading ít nhất 500ms để tránh nhấp nháy giao diện
+    // Đảm bảo hiển thị loading ít nhất 1000ms để tránh nhấp nháy giao diện
     const loadingTime = Date.now() - startTime
-    if (loadingTime < 500) {
-      await new Promise(resolve => setTimeout(resolve, 500 - loadingTime))
+    const minLoadingTime = 1000 // 1 giây
+    
+    if (loadingTime < minLoadingTime) {
+      await new Promise(resolve => setTimeout(resolve, minLoadingTime - loadingTime))
     }
+
+    // Sau khi đợi đủ thời gian, chỉ khi đó mới cập nhật state và kết thúc loading
+    jobs.value = newJobs
+    totalPages.value = newTotalPages
+    currentPage.value = newCurrentPage
+    pageSize.value = newPageSize
+    total.value = newTotal
 
   } catch (error) {
     console.error('Không thể lấy danh sách việc làm:', error)
     toast.error('Có lỗi xảy ra khi tải danh sách việc làm')
+    // Trong trường hợp lỗi, đảm bảo jobs là mảng rỗng để hiển thị không có kết quả
+    jobs.value = []
   } finally {
+    // Sau khi tất cả đã hoàn tất, đặt loading và initialLoading thành false
     loading.value = false
+    initialLoading.value = false
   }
 }
 
 const searchJobs = () => {
+  // Khi người dùng chủ động tìm kiếm, không phải là initialLoading nữa
+  initialLoading.value = false
+  
   // Chỉ sử dụng q từ nhập liệu và các tham số cố định
   const newQuery = {
     page: 1,
@@ -562,6 +603,9 @@ const searchJobs = () => {
 }
 
 const applyFilters = (filters) => {
+  // Khi người dùng áp dụng bộ lọc, không phải là initialLoading nữa
+  initialLoading.value = false
+  
   // Thay vì cập nhật searchQuery hiện có, tạo mới hoàn toàn URL params từ bộ lọc được gửi đến
   // Chỉ sử dụng các tham số cơ bản như page_size, sort_by, sort_order nếu không được cung cấp
   const newQuery = {
@@ -595,6 +639,9 @@ const applyFilters = (filters) => {
 }
 
 const resetFilters = () => {
+  // Khi người dùng xóa bộ lọc, không phải là initialLoading nữa
+  initialLoading.value = false
+  
   // Reset tất cả các giá trị tìm kiếm trong component
   searchQuery.q = ''
   searchQuery.city = ''
@@ -631,6 +678,9 @@ const resetFilters = () => {
 
 const changePage = (page) => {
   if (page < 1 || page > totalPages.value) return
+  
+  // Khi chuyển trang thì không phải là initialLoading nữa
+  initialLoading.value = false
   
   searchQuery.page = page
   router.push({
