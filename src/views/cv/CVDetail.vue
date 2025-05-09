@@ -455,6 +455,7 @@ watch(
 // Mounted
 onMounted(() => {
   loadData()
+  cvStore.markCVAsViewed(route.params.id)
 })
 </script>
 

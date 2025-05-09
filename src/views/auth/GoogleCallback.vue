@@ -50,7 +50,7 @@ onMounted(async () => {
       // Cập nhật store cơ bản
       authStore.token = accessToken;
       authStore.isAuthenticated = true;
-      authStore.userRole = userRole; // Vẫn lưu role (có thể là null)
+      authStore.userRole = userRole; // Lưu role từ API (có thể là 'none')
       console.log('GoogleCallback: Auth store updated.', authStore.isAuthenticated, authStore.userRole);
       
       // Kiểm tra trạng thái 
@@ -67,6 +67,13 @@ onMounted(async () => {
         authStore.logout(); 
         setTimeout(() => router.push('/login'), 3000);
         return; 
+      }
+
+      // Kiểm tra role là 'none', chuyển đến trang select-role
+      if (userRole === 'none') {
+        console.log('GoogleCallback: User role is none, redirecting to select-role...');
+        router.push('/select-role');
+        return;
       }
 
       // Luôn redirect đến trang chủ sau khi xử lý

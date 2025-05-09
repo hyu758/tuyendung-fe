@@ -70,7 +70,7 @@ const error = ref(null);
 onMounted(() => {
   if (!authStore.isAuthenticated) {
     router.push('/login');
-  } else if (authStore.userRole) {
+  } else if (authStore.userRole && authStore.userRole !== 'none') {
     router.push('/');
   }
 });
@@ -79,15 +79,13 @@ async function selectRole(role) {
   loading.value = role;
   error.value = null;
   try {
-    await axios.post('/api/accounts/set-role/', { role });
+    await axios.post('/api/set-role/', { role });
 
     authStore.userRole = role;
+    
+    await authStore.updateUserFromToken();
 
-    if (role === 'employer') {
-      router.push('/employer/dashboard');
-    } else {
-      router.push('/');
-    }
+    router.push('/');
 
   } catch (err) {
     console.error("Error setting role:", err);

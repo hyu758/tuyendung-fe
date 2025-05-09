@@ -175,6 +175,12 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/select-role',
+    name: 'SelectRole',
+    component: () => import('../views/auth/SelectRole.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/my-applications',
     component: () => import('../views/candidate/MyApplications.vue'),
     meta: { requiresAuth: true, role: 'candidate' }
@@ -275,6 +281,14 @@ router.beforeEach(async (to, from, next) => {
   const enterpriseStore = useEnterpriseStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const guestOnly = to.matched.some(record => record.meta.guest)
+  
+  // Kiểm tra user có role 'none'
+  if (authStore.isAuthenticated && authStore.userRole === 'none' && to.name !== 'SelectRole') {
+    // Luôn chuyển hướng đến trang select-role nếu role là 'none'
+    console.log('User has role "none", redirecting to SelectRole')
+    return next({ name: 'SelectRole' })
+  }
+  
   // Nếu route cần xác thực
   if (requiresAuth) {
     // Kiểm tra nếu có token

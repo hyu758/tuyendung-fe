@@ -111,8 +111,8 @@ onMounted(() => {
       router.push('/admin/dashboard')
     } else if (authStore.userRole === 'employer') {
       router.push('/employer/dashboard')
-    } else {
-      router.push('/')
+    } else if (authStore.userRole === 'none') {
+      router.push('/select-role')
     }
   }
 })

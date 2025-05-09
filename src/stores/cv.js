@@ -185,7 +185,29 @@ export const useCVStore = defineStore('cv', {
         this.loading = false
       }
     },
-    
+    async markCVAsViewed(cvId) {
+      try {
+        this.loading = true
+        this.error = null
+        
+        const response = await axios.post(`/api/cv/mark-as-viewed/${cvId}/`)
+        if (response.data && response.status === 200) {
+          return {
+            success: true,
+            data: response.data.data
+          }
+        }
+      } catch (error) {
+        console.error('Error marking CV as viewed:', error)
+        this.error = error.message || 'Đã xảy ra lỗi khi đánh dấu CV đã xem'
+        return {
+          success: false,
+          error: this.error
+        }
+      } finally {
+        this.loading = false
+      }
+    },
     async updateCVNote(cvId, note) {
       try {
         this.loading = true

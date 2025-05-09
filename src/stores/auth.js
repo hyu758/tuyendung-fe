@@ -85,6 +85,14 @@ export const useAuthStore = defineStore('auth', {
     userRole() {
       const user = this.userInfo
       if (!user) return null
+      
+      // Kiểm tra role từ decoded.role trước
+      const decoded = this.decodedToken
+      if (decoded && decoded.role) {
+        return decoded.role // Trả về role chính xác từ token (bao gồm 'none')
+      }
+      
+      // Logic cũ nếu không có role trong token
       if (user.is_admin) return 'admin'
       if (user.is_recruiter) return 'employer'
       if (user.is_applicant) return 'candidate'
