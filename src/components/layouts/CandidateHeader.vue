@@ -461,7 +461,6 @@ const mobileNotificationRef = ref(null)
 // Sử dụng thông tin từ authStore
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isActive = computed(() => authStore.isActivated)
-const userRole = computed(() => authStore.userRole)
 const userFullName = computed(() => authStore.userFullName)
 
 // Giữ lại biến username từ localStorage cho trường hợp chưa lấy được thông tin người dùng
@@ -476,9 +475,6 @@ watch(() => authStore.user, (newUser) => {
 }, { deep: true, immediate: true })
 
 onMounted(async () => {
-  // Lấy username từ localStorage để hiển thị ban đầu
-  username.value = localStorage.getItem('username') || 'Người dùng'
-  
   // Kiểm tra thông tin từ token
   if (isAuthenticated.value) {
     if (!authStore.user) {

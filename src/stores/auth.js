@@ -10,7 +10,6 @@ export const useAuthStore = defineStore('auth', {
       token: localStorage.getItem('token') || null,
       loading: false,
       error: null,
-      _userRole: localStorage.getItem('user_role') || null
     }
   },
   
@@ -82,7 +81,7 @@ export const useAuthStore = defineStore('auth', {
     userFullName() {
       const user = this.userInfo
       if (!user) return ''
-      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || ''
+      return user.fullname
     },
     
     userRole() {
@@ -322,7 +321,6 @@ export const useAuthStore = defineStore('auth', {
         
         // Cập nhật thông tin user
         this.user = {
-          username: decoded.username || decoded.email || localStorage.getItem('username'),
           user_id: decoded.user_id,
           is_active: decoded.is_active === true,
           is_admin: decoded.role === 'admin',

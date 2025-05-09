@@ -31,4 +31,4 @@ coverage
 .env.production
 *.tsbuildinfo
 
-.cursor
+.cursor/

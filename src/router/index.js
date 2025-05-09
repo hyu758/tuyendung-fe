@@ -362,18 +362,23 @@ router.beforeEach(async (to, from, next) => {
   }
   // Route chỉ dành cho khách
   else if (guestOnly && authStore.isAuthenticated) {
-    // Chỉ chuyển hướng employer và admin về dashboard của họ
-    // Ứng viên vẫn có thể xem các trang guest
     if (authStore.userRole === 'employer') {
       return next('/employer')
-    } else if (authStore.userRole === 'admin') {
-      return next('/admin')
+    }
+    if (to.name === 'Login' || to.name === 'Register') {
+      if (authStore.userRole === 'employer') {
+        return next('/employer');
+      } else if (authStore.userRole === 'candidate') {
+        return next('/job-search');
+      } else {
+        return next('/');
+      }
     }
     next()
   }
   // Route công khai
   else {
-    next()
+    next();
   }
 })
 
