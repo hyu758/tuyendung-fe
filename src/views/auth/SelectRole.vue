@@ -61,6 +61,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import BaseButton from '../../components/common/BaseButton.vue';
 import BaseAlert from '../../components/common/BaseAlert.vue';
+import axios from 'axios';
 
 const router = useRouter();
 const authStore = useAuthStore();
