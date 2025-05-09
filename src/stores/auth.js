@@ -9,7 +9,8 @@ export const useAuthStore = defineStore('auth', {
       user: null,
       token: localStorage.getItem('token') || null,
       loading: false,
-      error: null
+      error: null,
+      _userRole: localStorage.getItem('user_role') || null
     }
   },
   
@@ -31,7 +32,9 @@ export const useAuthStore = defineStore('auth', {
         // Phân tích JWT token để lấy payload
         const base64Url = this.token.split('.')[1]
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-        return JSON.parse(window.atob(base64))
+        const decoded = JSON.parse(window.atob(base64))
+        console.log('Decoded token:', decoded);
+        return decoded
       } catch (e) {
         console.error('Lỗi khi giải mã JWT token:', e)
         return null
@@ -83,20 +86,9 @@ export const useAuthStore = defineStore('auth', {
     },
     
     userRole() {
-      const user = this.userInfo
-      if (!user) return null
-      
-      // Kiểm tra role từ decoded.role trước
-      const decoded = this.decodedToken
-      if (decoded && decoded.role) {
-        return decoded.role // Trả về role chính xác từ token (bao gồm 'none')
-      }
-      
-      // Logic cũ nếu không có role trong token
-      if (user.is_admin) return 'admin'
-      if (user.is_recruiter) return 'employer'
-      if (user.is_applicant) return 'candidate'
-      return null
+      const user = this.userInfo;
+      if (!user) return null;
+      return user.role;
     }
   },
   
@@ -326,6 +318,8 @@ export const useAuthStore = defineStore('auth', {
           return false;
         }
         
+        console.log('Thông tin token được giải mã:', JSON.stringify(decoded));
+        
         // Cập nhật thông tin user
         this.user = {
           username: decoded.username || decoded.email || localStorage.getItem('username'),
@@ -336,6 +330,13 @@ export const useAuthStore = defineStore('auth', {
           is_applicant: decoded.role === 'candidate',
           role: decoded.role
         };
+        
+        // Cập nhật _userRole từ token và lưu vào localStorage
+        if (decoded.role) {
+          console.log('updateUserFromToken: Role từ token:', decoded.role);
+          this.setUserRole(decoded.role);
+          console.log('updateUserFromToken: Role từ token đã được lưu:', decoded.role);
+        }
         
         console.log('Đã cập nhật thông tin người dùng từ token:', this.user);
         
@@ -391,18 +392,20 @@ export const useAuthStore = defineStore('auth', {
       socketService.disconnect();
       
       // Xóa thông tin người dùng
-      this.token = null
-      this.user = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('username')
+      this.token = null;
+      this.user = null;
+      this._userRole = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('username');
+      localStorage.removeItem('user_role');
       
       // Tạo thông báo đăng xuất thành công
-      this.createNotification('success', 'Đăng xuất thành công!')
+      this.createNotification('success', 'Đăng xuất thành công!');
       
       // Chuyển hướng về trang đăng nhập
       if (redirect) {
-        router.push('/login')
+        router.push('/login');
       }
     },
     
@@ -446,15 +449,17 @@ export const useAuthStore = defineStore('auth', {
           return false;
         }
         
-        console.log('Đang thử refresh token...');
-        const response = await axios.post('/api/token/refresh/', {
+        const response = await axios.post('/api/token-refresh/', {
           refresh: refreshToken
         });
         
-        if (response.data.access) {
-          console.log('Refresh token thành công, token mới:', response.data.access.substring(0, 20) + '...');
-          this.token = response.data.access;
-          localStorage.setItem('token', response.data.access);
+        if (response.data.status === 200) {
+          const newToken = response.data.data.access;
+          this.token = newToken;
+          localStorage.setItem('token', newToken);
+          
+          // Decode token mới để kiểm tra
+          const decoded = this.decodedToken;
           
           // Cập nhật thông tin người dùng từ token mới
           this.updateUserFromToken();
@@ -462,7 +467,6 @@ export const useAuthStore = defineStore('auth', {
           return true;
         }
         
-        console.log('Refresh token không trả về access token mới');
         return false;
       } catch (error) {
         console.error('Lỗi khi refresh token:', error);
@@ -572,6 +576,14 @@ export const useAuthStore = defineStore('auth', {
         this.logout(true);
         return false;
       }
+    },
+    
+    // Thêm method để set userRole
+    setUserRole(role) {
+      console.log('setUserRole called with:', role);
+      this._userRole = role;
+      localStorage.setItem('user_role', role);
+      console.log('_userRole sau khi set:', this._userRole);
     }
   }
 }) 

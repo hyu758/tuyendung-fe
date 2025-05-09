@@ -282,11 +282,33 @@ router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const guestOnly = to.matched.some(record => record.meta.guest)
   
-  // Kiểm tra user có role 'none'
-  if (authStore.isAuthenticated && authStore.userRole === 'none' && to.name !== 'SelectRole') {
-    // Luôn chuyển hướng đến trang select-role nếu role là 'none'
-    console.log('User has role "none", redirecting to SelectRole')
-    return next({ name: 'SelectRole' })
+  if (authStore.isAuthenticated) {
+    try {
+      const decoded = authStore.decodedToken;
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (decoded && decoded.exp && (decoded.exp - currentTime < 300 || currentTime >= decoded.exp)) {
+        await authStore.refreshToken();
+      }
+    } catch (error) {
+      console.error('[Router] Lỗi khi kiểm tra token:', error);
+    }
+    
+    // Đảm bảo có thông tin user nếu đã đăng nhập
+    if (!authStore.user) {
+      await authStore.updateUserFromToken();
+    }
+  }
+  
+  // Lấy role từ nhiều nguồn
+  const userRole = authStore.userRole
+  
+  if (authStore.isAuthenticated && 
+      (userRole === 'none') && 
+      to.name !== 'SelectRole') {
+
+    console.log('[Router] User has role "none", redirecting to SelectRole');
+    return next({ name: 'SelectRole' });
   }
   
   // Nếu route cần xác thực

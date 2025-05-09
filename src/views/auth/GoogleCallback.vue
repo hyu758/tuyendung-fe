@@ -50,7 +50,7 @@ onMounted(async () => {
       // Cập nhật store cơ bản
       authStore.token = accessToken;
       authStore.isAuthenticated = true;
-      authStore.userRole = userRole; // Lưu role từ API (có thể là 'none')
+      authStore.setUserRole(userRole);
       console.log('GoogleCallback: Auth store updated.', authStore.isAuthenticated, authStore.userRole);
       
       // Kiểm tra trạng thái 
