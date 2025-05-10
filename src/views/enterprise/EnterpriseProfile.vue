@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
+  <div class="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <template v-if="loading">
         <!-- Skeleton loading -->
@@ -119,8 +119,8 @@
 
       <template v-else-if="enterprise">
         <!-- Header card với banner và logo -->
-        <div class="bg-white shadow-sm rounded-xl overflow-hidden mb-8 transition-all hover:shadow-md">
-          <div class="relative h-48 sm:h-56 md:h-64 bg-gradient-to-r from-blue-500 to-indigo-600" v-memo="enterprise.background_image_url">
+        <div class="bg-white shadow-sm rounded-xl overflow-hidden mb-6 sm:mb-8 transition-all hover:shadow-md">
+          <div class="relative h-40 sm:h-48 md:h-56 lg:h-64 bg-gradient-to-r from-blue-500 to-indigo-600">
             <img 
               v-if="enterprise.background_image_url"
               :src="enterprise.background_image_url"
@@ -133,43 +133,43 @@
             <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
           </div>
           
-          <div class="relative px-6 md:px-8 pb-6">
-            <div class="flex flex-col md:flex-row">
-              <div class="flex-shrink-0 -mt-16 md:-mt-20">
-                <div class="w-24 h-24 md:w-32 md:h-32 rounded-xl border-4 border-white bg-white shadow-md overflow-hidden" v-memo="enterprise.logo_url">
+          <div class="relative px-4 sm:px-6 md:px-8 pb-4 sm:pb-6">
+            <div class="flex flex-col sm:flex-row">
+              <div class="flex-shrink-0 -mt-14 sm:-mt-16 md:-mt-20">
+                <div class="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-xl border-4 border-white bg-white shadow-md overflow-hidden mx-auto sm:mx-0">
                   <img 
-                    v-if="enterprise.logo_url"
+                    v-if="enterprise && enterprise.logo_url"
                     :src="enterprise.logo_url"
                     class="w-full h-full object-contain"
                     alt="Company logo"
                   />
                   <div v-else class="w-full h-full bg-gray-100 flex items-center justify-center">
-                    <i class="fas fa-building text-gray-400 text-4xl"></i>
+                    <i class="fas fa-building text-gray-400 text-3xl md:text-4xl"></i>
                   </div>
                 </div>
               </div>
-              <div class="mt-4 md:mt-4 md:ml-8 flex-grow">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div v-memo="[enterprise.company_name, enterprise.city]">
-                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ enterprise.company_name }}</h1>
-                    <p class="text-gray-600 mt-2 flex items-center">
+              <div class="mt-3 sm:mt-4 sm:ml-6 md:ml-8 flex-grow text-center sm:text-left">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 line-clamp-2">{{ enterprise.company_name || 'Doanh nghiệp' }}</h1>
+                    <p class="text-gray-600 mt-1 sm:mt-2 flex items-center justify-center sm:justify-start">
                       <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
                       {{ enterprise.city || 'Chưa cập nhật địa điểm' }}
                     </p>
                   </div>
-                  <div class="mt-4 md:mt-0 flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                  <div class="mt-3 sm:mt-0 flex flex-col sm:flex-row items-center sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 md:space-x-4">
                     <span 
                       :class="[
-                        'inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium',
+                        'inline-flex items-center px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium',
                         enterprise.is_active ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                       ]"
                     >
-                      <i :class="['fas mr-1.5', enterprise.is_active ? 'fa-check-circle' : 'fa-clock']"></i>
+                      <i :class="['fas mr-1 sm:mr-1.5', enterprise.is_active ? 'fa-check-circle' : 'fa-clock']"></i>
                       {{ enterprise.is_active ? 'Đã xác thực' : 'Chờ xác thực' }}
                     </span>
                     <button 
                       @click="navigateToEdit"
-                      class="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 border border-transparent rounded-lg text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      class="inline-flex items-center justify-center w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 border border-transparent rounded-lg text-sm sm:text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
                       <i class="fas fa-edit mr-2"></i>
                       Chỉnh sửa thông tin
@@ -182,72 +182,72 @@
         </div>
 
         <!-- Grid layout cho thông tin chi tiết -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           <!-- Cột trái: Thông tin cơ bản -->
-          <div class="space-y-6 md:space-y-8">
+          <div class="space-y-4 sm:space-y-6 lg:space-y-8">
             <!-- Giới thiệu công ty -->
-            <div class="bg-white shadow-sm rounded-xl p-6 transition-all hover:shadow-md" v-memo="enterprise.description">
-              <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div class="bg-white shadow-sm rounded-xl p-4 sm:p-6 transition-all hover:shadow-md">
+              <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                 <i class="fas fa-info-circle text-blue-500 mr-2"></i>
                 Giới thiệu công ty
               </h2>
-              <p v-if="enterprise.description" class="text-gray-700 leading-relaxed">
+              <p v-if="enterprise.description" class="text-gray-700 leading-relaxed text-sm sm:text-base">
                 {{ enterprise.description }}
               </p>
-              <p v-else class="text-gray-500 italic">
+              <p v-else class="text-gray-500 italic text-sm sm:text-base">
                 Chưa có thông tin giới thiệu về công ty
               </p>
             </div>
 
             <!-- Thông tin liên hệ -->
-            <div class="bg-white shadow-sm rounded-xl p-6 transition-all hover:shadow-md" v-memo="[enterprise.email_company, enterprise.phone_number, enterprise.address, enterprise.link_web_site]">
-              <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div class="bg-white shadow-sm rounded-xl p-4 sm:p-6 transition-all hover:shadow-md">
+              <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                 <i class="fas fa-address-card text-blue-500 mr-2"></i>
                 Thông tin liên hệ
               </h2>
-              <div class="space-y-4">
+              <div class="space-y-3 sm:space-y-4">
                 <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-envelope text-blue-500"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-envelope text-blue-500 text-sm sm:text-base"></i>
                   </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Email</p>
-                    <p class="text-gray-700">{{ enterprise.email_company || 'Chưa cập nhật' }}</p>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Email</p>
+                    <p class="text-gray-700 text-sm sm:text-base break-all">{{ enterprise.email_company || 'Chưa cập nhật' }}</p>
                   </div>
                 </div>
                 <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-phone text-green-500"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-phone text-green-500 text-sm sm:text-base"></i>
                   </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Số điện thoại</p>
-                    <p class="text-gray-700">{{ enterprise.phone_number || 'Chưa cập nhật' }}</p>
-                  </div>
-                </div>
-                <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-map-marker-alt text-red-500"></i>
-                  </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Địa chỉ</p>
-                    <p class="text-gray-700">{{ enterprise.address || 'Chưa cập nhật' }}</p>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Số điện thoại</p>
+                    <p class="text-gray-700 text-sm sm:text-base">{{ enterprise.phone_number || 'Chưa cập nhật' }}</p>
                   </div>
                 </div>
                 <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-globe text-purple-500"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-map-marker-alt text-red-500 text-sm sm:text-base"></i>
                   </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Website</p>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Địa chỉ</p>
+                    <p class="text-gray-700 text-sm sm:text-base">{{ enterprise.address || 'Chưa cập nhật' }}</p>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-globe text-purple-500 text-sm sm:text-base"></i>
+                  </div>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Website</p>
                     <a 
                       v-if="enterprise.link_web_site" 
                       :href="enterprise.link_web_site" 
                       target="_blank" 
-                      class="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                      class="text-blue-600 hover:text-blue-800 hover:underline transition-colors text-sm sm:text-base break-all"
                     >
                       {{ enterprise.link_web_site }}
                     </a>
-                    <p v-else class="text-gray-700">Chưa cập nhật</p>
+                    <p v-else class="text-gray-700 text-sm sm:text-base">Chưa cập nhật</p>
                   </div>
                 </div>
               </div>
@@ -255,88 +255,88 @@
           </div>
 
           <!-- Cột phải: Thông tin doanh nghiệp -->
-          <div class="space-y-6 md:space-y-8" v-memo="[enterprise.tax, enterprise.scale, enterprise.field_of_activity]">
+          <div class="space-y-4 sm:space-y-6 lg:space-y-8" v-memo="[enterprise.tax, enterprise.scale, enterprise.field_of_activity]">
             <!-- Thông tin doanh nghiệp -->
-            <div class="bg-white shadow-sm rounded-xl p-6 transition-all hover:shadow-md">
-              <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div class="bg-white shadow-sm rounded-xl p-4 sm:p-6 transition-all hover:shadow-md">
+              <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                 <i class="fas fa-building text-blue-500 mr-2"></i>
                 Thông tin doanh nghiệp
               </h2>
-              <div class="space-y-4">
+              <div class="space-y-3 sm:space-y-4">
                 <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-id-card text-yellow-500"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-yellow-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-id-card text-yellow-500 text-sm sm:text-base"></i>
                   </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Mã số thuế</p>
-                    <p class="text-gray-700">{{ enterprise.tax || 'Chưa cập nhật' }}</p>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Mã số thuế</p>
+                    <p class="text-gray-700 text-sm sm:text-base">{{ enterprise.tax || 'Chưa cập nhật' }}</p>
                   </div>
                 </div>
                 <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-users text-indigo-500"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-users text-indigo-500 text-sm sm:text-base"></i>
                   </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Quy mô công ty</p>
-                    <p class="text-gray-700">{{ enterprise.scale || 'Chưa cập nhật' }}</p>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Quy mô công ty</p>
+                    <p class="text-gray-700 text-sm sm:text-base">{{ enterprise.scale || 'Chưa cập nhật' }}</p>
                   </div>
                 </div>
                 <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-industry text-teal-500"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-teal-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-industry text-teal-500 text-sm sm:text-base"></i>
                   </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Lĩnh vực hoạt động</p>
-                    <p class="text-gray-700">{{ getFieldName(enterprise.field_of_activity) || 'Chưa cập nhật' }}</p>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Lĩnh vực hoạt động</p>
+                    <p class="text-gray-700 text-sm sm:text-base">{{ getFieldName(enterprise.field_of_activity) || 'Chưa cập nhật' }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Giấy phép kinh doanh -->
-            <div class="bg-white shadow-sm rounded-xl p-6 transition-all hover:shadow-md" v-memo="enterprise.business_certificate_url">
-              <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div class="bg-white shadow-sm rounded-xl p-4 sm:p-6 transition-all hover:shadow-md">
+              <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                 <i class="fas fa-certificate text-blue-500 mr-2"></i>
                 Giấy phép kinh doanh
               </h2>
-              <div v-if="enterprise.business_certificate_url" class="mt-4">
+              <div v-if="enterprise && enterprise.business_certificate_url" class="mt-3 sm:mt-4">
                 <img 
                   :src="enterprise.business_certificate_url" 
                   alt="Giấy phép kinh doanh"
                   class="w-full rounded-lg shadow-sm border border-gray-200 transition-all hover:shadow-md"
                 />
               </div>
-              <div v-else class="bg-gray-50 rounded-lg p-8 text-center">
-                <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto flex items-center justify-center">
-                  <i class="fas fa-file-alt text-gray-400 text-2xl"></i>
+              <div v-else class="bg-gray-50 rounded-lg p-4 sm:p-8 text-center">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mx-auto flex items-center justify-center">
+                  <i class="fas fa-file-alt text-gray-400 text-xl sm:text-2xl"></i>
                 </div>
-                <p class="mt-4 text-gray-500">Chưa có giấy phép kinh doanh</p>
+                <p class="mt-3 sm:mt-4 text-gray-500 text-sm sm:text-base">Chưa có giấy phép kinh doanh, bạn cần bổ sung giấy phép kinh doanh để có thể được xác thực sớm nhất</p>
               </div>
             </div>
 
             <!-- Thông tin thời gian -->
-            <div class="bg-white shadow-sm rounded-xl p-6 transition-all hover:shadow-md" v-memo="[enterprise.created_at, enterprise.modified_at || enterprise.updated_at]">
-              <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div class="bg-white shadow-sm rounded-xl p-4 sm:p-6 transition-all hover:shadow-md" v-memo="[enterprise.created_at, enterprise.modified_at || enterprise.updated_at]">
+              <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                 <i class="fas fa-clock text-blue-500 mr-2"></i>
                 Thông tin thời gian
               </h2>
-              <div class="space-y-4">
+              <div class="space-y-3 sm:space-y-4">
                 <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-calendar-plus text-blue-500"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-calendar-plus text-blue-500 text-sm sm:text-base"></i>
                   </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Ngày tham gia</p>
-                    <p class="text-gray-700">{{ formatDate(enterprise.created_at) }}</p>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Ngày tham gia</p>
+                    <p class="text-gray-700 text-sm sm:text-base">{{ formatDate(enterprise.created_at) }}</p>
                   </div>
                 </div>
                 <div class="flex items-start">
-                  <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-calendar-check text-green-500"></i>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-calendar-check text-green-500 text-sm sm:text-base"></i>
                   </div>
-                  <div class="ml-4">
-                    <p class="text-sm text-gray-500">Cập nhật gần nhất</p>
-                    <p class="text-gray-700">{{ formatDate(enterprise.modified_at || enterprise.updated_at) }}</p>
+                  <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm text-gray-500">Cập nhật gần nhất</p>
+                    <p class="text-gray-700 text-sm sm:text-base">{{ formatDate(enterprise.modified_at || enterprise.updated_at) }}</p>
                   </div>
                 </div>
               </div>
@@ -345,16 +345,16 @@
         </div>
       </template>
 
-      <div v-else-if="error" class="bg-white shadow-sm rounded-xl p-8 transition-all hover:shadow-md">
+      <div v-else-if="error" class="bg-white shadow-sm rounded-xl p-6 sm:p-8 transition-all hover:shadow-md">
         <div class="text-center">
-          <div class="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-            <i class="fas fa-exclamation-circle text-3xl text-red-500"></i>
+          <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-exclamation-circle text-2xl sm:text-3xl text-red-500"></i>
           </div>
-          <h3 class="mt-4 text-xl font-medium text-gray-900">Lỗi</h3>
-          <p class="mt-2 text-gray-600">{{ error }}</p>
+          <h3 class="mt-4 text-lg sm:text-xl font-medium text-gray-900">Lỗi</h3>
+          <p class="mt-2 text-sm sm:text-base text-gray-600">{{ error }}</p>
           <button 
             @click="retryFetchData" 
-            class="mt-6 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all inline-flex items-center"
+            class="mt-4 sm:mt-6 px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all inline-flex items-center text-sm sm:text-base"
           >
             <i class="fas fa-redo-alt mr-2"></i>
             Thử lại
@@ -389,17 +389,23 @@ const fieldMapping = {
 }
 
 const getFieldName = (field) => {
+  if (!field) return 'Chưa xác định'
   return fieldMapping[field] || field
 }
 
 const formatDate = (dateString) => {
   if (!dateString) return 'Chưa xác định'
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('vi-VN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(date)
+  try {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(date)
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return 'Ngày không hợp lệ'
+  }
 }
 
 const navigateToEdit = () => {

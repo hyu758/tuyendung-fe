@@ -421,11 +421,13 @@ import { usePostStore } from '../../stores/post'
 import { useFieldStore } from '../../stores/field'
 import { useAddressStore } from '../../stores/address'
 import { debounce } from 'lodash'
+import { useToast } from 'vue-toastification'
 
 const router = useRouter()
 const postStore = usePostStore()
 const fieldStore = useFieldStore()
 const addressStore = useAddressStore()
+const $toast = useToast()
 const isSubmitting = ref(false)
 const errors = ref({})
 const fields = ref([])
@@ -554,41 +556,41 @@ const handleSubmit = async () => {
       field: form.field_id
     }
     
-    console.log(postData)
+    console.log('Dữ liệu gửi đi:', postData)
     const result = await postStore.createPost(postData)
+    console.log('Kết quả trả về:', result)
+    
+    // Xử lý kết quả thành công
     if (result.success) {
+      $toast.success(result.message || 'Tạo bài đăng thành công')
       router.push('/employer/posts')
-    } else {
-      if (result.error?.code === 403 && result.error?.message?.includes('Đã đạt giới hạn đăng bài')) {
+    } 
+    // Xử lý các trường hợp lỗi
+    else {
+      // Trường hợp giới hạn đăng bài (có code + current_posts + max_posts)
+      if (result.code === 403 && result.message?.includes('Đã đạt giới hạn đăng bài')) {
         postLimitInfo.value = {
-          currentPosts: result.error.current_posts || 0,
-          maxPosts: result.error.max_posts || 0
+          currentPosts: result.current_posts || 0,
+          maxPosts: result.max_posts || 0
         }
         showPostLimitModal.value = true
-      } else {
-        errors.value = result.error
+      }
+      // Trường hợp lỗi validation (có errors)
+      else if (result.errors) {
+        // Hiển thị lỗi validation trong form
+        errors.value = result.errors
+        // Hiển thị thông báo lỗi tổng quan bằng toast
+        $toast.error('Vui lòng kiểm tra lại thông tin')
+      }
+      // Các trường hợp lỗi khác (message)
+      else {
+        // Hiển thị thông báo lỗi bằng toast thay vì trong form
+        $toast.error(result.message || 'Tạo bài đăng thất bại')
       }
     }
   } catch (err) {
     console.error('Error creating post:', err)
-    
-    if (err.response?.data) {
-      const responseData = err.response.data
-      
-      if (responseData.code === 403 && responseData.message?.includes('Đã đạt giới hạn đăng bài')) {
-        postLimitInfo.value = {
-          currentPosts: responseData.current_posts || 0,
-          maxPosts: responseData.max_posts || 0
-        }
-        showPostLimitModal.value = true
-      } else if (responseData.errors) {
-        errors.value = responseData.errors
-      } else {
-        errors.value = { general: responseData.message || 'Có lỗi xảy ra khi tạo tin tuyển dụng' }
-      }
-    } else {
-      errors.value = { general: 'Không thể kết nối tới máy chủ. Vui lòng thử lại sau.' }
-    }
+    $toast.error('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.')
   } finally {
     isSubmitting.value = false
   }

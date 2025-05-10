@@ -53,10 +53,18 @@ export const usePostStore = defineStore('post', {
       try {
         this.loading = true
         const response = await axios.post('/api/posts/create/', postData)
-        return { success: true, data: response.data }
+        // Trường hợp thành công: { message, status, data }
+        return { 
+          success: true, 
+          ...response.data
+        }
       } catch (error) {
-        this.error = error.response?.data?.errors || 'Có lỗi xảy ra khi tạo tin tuyển dụng'
-        return { success: false, error: this.error }
+        console.error('Error creating post:', error)
+        // Trường hợp lỗi từ API: { message, status, errors?, code?, current_posts?, max_posts? }
+        return {
+          success: false,
+          ...error.response?.data || { message: 'Có lỗi xảy ra khi tạo tin tuyển dụng' }
+        }
       } finally {
         this.loading = false
       }
