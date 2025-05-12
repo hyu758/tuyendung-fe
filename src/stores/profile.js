@@ -128,16 +128,27 @@ export const useProfileStore = defineStore('profile', {
         }
       } catch (error) {
         console.error('Lỗi khi đổi mật khẩu:', error)
-        this.error = error.response?.data?.message || 'Không thể đổi mật khẩu. Vui lòng thử lại.'
+        
+        // Lấy thông báo lỗi từ phản hồi API
+        const errorMessage = error.response?.data?.message || 'Không thể đổi mật khẩu. Vui lòng thử lại.'
+        const errors = error.response?.data?.errors || {}
+        
+        // Lưu thông báo lỗi vào state
+        this.error = errorMessage
         
         // Thông báo lỗi
         localStorage.setItem('notification', JSON.stringify({
           type: 'error',
-          message: this.error,
+          message: errorMessage,
           show: true
         }))
         
-        return { success: false, error: this.error }
+        // Trả về chi tiết lỗi để hiển thị trong form
+        return { 
+          success: false, 
+          error: errorMessage,
+          errors: errors
+        }
       } finally {
         this.loading = false
       }

@@ -282,7 +282,14 @@
                 <div v-if="passwordError" class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded">
                   <div class="flex items-center">
                     <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="mr-2" />
-                    <p>{{ passwordError }}</p>
+                    <div>
+                      <p>{{ passwordError }}</p>
+                      <ul v-if="passwordErrors" class="mt-2 ml-6 list-disc text-sm">
+                        <li v-for="(errorMsg, field) in passwordErrors" :key="field">
+                          <strong>{{ getFieldLabel(field) }}:</strong> {{ Array.isArray(errorMsg) ? errorMsg[0] : errorMsg }}
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
                 
@@ -334,6 +341,7 @@ const authStore = useAuthStore()
 const premiumStore = usePremiumStore()
 const activeTab = ref('profile')
 const passwordError = ref('')
+const passwordErrors = ref(null)
 const passwordStrength = ref(0)
 
 // Kiểm tra tài khoản Premium
@@ -457,9 +465,20 @@ const canSubmitPassword = computed(() => {
   );
 })
 
+// Lấy tên hiển thị cho các trường
+function getFieldLabel(field) {
+  const fieldLabels = {
+    'current_password': 'Mật khẩu hiện tại',
+    'new_password': 'Mật khẩu mới',
+    'confirm_password': 'Xác nhận mật khẩu'
+  }
+  return fieldLabels[field] || field
+}
+
 // Reset lỗi khi thay đổi form
 watch(passwordForm, () => {
-  passwordError.value = '';
+  passwordError.value = ''
+  passwordErrors.value = null
 })
 
 // Lấy thông tin hồ sơ khi component được tạo
@@ -498,6 +517,7 @@ async function updateProfile() {
 // Đổi mật khẩu
 async function changePassword() {
   passwordError.value = ''
+  passwordErrors.value = null
   
   // Kiểm tra mật khẩu mới và xác nhận mật khẩu có khớp nhau không
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -519,6 +539,14 @@ async function changePassword() {
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
     passwordStrength.value = 0
+  } else {
+    // Hiển thị lỗi nếu có
+    passwordError.value = result.error
+    
+    // Hiển thị chi tiết lỗi nếu API trả về
+    if (result.errors) {
+      passwordErrors.value = result.errors
+    }
   }
 }
 </script> 
