@@ -173,6 +173,19 @@
                   <font-awesome-icon icon="comment-dots" class="text-yellow-600" />
                   <span class="text-yellow-600 font-medium">Nâng cấp để nhắn tin</span>
                 </base-button>
+
+                <!-- Button Báo cáo bài đăng -->
+                <base-button
+                  v-if="authStore.isLoggedIn"
+                  type="button"
+                  variant="danger" 
+                  size="md"
+                  class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 flex items-center justify-center gap-2 transform hover:scale-105 transition-all duration-300 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 hover:border-red-300 shadow-md hover:shadow-lg"
+                  @click="showReportModal = true"
+                >
+                  <font-awesome-icon icon="flag" class="text-red-600" />
+                  <span class="text-red-600 font-medium">Báo cáo</span>
+                </base-button>
               </div>
               <div v-if="authStore.isLoggedIn && job.latest_application_date" class="hidden sm:flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-100 shadow-sm">
                 <font-awesome-icon icon="check-circle" class="text-green-500" />
@@ -716,6 +729,59 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Báo cáo bài đăng -->
+    <div v-if="showReportModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div class="absolute inset-0 bg-black/50" @click="closeReportModal"></div>
+      <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300"
+        :class="{'translate-y-0 opacity-100 scale-100': showReportModal, 'translate-y-4 opacity-0 scale-95': !showReportModal}">
+        <div class="p-4 md:p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Báo cáo bài đăng</h3>
+            <button @click="closeReportModal" class="text-gray-400 hover:text-gray-600">
+              <font-awesome-icon icon="times" />
+            </button>
+          </div>
+
+          <form @submit.prevent="submitReport" class="space-y-4">
+            <div>
+              <label for="report-reason" class="block text-sm font-medium text-gray-700 mb-1">Lý do báo cáo <span class="text-red-500">*</span></label>
+              <textarea 
+                id="report-reason"
+                v-model="reportForm.reason" 
+                rows="4" 
+                class="w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                :class="{'border-red-500': reportError}"
+                placeholder="Vui lòng mô tả chi tiết lý do bạn báo cáo bài đăng này..."
+                required
+              ></textarea>
+              <p v-if="reportError" class="mt-1 text-sm text-red-500">{{ reportError }}</p>
+            </div>
+
+            <div class="flex gap-2 justify-end">
+              <button 
+                type="button" 
+                @click="closeReportModal" 
+                class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button 
+                type="submit" 
+                class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="isReportSubmitting"
+              >
+                <span v-if="isReportSubmitting" class="flex items-center justify-center">
+                  <font-awesome-icon icon="circle-notch" class="fa-spin mr-2" />
+                  Đang gửi...
+                </span>
+                <span v-else>Gửi báo cáo</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -738,9 +804,11 @@ const loading = ref(true)
 const showApplyModal = ref(false)
 const showLoginRequiredModal = ref(false)
 const showLimitReachedModal = ref(false)
+const showReportModal = ref(false)
 const isDragging = ref(false)
 const cvFile = ref(null)
 const isSubmitting = ref(false)
+const isReportSubmitting = ref(false)
 const authStore = useAuthStore()
 const { addToast } = useToast()
 
@@ -763,6 +831,11 @@ const successMessage = ref('')
 const errorMessage = ref('')
 const showNotification = ref(false)
 const notificationType = ref('success') // success or error
+
+const reportError = ref('')
+const reportForm = reactive({
+  reason: ''
+})
 
 const handleImageError = (e) => {
   e.target.src = '/default-company-logo.png'
@@ -1321,6 +1394,67 @@ watch(() => route.params.id, (newId, oldId) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 }, { immediate: false })
+
+// Hiển thị modal báo cáo
+const showReportModalFn = () => {
+  if (!authStore.isLoggedIn) {
+    addToast({
+      title: 'Cần đăng nhập',
+      message: 'Vui lòng đăng nhập để báo cáo bài đăng',
+      type: 'warning'
+    })
+    router.push({ 
+      name: 'Login',
+      query: { redirect: route.fullPath } 
+    })
+    return
+  }
+  
+  showReportModal.value = true
+}
+
+// Đóng modal báo cáo
+const closeReportModal = () => {
+  showReportModal.value = false
+  reportForm.reason = ''
+  reportError.value = ''
+}
+
+// Gửi báo cáo
+const submitReport = async () => {
+  if (!reportForm.reason.trim()) {
+    reportError.value = 'Vui lòng nhập lý do báo cáo'
+    return
+  }
+  
+  try {
+    isReportSubmitting.value = true
+    
+    const response = await axios.post('/api/posts/report/', {
+      post: job.value.id,
+      reason: reportForm.reason
+    })
+    
+    if (response.status === 201 || response.status === 200) {
+      closeReportModal()
+      addToast({
+        title: 'Báo cáo thành công',
+        message: 'Cảm ơn bạn đã báo cáo bài đăng này. Chúng tôi sẽ xem xét và phản hồi sớm.',
+        type: 'success'
+      })
+    }
+  } catch (error) {
+    console.error('Lỗi khi gửi báo cáo:', error)
+    
+    if (error.response?.data?.message) {
+      reportError.value = error.response.data.message
+    } else {
+      reportError.value = 'Đã xảy ra lỗi khi gửi báo cáo. Vui lòng thử lại sau.'
+    }
+  } finally {
+    isReportSubmitting.value = false
+  }
+}
 
 onMounted(() => {
   // Tải thông tin profile để cập nhật trạng thái Premium
