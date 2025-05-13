@@ -589,7 +589,7 @@ const handleSubmit = async () => {
       }
     }
   } catch (err) {
-    console.error('Error creating post:', err)
+      console.error('Error creating post:', err)
     $toast.error('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.')
   } finally {
     isSubmitting.value = false

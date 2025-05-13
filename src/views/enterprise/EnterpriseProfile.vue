@@ -396,12 +396,12 @@ const getFieldName = (field) => {
 const formatDate = (dateString) => {
   if (!dateString) return 'Chưa xác định'
   try {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date)
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('vi-VN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(date)
   } catch (error) {
     console.error('Error formatting date:', error)
     return 'Ngày không hợp lệ'

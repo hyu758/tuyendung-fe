@@ -52,7 +52,7 @@ onMounted(async () => {
     }
   }
   
-  // Thiết lập kiểm tra token định kỳ (15 phút kiểm tra một lần)
+  // Thiết lập kiểm tra token định kỳ (5 phút kiểm tra một lần)
   startTokenCheckInterval()
   
   if (localStorage.getItem('token') && !authStore.user) {
@@ -176,13 +176,13 @@ const startTokenCheckInterval = () => {
     clearInterval(tokenCheckInterval)
   }
   
-  // Thiết lập interval mới (15 phút = 900000ms)
+  // Thiết lập interval mới (5 phút = 300000ms)
   tokenCheckInterval = setInterval(async () => {
     console.log('Periodic token check...')
     if (authStore.isAuthenticated) {
       await authStore.checkTokenValidity()
     }
-  }, 900000) // 15 phút
+  }, 300000) // 5 phút
 }
 
 // Hiển thị thông báo nếu có lưu trong localStorage
