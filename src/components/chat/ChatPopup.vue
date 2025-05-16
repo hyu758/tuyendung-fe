@@ -80,29 +80,41 @@
 
       <!-- Input Area -->
       <div class="p-2 border-t border-gray-200">
-        <div class="flex items-center bg-gray-100 rounded-full px-3 py-1">
-          <div class="flex items-center space-x-1">
-            <button class="text-gray-500 hover:text-blue-500">
+        <div class="flex items-center rounded-lg bg-gray-100 overflow-hidden">
+          <div class="flex-shrink-0 flex items-center px-2">
+            <button class="text-gray-500 hover:text-blue-500 p-1 transition-colors">
               <i class="fas fa-smile"></i>
             </button>
-            <button class="text-gray-500 hover:text-blue-500">
+            <button class="text-gray-500 hover:text-blue-500 p-1 ml-1 transition-colors">
               <i class="fas fa-paperclip"></i>
             </button>
           </div>
-          <input 
-            v-model="newMessage" 
-            type="text" 
-            placeholder="Nhập tin nhắn..." 
-            class="flex-1 border-none bg-transparent p-2 focus:outline-none text-sm"
-            @keyup.enter="sendMessage"
-          />
-          <button 
-            @click="sendMessage" 
-            class="ml-2 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors"
-            :disabled="!newMessage.trim()"
-          >
-            <i class="fas fa-paper-plane text-sm"></i>
-          </button>
+          
+          <div class="flex-grow flex items-end relative">
+            <textarea
+              v-model="newMessage"
+              ref="messageInput" 
+              rows="1"
+              placeholder="Nhập tin nhắn..." 
+              class="w-full bg-transparent py-2 px-2 focus:outline-none text-sm resize-none overflow-hidden min-h-[36px] max-h-24"
+              @keydown.enter.exact.prevent="sendMessage"
+              @keydown.shift.enter="() => {}"
+              @input="resizeTextarea"
+              @focus="resizeTextarea"
+              @paste="resizeTextarea"
+            ></textarea>
+          </div>
+          
+          <div class="flex-shrink-0 px-2">
+            <button 
+              @click="sendMessage" 
+              class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors"
+              :disabled="!newMessage.trim()"
+              :class="{ 'opacity-50 cursor-not-allowed': !newMessage.trim() }"
+            >
+              <i class="fas fa-paper-plane text-sm"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -161,6 +173,7 @@ const loading = ref(true);
 const messages = ref([]);
 const newMessage = ref('');
 const messagesContainer = ref(null);
+const messageInput = ref(null);
 const hasMoreMessages = ref(true);
 const page = ref(1);
 
@@ -176,10 +189,16 @@ const toggleMinimize = () => {
   console.log('Toggle minimize:', !isMinimized.value);
   isMinimized.value = !isMinimized.value;
   
-  // Nếu mở rộng, cuộn xuống tin nhắn mới nhất
+  // Nếu mở rộng, cuộn xuống tin nhắn mới nhất và focus vào input
   if (!isMinimized.value) {
     setTimeout(() => {
       scrollToBottom();
+      // Focus vào input
+      nextTick(() => {
+        if (messageInput.value) {
+          messageInput.value.focus();
+        }
+      });
     }, 300); // Đợi animation hoàn thành
   }
 };
@@ -220,20 +239,63 @@ const formatTime = (dateString) => {
     return `${diffInMinutes} phút`;
   } else if (diffInMinutes < 24 * 60) {
     return `${Math.floor(diffInMinutes / 60)}h`;
-  } else if (diffInMinutes < 7 * 24 * 60) {
-    return `${Math.floor(diffInMinutes / (24 * 60))}ngày`;
   } else {
-    return date.toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    // Nếu tin nhắn cũ hơn 24 giờ, hiển thị ngày tháng và giờ
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const messageDay = new Date(date);
+    messageDay.setHours(0, 0, 0, 0);
+    
+    // Thời gian (giờ:phút)
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    
+    if (messageDay.getTime() === today.getTime()) {
+      // Nếu là hôm nay
+      return `Hôm nay ${timeStr}`;
+    } else if (messageDay.getTime() === yesterday.getTime()) {
+      // Nếu là hôm qua
+      return `Hôm qua ${timeStr}`;
+    } else if (now.getFullYear() === date.getFullYear()) {
+      // Nếu cùng năm, hiển thị ngày và tháng
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      return `${day}/${month} ${timeStr}`;
+    } else {
+      // Nếu khác năm, hiển thị cả năm
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year} ${timeStr}`;
+    }
   }
 };
 
 // Gửi tin nhắn mới
-const sendMessage = async () => {
+const sendMessage = async (e) => {
+  // Nếu không có nội dung thì không thực hiện gì cả
   if (!newMessage.value.trim()) return;
   
   try {
+    // Lưu nội dung và reset input
     const content = newMessage.value.trim();
     newMessage.value = ''; // Reset input
+    
+    // Reset chiều cao của textarea về mặc định
+    if (messageInput.value) {
+      messageInput.value.style.height = '36px';
+      messageInput.value.style.overflowY = 'hidden';
+    }
+    
+    // Focus lại vào input sau khi gửi
+    nextTick(() => {
+      messageInput.value?.focus();
+    });
     
     console.log('Gửi tin nhắn mới:', content, 'tới người dùng:', props.conversation.userId);
     
@@ -241,9 +303,6 @@ const sendMessage = async () => {
     const message = await chatStore.sendMessage(props.conversation.userId, content);
     
     console.log('Tin nhắn đã được gửi:', message);
-    
-    // Tin nhắn đã được thêm vào store tự động bởi sendMessage
-    // và watcher sẽ cập nhật messages.value
     
     // Cuộn xuống sau khi tin nhắn được gửi
     await nextTick();
@@ -286,17 +345,18 @@ const handleScroll = async () => {
       console.log('Tải thêm tin nhắn cũ, trang:', chatStore.page);
       
       // Lưu số lượng tin nhắn hiện tại
-      const currentMessagesCount = chatStore.messages.length;
+      const currentMessagesCount = chatStore.messagesByUser[props.conversation.userId]?.length || 0;
       
       // Sử dụng fetchMessages để tải thêm tin nhắn cũ và cập nhật store
       await chatStore.fetchMessages(props.conversation.userId);
       
       // Cập nhật tin nhắn từ store sau khi tải
-      messages.value = [...chatStore.messages];
+      messages.value = [...(chatStore.messagesByUser[props.conversation.userId] || [])];
       
       // Kiểm tra xem có tin nhắn mới được thêm vào không
-      if (chatStore.messages.length > currentMessagesCount) {
-        console.log('Đã nhận được tin nhắn cũ:', chatStore.messages.length - currentMessagesCount);
+      const newMessagesCount = chatStore.messagesByUser[props.conversation.userId]?.length || 0;
+      if (newMessagesCount > currentMessagesCount) {
+        console.log('Đã nhận được tin nhắn cũ:', newMessagesCount - currentMessagesCount);
         
         // Giữ nguyên vị trí scroll sau khi thêm tin nhắn
         await nextTick();
@@ -382,7 +442,7 @@ const loadInitialMessages = async () => {
     await chatStore.fetchMessages(props.conversation.userId, true);
     
     // Lấy tin nhắn từ store
-    messages.value = [...chatStore.messages];
+    messages.value = [...(chatStore.messagesByUser[props.conversation.userId] || [])];
     
     console.log('Đã tải được', messages.value.length, 'tin nhắn ban đầu');
     
@@ -410,9 +470,11 @@ const loadInitialMessages = async () => {
   }
 };
 
-// Theo dõi sự thay đổi của chatStore.messages
-watch(() => chatStore.messages, (newMessages) => {
-  console.log('[ChatPopup] chatStore.messages đã thay đổi, số lượng tin nhắn:', newMessages.length);
+// Theo dõi sự thay đổi của tin nhắn trong cuộc trò chuyện hiện tại
+watch(() => chatStore.messagesByUser[props.conversation.userId], (newMessages) => {
+  if (!newMessages) return;
+  
+  console.log('[ChatPopup] Tin nhắn của cuộc trò chuyện hiện tại đã thay đổi, số lượng tin nhắn:', newMessages.length);
   
   // Lọc ra chỉ những tin nhắn thuộc cuộc trò chuyện hiện tại
   const userIdNow = props.conversation.userId;
@@ -450,6 +512,13 @@ onMounted(async () => {
   // Đăng ký lắng nghe tin nhắn mới
   socketService.onMessage(handleNewMessage);
   
+  // Khởi tạo chiều cao cho textarea
+  nextTick(() => {
+    if (messageInput.value) {
+      resizeTextarea();
+    }
+  });
+  
   console.log('Đã thiết lập ChatPopup hoàn tất');
 });
 
@@ -472,6 +541,46 @@ onUnmounted(() => {
   
   console.log('Đã dọn dẹp tài nguyên của ChatPopup');
 });
+
+// Điều chỉnh chiều cao của textarea theo nội dung
+const resizeTextarea = () => {
+  if (!messageInput.value) return;
+  
+  // Reset chiều cao để tính toán chính xác
+  messageInput.value.style.height = 'auto';
+  
+  // Thiết lập chiều cao tối thiểu
+  const minHeight = 36; // px
+  
+  // Thiết lập chiều cao tối đa
+  const maxHeight = 120; // px
+  
+  // Tính toán chiều cao dựa trên nội dung, giới hạn từ min đến max
+  const scrollHeight = messageInput.value.scrollHeight;
+  const newHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight));
+  
+  // Áp dụng chiều cao mới
+  messageInput.value.style.height = `${newHeight}px`;
+  
+  // Nếu đạt chiều cao tối đa, cho phép scrolling
+  messageInput.value.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
+  
+  // Cuộn xuống nếu đang ở cuối danh sách tin nhắn
+  if (isAtBottom()) {
+    nextTick(() => {
+      scrollToBottom();
+    });
+  }
+};
+
+// Kiểm tra nếu đang ở cuối danh sách tin nhắn
+const isAtBottom = () => {
+  if (!messagesContainer.value) return true;
+  
+  const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
+  // Coi như đang ở cuối nếu khoảng cách đến cuối ít hơn 100px
+  return scrollHeight - scrollTop - clientHeight < 100;
+};
 </script>
 
 <style scoped>
@@ -504,5 +613,19 @@ onUnmounted(() => {
   color: #333;
   margin-right: auto;
   border-bottom-left-radius: 4px;
+}
+
+/* CSS cho textarea */
+textarea {
+  line-height: 1.5;
+  transition: height 0.1s ease-in-out;
+  word-break: break-word;
+  box-sizing: border-box;
+}
+
+textarea:focus {
+  box-shadow: none;
+  border: none;
+  outline: none;
 }
 </style> 

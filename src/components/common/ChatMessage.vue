@@ -51,10 +51,40 @@ const formattedTime = computed(() => {
     return '';
   }
   
-  // Format thời gian theo giờ:phút
-  return date.toLocaleTimeString('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const now = new Date();
+  const diffInMs = now - date;
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  
+  // Format giờ:phút
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const timeStr = `${hours}:${minutes}`;
+  
+  // Nếu là trong ngày hiện tại, chỉ hiển thị giờ
+  if (diffInHours < 24 && date.getDate() === now.getDate()) {
+    return timeStr;
+  }
+  
+  // Nếu là trong tuần (7 ngày trở lại), hiển thị thứ + giờ
+  if (diffInDays < 7) {
+    const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const dayOfWeek = weekdays[date.getDay()];
+    return `${dayOfWeek} ${timeStr}`;
+  }
+  
+  // Nếu cùng năm, hiển thị ngày/tháng + giờ
+  if (date.getFullYear() === now.getFullYear()) {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${day}/${month} ${timeStr}`;
+  }
+  
+  // Nếu khác năm, hiển thị đầy đủ ngày/tháng/năm + giờ
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year} ${timeStr}`;
 });
 </script> 

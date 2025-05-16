@@ -152,56 +152,68 @@ export const useChatStore = defineStore('chat', {
       this.loading = true;
       this.error = null;
       try {
-        const initialPages = refresh ? 2 : 1;
         const limit = 20;
         let allNewMessages = [];
-        let hasMorePagesAvailable = true;
-        const fetchPromises = [];
-        for (let i = 0; i < initialPages && hasMorePagesAvailable; i++) {
-          const currentPage = refresh ? i + 1 : this.page;
-          fetchPromises.push(
-            chatService.getMessages(userId, {
-            page: currentPage,
-              limit: limit
-            }).then(response => {
-              const pageMessages = response.data.data.results || [];
-              const totalPages = response.data.data.total_pages || 0;
-              console.log(`Đã tải ${pageMessages.length} tin nhắn từ trang ${currentPage}/${totalPages}`);
-              if (currentPage === 1 && pageMessages.length > 0) {
-                const latestMsg = pageMessages[0];
-                if (latestMsg.recipient_fullname) {
-                  const currentUserId = this.userInfo?.user_id;
-                  if (currentUserId) {
-                    const otherUserId = latestMsg.sender === currentUserId 
-                      ? latestMsg.recipient 
-                      : latestMsg.sender;
-                    if (!this.userInfoCache[otherUserId]) {
-                      this.userInfoCache[otherUserId] = {
-                        user_id: otherUserId,
-                        fullname: latestMsg.recipient_fullname,
-                        avatar: null
-                      };
-                      console.log(`Đã lưu thông tin người dùng ${otherUserId} vào cache: ${latestMsg.recipient_fullname}`);
-                    }
-                  }
-                }
-                this.lastMessages[userId] = latestMsg;
-                console.log('Cập nhật tin nhắn cuối cùng:', latestMsg.content);
+        
+        // Trước tiên tải trang 1 để xác định tổng số trang
+        const firstPageResponse = await chatService.getMessages(userId, {
+          page: 1,
+          limit: limit
+        });
+        
+        const firstPageMessages = firstPageResponse.data.data.results || [];
+        const totalPages = firstPageResponse.data.data.total_pages || 0;
+        
+        console.log(`Đã tải ${firstPageMessages.length} tin nhắn từ trang 1/${totalPages}`);
+        allNewMessages = [...firstPageMessages];
+        
+        // Xử lý thông tin người dùng và tin nhắn cuối cùng từ trang 1
+        if (firstPageMessages.length > 0) {
+          const latestMsg = firstPageMessages[0];
+          if (latestMsg.recipient_fullname) {
+            const currentUserId = this.userInfo?.user_id;
+            if (currentUserId) {
+              const otherUserId = latestMsg.sender === currentUserId 
+                ? latestMsg.recipient 
+                : latestMsg.sender;
+              if (!this.userInfoCache[otherUserId]) {
+                this.userInfoCache[otherUserId] = {
+                  user_id: otherUserId,
+                  fullname: latestMsg.recipient_fullname,
+                  avatar: null
+                };
+                console.log(`Đã lưu thông tin người dùng ${otherUserId} vào cache: ${latestMsg.recipient_fullname}`);
               }
-              hasMorePagesAvailable = currentPage < totalPages;
-              if (currentPage === this.page) {
-                this.hasMoreMessages = hasMorePagesAvailable;
-                this.page = currentPage + 1;
-              }
-              return pageMessages;
-            }).catch(error => {
-              console.error(`Lỗi khi tải trang ${currentPage}:`, error);
-              return [];
-            })
-          );
+            }
+          }
+          this.lastMessages[userId] = latestMsg;
+          console.log('Cập nhật tin nhắn cuối cùng:', latestMsg.content);
         }
-        const resultsArray = await Promise.all(fetchPromises);
-        allNewMessages = resultsArray.flat();
+        
+        // Nếu refresh = true và có trang thứ 2, tải thêm trang 2
+        if (refresh && totalPages > 1) {
+          console.log('Tải thêm trang 2 vì refresh = true và có đủ tin nhắn');
+          try {
+            const secondPageResponse = await chatService.getMessages(userId, {
+              page: 2,
+              limit: limit
+            });
+            
+            const secondPageMessages = secondPageResponse.data.data.results || [];
+            console.log(`Đã tải ${secondPageMessages.length} tin nhắn từ trang 2/${totalPages}`);
+            allNewMessages = [...allNewMessages, ...secondPageMessages];
+          } catch (error) {
+            console.error('Lỗi khi tải trang 2:', error);
+          }
+        }
+        
+        // Cập nhật thông tin phân trang
+        this.hasMoreMessages = totalPages > 1;
+        this.page = 2; // Trang tiếp theo sẽ là trang 2 (hoặc 3 nếu đã tải trang 2)
+        if (refresh && totalPages > 1) {
+          this.page = 3; // Đã tải trang 1 và 2, trang tiếp theo sẽ là 3
+        }
+        
         if (!this.messagesByUser[userId]) this.messagesByUser[userId] = [];
         if (refresh) {
           // Thay thế toàn bộ tin nhắn cũ

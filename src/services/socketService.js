@@ -258,7 +258,10 @@ class SocketService {
     const chatStore = useChatStore();
     console.log('Current chatStore state:', {
       activeConversation: chatStore.activeConversation,
-      messagesCount: chatStore.messages.length,
+      hasMessages: chatStore.activeConversation ? 
+        (chatStore.messagesByUser[chatStore.activeConversation] ? 
+          `${chatStore.messagesByUser[chatStore.activeConversation].length} messages` : 'No messages'
+        ) : 'No active conversation',
       userInfo: chatStore.userInfo
     });
     

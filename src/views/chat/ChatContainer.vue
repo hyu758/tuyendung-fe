@@ -185,6 +185,8 @@ const processedConversations = computed(() => {
     const otherUserId = isUserSender ? conv.recipient : conv.sender;
     const otherUserIdNum = typeof otherUserId === 'string' ? parseInt(otherUserId, 10) : otherUserId;
     const userInfo = chatStore.userInfoCache[otherUserIdNum];
+    
+    // Tìm tin nhắn cuối cùng của cuộc trò chuyện này
     let lastMessage = chatStore.lastMessages[otherUserIdNum];
     if (lastMessage) {
       const sender = typeof lastMessage.sender === 'string' ? parseInt(lastMessage.sender, 10) : lastMessage.sender;
@@ -196,10 +198,23 @@ const processedConversations = computed(() => {
         lastMessage = null;
       }
     }
+    
+    // Lấy tên hiển thị từ nhiều nguồn
+    let displayName = '';
+    if (userInfo && userInfo.fullname) {
+      displayName = userInfo.fullname;
+    } else if (lastMessage && lastMessage.recipient_fullname && otherUserIdNum !== currentUserId.value) {
+      displayName = lastMessage.recipient_fullname;
+    } else if (lastMessage && lastMessage.sender_fullname) {
+      displayName = lastMessage.sender_fullname;
+    } else {
+      displayName = `Người dùng #${otherUserIdNum}`;
+    }
+    
     if (!userMap.has(otherUserIdNum)) {
       userMap.set(otherUserIdNum, {
         userId: otherUserIdNum,
-        displayName: userInfo?.fullname || `Người dùng #${otherUserIdNum}`,
+        displayName: displayName,
         avatar: userInfo?.avatar || null,
         isOnline: false,
         lastMessage: lastMessage?.content || '', 
@@ -238,6 +253,15 @@ const activeConversation = computed(() => {
 // Lấy tên hiển thị của người dùng
 const getDisplayName = (conversation) => {
   console.log('Lấy tên hiển thị cho conversation:', conversation);
+  
+  // Kiểm tra cache một lần nữa để đảm bảo có tên mới nhất
+  const userId = conversation.userId;
+  const userInfo = chatStore.userInfoCache[userId];
+  
+  if (userInfo && userInfo.fullname) {
+    return userInfo.fullname;
+  }
+  
   return conversation.displayName || `Người dùng #${conversation.userId}`;
 };
 

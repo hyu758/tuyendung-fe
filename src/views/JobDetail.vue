@@ -838,7 +838,7 @@ const reportForm = reactive({
 })
 
 const handleImageError = (e) => {
-  e.target.src = '/default-company-logo.png'
+  e.target.src = '/assets/logo.png'
 }
 
 const formatSalary = (salary) => {

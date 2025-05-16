@@ -25,13 +25,21 @@
             </div>
           </div>
           
+          <!-- Trạng thái loading -->
+          <div v-if="isLoading" class="h-[calc(100vh-220px)] flex items-center justify-center">
+            <div class="text-center">
+              <i class="fas fa-circle-notch fa-spin text-indigo-500 text-3xl mb-4"></i>
+              <p class="text-gray-600">Đang tải tin nhắn...</p>
+            </div>
+          </div>
+          
           <!-- Main chat container -->
-          <div v-if="!isEmpty" class="h-[calc(100vh-220px)]">
+          <div v-else-if="!isEmpty" class="h-[calc(100vh-220px)]">
             <chat-container />
           </div>
           
           <!-- Empty state (sẽ hiển thị khi không có cuộc trò chuyện nào) -->
-          <div v-if="isEmpty" class="h-[calc(100vh-220px)] flex items-center justify-center">
+          <div v-else class="h-[calc(100vh-220px)] flex items-center justify-center">
             <div class="text-center max-w-md mx-auto p-8 bg-white/60 backdrop-blur-sm rounded-xl shadow-md">
               <div class="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <font-awesome-icon icon="comments" class="text-indigo-500 text-3xl" />
@@ -61,9 +69,10 @@ import { useAuthStore } from '@/stores/auth'
 import socketService from '../../services/socketService';
 
 const chatStore = useChatStore();
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 const unreadCount = computed(() => chatStore.unreadCount);
 const isEmpty = ref(false);
+const isLoading = ref(true);
 
 // Xử lý tin nhắn socket
 const handleSocketMessage = (data) => {
@@ -73,9 +82,43 @@ const handleSocketMessage = (data) => {
   if (data.type === 'new_message' || (data.data && data.data.type === 'new_message')) {
     const messageData = data.data ? data.data : data;
     
+    // Đảm bảo chúng ta có đúng thông tin người dùng từ dữ liệu socket
+    if (messageData.recipient_fullname && messageData.sender_id) {
+      const senderId = parseInt(messageData.sender_id, 10);
+      if (!chatStore.userInfoCache[senderId]) {
+        chatStore.userInfoCache[senderId] = {
+          user_id: senderId,
+          fullname: messageData.recipient_fullname,
+          avatar: null
+        };
+        console.log(`Đã thêm thông tin người dùng ${senderId} vào cache: ${messageData.recipient_fullname}`);
+      }
+    }
+    
     // Cập nhật danh sách tin nhắn
     if (messageData.message) {
       chatStore.addMessage(messageData.message);
+    } else {
+      // Tạo đối tượng tin nhắn từ dữ liệu socket
+      const newMessage = {
+        id: parseInt(messageData.message_id, 10),
+        sender: parseInt(messageData.sender_id, 10),
+        recipient: parseInt(messageData.recipient_id, 10),
+        content: messageData.content,
+        is_read: messageData.is_read || false,
+        created_at: messageData.created_at || new Date().toISOString(),
+        recipient_fullname: messageData.recipient_fullname || null
+      };
+      
+      chatStore.addMessage(newMessage);
+      // Cập nhật lastMessages và sắp xếp cuộc trò chuyện
+      if (newMessage.sender !== authStore.userInfo?.user_id) {
+        chatStore.setLastMessage(newMessage.sender, newMessage);
+        chatStore.sortConversationToTop(newMessage);
+      } else if (newMessage.recipient !== authStore.userInfo?.user_id) {
+        chatStore.setLastMessage(newMessage.recipient, newMessage);
+        chatStore.sortConversationToTop(newMessage);
+      }
     }
     
     // Cập nhật số lượng tin nhắn chưa đọc
@@ -87,6 +130,28 @@ const handleSocketMessage = (data) => {
 watch(() => chatStore.conversations, (conversations) => {
   isEmpty.value = !conversations || conversations.length === 0;
 }, { immediate: true });
+
+// Cập nhật thông tin người dùng trong cuộc trò chuyện
+const updateUserInfoForConversations = async () => {
+  const currentUserId = authStore.userInfo?.user_id;
+  if (!currentUserId || !chatStore.conversations) return;
+  
+  for (const conversation of chatStore.conversations) {
+    const otherUserId = conversation.sender === currentUserId 
+      ? conversation.recipient 
+      : conversation.sender;
+    
+    // Nếu chưa có thông tin người dùng trong cache, tải thông tin
+    if (!chatStore.userInfoCache[otherUserId]) {
+      try {
+        await chatStore.fetchUserInfo(otherUserId);
+        console.log(`Đã tải thông tin cho người dùng ${otherUserId}`);
+      } catch (error) {
+        console.error(`Lỗi khi tải thông tin cho người dùng ${otherUserId}:`, error);
+      }
+    }
+  }
+};
 
 onMounted(async () => {
   // Khởi tạo kết nối socket
@@ -102,8 +167,17 @@ onMounted(async () => {
   
   // Tải dữ liệu ban đầu
   try {
+    isLoading.value = true;
+    
     // Tải danh sách cuộc trò chuyện
     await chatStore.fetchConversations();
+    
+    // Cập nhật thông tin người dùng cho các cuộc trò chuyện
+    await updateUserInfoForConversations();
+    
+    // Tải thông tin tin nhắn mới nhất cho mỗi cuộc trò chuyện
+    await chatStore.fetchLatestMessages();
+    
     // Cập nhật số lượng tin nhắn chưa đọc
     await chatStore.fetchUnreadMessages();
     
@@ -123,6 +197,8 @@ onMounted(async () => {
     });
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu cho MessageCenter:', error);
+  } finally {
+    isLoading.value = false;
   }
 });
 </script> 

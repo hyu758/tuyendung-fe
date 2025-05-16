@@ -117,17 +117,34 @@ const formattedTime = computed(() => {
   const now = new Date();
   const diffInMs = now - date;
   const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
   
   if (diffInMinutes < 1) {
     return 'Vừa xong';
   } else if (diffInMinutes < 60) {
     return `${diffInMinutes} phút`;
-  } else if (diffInMinutes < 24 * 60) {
-    return `${Math.floor(diffInMinutes / 60)}h`;
-  } else if (diffInMinutes < 7 * 24 * 60) {
-    return `${Math.floor(diffInMinutes / (24 * 60))} ngày`;
+  } else if (diffInHours < 24 && date.getDate() === now.getDate()) {
+    // Nếu là trong ngày hiện tại, hiển thị giờ
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } else if (diffInDays < 7) {
+    // Nếu trong vòng 7 ngày, hiển thị thứ
+    const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const dayOfWeek = weekdays[date.getDay()];
+    return dayOfWeek;
+  } else if (date.getFullYear() === now.getFullYear()) {
+    // Nếu cùng năm, hiển thị ngày/tháng
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${day}/${month}`;
   } else {
-    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    // Nếu khác năm, hiển thị ngày/tháng/năm
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(2); // Chỉ lấy 2 số cuối của năm
+    return `${day}/${month}/${year}`;
   }
 });
 
