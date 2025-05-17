@@ -22,7 +22,51 @@
 
             <!-- Form -->
             <form @submit.prevent="handleSubmit" class="space-y-8">
-                            <!-- Logo và ảnh nền -->              <div>                <h2 class="text-lg font-medium text-gray-900 mb-4">Hình ảnh doanh nghiệp</h2>                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">                  <!-- Logo -->                  <BaseFileUpload                    v-model="form.logo"                    label="Logo công ty"                    :error="errors.logo"                    accept="image/*"                    icon="fas fa-building"                    previewContainerClass="h-40"                    helpText="Tải lên logo công ty (JPG, PNG, tối đa 2MB)"                    @error="handleFileError($event, 'logo')"                  />                                    <!-- Ảnh nền -->                  <BaseFileUpload                    v-model="form.background_image"                    label="Ảnh nền doanh nghiệp"                    :error="errors.background_image"                    accept="image/*"                    icon="fas fa-image"                    previewContainerClass="h-40"                    helpText="Tải lên ảnh nền doanh nghiệp (JPG, PNG, tối đa 2MB)"                    @error="handleFileError($event, 'background_image')"                  />                </div>              </div>                            <!-- Giấy phép kinh doanh -->              <div>                <h2 class="text-lg font-medium text-gray-900 mb-4">Giấy phép kinh doanh</h2>                <BaseFileUpload                  v-model="form.business_certificate"                  label="Giấy phép kinh doanh (Ảnh)"                  :error="errors.business_certificate"                  accept="image/*"                  icon="fas fa-file-alt"                  previewType="contain"                  previewContainerClass="h-60"                  helpText="Tải lên ảnh giấy phép kinh doanh (JPG, PNG, tối đa 2MB)"                  @error="handleFileError($event, 'business_certificate')"                />
+              <!-- Logo và ảnh nền -->
+              <div>
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Hình ảnh doanh nghiệp</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <!-- Logo -->
+                  <BaseFileUpload
+                    v-model="form.logo"
+                    label="Logo công ty"
+                    :error="errors.logo"
+                    accept="image/*"
+                    icon="fas fa-building"
+                    previewContainerClass="h-40"
+                    helpText="Tải lên logo công ty (JPG, PNG, tối đa 2MB)"
+                    @error="handleFileError($event, 'logo')"
+                  />
+                  
+                  <!-- Ảnh nền -->
+                  <BaseFileUpload
+                    v-model="form.background_image"
+                    label="Ảnh nền doanh nghiệp"
+                    :error="errors.background_image"
+                    accept="image/*"
+                    icon="fas fa-image"
+                    previewContainerClass="h-40"
+                    helpText="Tải lên ảnh nền doanh nghiệp (JPG, PNG, tối đa 2MB)"
+                    @error="handleFileError($event, 'background_image')"
+                  />
+                </div>
+              </div>
+              
+              <!-- Giấy phép kinh doanh -->
+              <div>
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Giấy phép kinh doanh</h2>
+                <BaseFileUpload
+                  v-model="form.business_certificate"
+                  label="Giấy phép kinh doanh (Ảnh)"
+                  :error="errors.business_certificate"
+                  accept="image/*"
+                  icon="fas fa-file-alt"
+                  previewType="contain"
+                  previewContainerClass="h-60"
+                  helpText="Tải lên ảnh giấy phép kinh doanh (JPG, PNG, tối đa 2MB)"
+                  @error="handleFileError($event, 'business_certificate')"
+                />
+              </div>
 
               <!-- Thông tin cơ bản -->
               <div>

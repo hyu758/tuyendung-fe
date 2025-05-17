@@ -21,9 +21,21 @@
       <div class="px-4 py-2 border-b border-gray-100 sticky top-0 bg-white z-10">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-medium text-gray-900">Thông báo</h3>
-          <span v-if="notificationStore.hasUnread" class="text-xs font-medium text-blue-600">
-            {{ notificationStore.unreadCount }} chưa đọc
-          </span>
+          <div class="flex items-center">
+            <span v-if="notificationStore.hasUnread" class="text-xs font-medium text-blue-600 mr-2">
+              {{ notificationStore.unreadCount }} chưa đọc
+            </span>
+            <button 
+              v-if="notificationStore.hasUnread" 
+              @click="markAllAsRead"
+              class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+              :disabled="markingAll"
+            >
+              <i class="fas fa-check-double mr-1"></i>
+              <span v-if="markingAll">Đang xử lý...</span>
+              <span v-else>Đánh dấu đã đọc</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -63,10 +75,13 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useNotificationStore } from '../../stores/notification';
 import NotificationItem from './NotificationItem.vue';
 import socketService from '../../services/socketService';
+import { useToast } from '../../composables/useToast';
 
 const dropdown = ref(null);
 const isOpen = ref(false);
 const notificationStore = useNotificationStore();
+const { addToast } = useToast();
+const markingAll = ref(false);
 
 // Toggle dropdown visibility
 const toggleDropdown = async () => {
@@ -84,6 +99,34 @@ const toggleDropdown = async () => {
 // Load more notifications
 const loadMoreNotifications = async () => {
   await notificationStore.fetchNotifications();
+};
+
+// Đánh dấu tất cả thông báo đã đọc
+const markAllAsRead = async () => {
+  try {
+    markingAll.value = true;
+    const result = await notificationStore.markAllAsRead();
+    
+    if (result.success) {
+      addToast({
+        type: 'success',
+        message: 'Đã đánh dấu tất cả thông báo là đã đọc'
+      });
+    } else {
+      addToast({
+        type: 'error',
+        message: result.error || 'Không thể đánh dấu thông báo đã đọc'
+      });
+    }
+  } catch (error) {
+    console.error('Error marking all as read:', error);
+    addToast({
+      type: 'error',
+      message: 'Đã xảy ra lỗi khi đánh dấu thông báo đã đọc'
+    });
+  } finally {
+    markingAll.value = false;
+  }
 };
 
 // Handle click outside to close dropdown

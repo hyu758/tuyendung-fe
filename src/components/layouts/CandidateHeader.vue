@@ -58,6 +58,16 @@
                   <span v-if="notificationStore.hasUnread" class="text-xs font-medium text-green-600 mr-2">
                     {{ notificationStore.unreadCount }} mới
                   </span>
+                  <button 
+                    v-if="notificationStore.hasUnread" 
+                    @click="markAllAsRead"
+                    class="text-xs text-blue-600 hover:text-blue-800 font-medium mr-2"
+                    :disabled="markingAll"
+                  >
+                    <i class="fas fa-check-double mr-1"></i>
+                    <span v-if="markingAll">...</span>
+                    <span v-else>Đã đọc</span>
+                  </button>
                   <button @click="showMobileNotification = false" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times"></i>
                   </button>
@@ -107,10 +117,6 @@
               <div v-else class="py-6 text-center">
                 <i class="fas fa-bell-slash text-gray-300 text-2xl mb-2"></i>
                 <p class="text-sm text-gray-500">Bạn chưa có thông báo nào</p>
-              </div>
-              
-              <div class="px-4 py-3 border-t border-gray-100 text-center">
-                <p class="text-xs text-gray-500">Đánh dấu tất cả là đã đọc</p>
               </div>
             </div>
           </div>
@@ -414,8 +420,8 @@
                 </div>
               </div>
               
-              <div v-else class="py-4 text-center">
-                <i class="fas fa-bell-slash text-gray-300 text-xl mb-2"></i>
+              <div v-else class="py-6 text-center">
+                <i class="fas fa-bell-slash text-gray-300 text-2xl mb-2"></i>
                 <p class="text-sm text-gray-500">Bạn chưa có thông báo nào</p>
               </div>
             </div>
@@ -445,6 +451,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useNotificationStore } from '../../stores/notification'
 import { usePremiumStore } from '../../stores/premium'
+import { useToast } from '../../composables/useToast'
 import NotificationDropdown from '../common/NotificationDropdown.vue'
 import ChatDropdown from '../common/ChatDropdown.vue'
 
@@ -452,11 +459,13 @@ const router = useRouter()
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
 const premiumStore = usePremiumStore()
+const { addToast } = useToast()
 const showDropdown = ref(false)
 const showMobileMenu = ref(false)
 const profileDropdown = ref(null)
 const showMobileNotification = ref(false)
 const mobileNotificationRef = ref(null)
+const markingAll = ref(false)
 
 // Sử dụng thông tin từ authStore
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -598,6 +607,34 @@ async function checkPremiumExpiry() {
     }
   }
 }
+
+// Đánh dấu tất cả thông báo đã đọc
+const markAllAsRead = async () => {
+  try {
+    markingAll.value = true;
+    const result = await notificationStore.markAllAsRead();
+    
+    if (result.success) {
+      addToast({
+        type: 'success',
+        message: 'Đã đánh dấu tất cả thông báo là đã đọc'
+      });
+    } else {
+      addToast({
+        type: 'error',
+        message: result.error || 'Không thể đánh dấu thông báo đã đọc'
+      });
+    }
+  } catch (error) {
+    console.error('Error marking all as read:', error);
+    addToast({
+      type: 'error',
+      message: 'Đã xảy ra lỗi khi đánh dấu thông báo đã đọc'
+    });
+  } finally {
+    markingAll.value = false;
+  }
+};
 </script>
 
 <style scoped>
