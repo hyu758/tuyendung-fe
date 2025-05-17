@@ -40,23 +40,23 @@
       </div>
       
       <!-- Premium Packages -->
-      <div v-if="!premiumStore.loading" class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div v-if="!premiumStore.loading" class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         <div v-for="pkg in premiumStore.packages" :key="pkg.id" 
-             class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow">
+             class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow flex flex-col">
           <div class="bg-gradient-to-r from-blue-500 to-purple-600 py-6 px-6">
             <h3 class="text-2xl font-bold text-white">{{ pkg.name }}</h3>
             <p class="text-white text-opacity-90 mt-1">{{ pkg.description }}</p>
           </div>
           
-          <div class="p-6">
+          <div class="p-6 flex flex-col flex-grow">
             <div class="flex items-baseline mb-6">
               <span class="text-3xl font-bold text-gray-900">{{ formatPrice(pkg.price) }}</span>
               <span class="text-gray-500 ml-1">VND</span>
             </div>
             
-            <ul class="mb-8 space-y-4">
+            <ul class="mb-8 space-y-4 flex-grow">
               <li v-for="(feature, index) in pkg.features" :key="index" class="flex items-start">
-                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
                 <span>{{ feature }}</span>
@@ -66,7 +66,7 @@
             <button 
               @click="handlePurchase(pkg.id)"
               :disabled="premiumStore.isPremium || isBuying"
-              class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed h-12"
             >
               <span v-if="isBuying && selectedPackageId === pkg.id">
                 <span class="spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
