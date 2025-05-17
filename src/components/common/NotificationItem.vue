@@ -130,7 +130,7 @@ const handleClick = async () => {
       }
       break;
     case 'cv_viewed':
-      router.push(`/job-detail?cv_id=${props.notification.object_id}`);
+      router.push(`/my-applications?cv_id=${props.notification.object_id}`);
       break;
     case 'system':
       // Thông báo hệ thống có thể không có link

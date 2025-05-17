@@ -182,7 +182,7 @@ export const useNotificationStore = defineStore('notification', {
           object_id: cvId,
           title: 'CV của bạn đã được xem',
           message: 'Nhà tuyển dụng đã xem CV của bạn',
-          link: link || `/job-detail?cv_id=${cvId}`
+          link: link || `/my-applications?cv_id=${cvId}`
         })
 
         return { success: true, data: response.data }
