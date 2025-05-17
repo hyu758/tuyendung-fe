@@ -110,7 +110,7 @@ const handleClick = async () => {
     await notificationStore.markAsRead(props.notification.id);
   }
   
-  // Xử lý chuyển hướng dựa vào loại thông báo nếu không có link
+  // Xử lý chuyển hướng dựa vào loại thông báo
   switch (props.notification.notification_type) {
     case 'cv_status_changed':
       router.push(`/my-applications?cv_id=${props.notification.object_id}`);
@@ -122,10 +122,11 @@ const handleClick = async () => {
       router.push(`/my-applications?cv_id=${props.notification.object_id}`);
       break;
     case 'message_received':
+      // Sửa đường dẫn để đảm bảo chuyển hướng đúng
       if (useAuthStore().isCandidate) {
-        router.push(`candidate/messages?conversation_id=${props.notification.object_id}`);
+        router.push(`/candidate/messages?user=${props.notification.object_id}`);
       } else {
-        router.push(`employer/messages?conversation_id=${props.notification.object_id}`);
+        router.push(`/employer/messages?user=${props.notification.object_id}`);
       }
       break;
     case 'cv_viewed':

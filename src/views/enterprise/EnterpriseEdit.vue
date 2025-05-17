@@ -22,123 +22,7 @@
 
             <!-- Form -->
             <form @submit.prevent="handleSubmit" class="space-y-8">
-              <!-- Logo và ảnh nền -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div v-memo="[logoPreview, form.logo]">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Logo công ty</label>
-                  <div class="flex items-center">
-                    <div class="relative w-32 h-32">
-                      <img
-                        v-if="logoPreview || form.logo"
-                        :src="logoPreview || form.logo"
-                        class="w-full h-full object-cover rounded-lg border-2 border-gray-200"
-                        alt="Logo preview"
-                      />
-                      <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
-                        <i class="fas fa-image text-3xl text-gray-400"></i>
-                      </div>
-                      <button
-                        v-if="logoPreview || form.logo"
-                        type="button"
-                        class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none"
-                        @click="removeLogo"
-                      >
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                    <div class="ml-5">
-                      <label class="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <i class="fas fa-upload mr-2"></i>
-                        Tải logo lên
-                        <input
-                          type="file"
-                          class="hidden"
-                          accept="image/*"
-                          @change="handleLogoUpload"
-                        >
-                      </label>
-                      <p class="mt-2 text-xs text-gray-500">PNG, JPG, JPEG (Max. 2MB)</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-memo="[backgroundPreview, form.background_image]">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh nền</label>
-                  <div class="flex items-center">
-                    <div class="relative w-48 h-32">
-                      <img
-                        v-if="backgroundPreview || form.background_image"
-                        :src="backgroundPreview || form.background_image"
-                        class="w-full h-full object-cover rounded-lg border-2 border-gray-200"
-                        alt="Background preview"
-                      />
-                      <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
-                        <i class="fas fa-image text-3xl text-gray-400"></i>
-                      </div>
-                      <button
-                        v-if="backgroundPreview || form.background_image"
-                        type="button"
-                        class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none"
-                        @click="removeBackground"
-                      >
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                    <div class="ml-5">
-                      <label class="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <i class="fas fa-upload mr-2"></i>
-                        Tải ảnh nền
-                        <input
-                          type="file"
-                          class="hidden"
-                          accept="image/*"
-                          @change="handleBackgroundUpload"
-                        >
-                      </label>
-                      <p class="mt-2 text-xs text-gray-500">PNG, JPG, JPEG (Max. 2MB)</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-memo="[certificatePreview, form.business_certificate, errors.business_certificate]">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Giấy phép kinh doanh <span class="text-red-500">*</span></label>
-                  <div class="flex items-center">
-                    <div class="relative w-48 h-32">
-                      <img
-                        v-if="certificatePreview || form.business_certificate"
-                        :src="certificatePreview || form.business_certificate"
-                        class="w-full h-full object-cover rounded-lg border-2 border-gray-200"
-                        alt="Business certificate preview"
-                      />
-                      <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
-                        <i class="fas fa-file-alt text-3xl text-gray-400"></i>
-                      </div>
-                      <button
-                        v-if="certificatePreview || form.business_certificate"
-                        type="button"
-                        class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none"
-                        @click="removeCertificate"
-                      >
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
-                    <div class="ml-5">
-                      <label class="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <i class="fas fa-upload mr-2"></i>
-                        Tải giấy phép
-                        <input
-                          type="file"
-                          class="hidden"
-                          accept="image/*"
-                          @change="handleCertificateUpload"
-                        >
-                      </label>
-                      <p class="mt-2 text-xs text-gray-500">PNG, JPG, JPEG (Max. 2MB)</p>
-                    </div>
-                  </div>
-                  <p v-if="errors.business_certificate" class="mt-1 text-sm text-red-500">{{ errors.business_certificate }}</p>
-                </div>
-              </div>
+                            <!-- Logo và ảnh nền -->              <div>                <h2 class="text-lg font-medium text-gray-900 mb-4">Hình ảnh doanh nghiệp</h2>                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">                  <!-- Logo -->                  <BaseFileUpload                    v-model="form.logo"                    label="Logo công ty"                    :error="errors.logo"                    accept="image/*"                    icon="fas fa-building"                    previewContainerClass="h-40"                    helpText="Tải lên logo công ty (JPG, PNG, tối đa 2MB)"                    @error="handleFileError($event, 'logo')"                  />                                    <!-- Ảnh nền -->                  <BaseFileUpload                    v-model="form.background_image"                    label="Ảnh nền doanh nghiệp"                    :error="errors.background_image"                    accept="image/*"                    icon="fas fa-image"                    previewContainerClass="h-40"                    helpText="Tải lên ảnh nền doanh nghiệp (JPG, PNG, tối đa 2MB)"                    @error="handleFileError($event, 'background_image')"                  />                </div>              </div>                            <!-- Giấy phép kinh doanh -->              <div>                <h2 class="text-lg font-medium text-gray-900 mb-4">Giấy phép kinh doanh</h2>                <BaseFileUpload                  v-model="form.business_certificate"                  label="Giấy phép kinh doanh (Ảnh)"                  :error="errors.business_certificate"                  accept="image/*"                  icon="fas fa-file-alt"                  previewType="contain"                  previewContainerClass="h-60"                  helpText="Tải lên ảnh giấy phép kinh doanh (JPG, PNG, tối đa 2MB)"                  @error="handleFileError($event, 'business_certificate')"                />
 
               <!-- Thông tin cơ bản -->
               <div>
@@ -330,6 +214,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEnterpriseStore } from '../../stores/enterprise'
+import BaseFileUpload from '../../components/common/BaseFileUpload.vue'
 
 const router = useRouter()
 const enterpriseStore = useEnterpriseStore()
@@ -507,4 +392,13 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// Hàm xử lý lỗi từ component BaseFileUpload
+const handleFileError = (errorMessage, fieldName) => {
+  if (errorMessage) {
+    errors.value[fieldName] = errorMessage
+  } else {
+    errors.value[fieldName] = ''
+  }
+}
 </script> 

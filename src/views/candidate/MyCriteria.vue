@@ -285,7 +285,24 @@ const fetchCriteria = async () => {
       criteria.value = null
     } else {
       error.value = true
-      errorMessage.value = 'Không thể lấy thông tin tiêu chí. Vui lòng thử lại sau.'
+      
+      // Thêm xử lý cho lỗi network và lỗi server
+      if (!err.response) {
+        errorMessage.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.'
+      } else if (err.response.status >= 500) {
+        errorMessage.value = 'Lỗi máy chủ. Vui lòng thử lại sau.'
+      } else {
+        errorMessage.value = 'Không thể lấy thông tin tiêu chí. Vui lòng thử lại sau.'
+      }
+      
+      // Chỉ thử lại một lần để tránh vòng lặp vô hạn
+      if (!window.hasRetriedFetch) {
+        window.hasRetriedFetch = true;
+        setTimeout(() => {
+          window.hasRetriedFetch = false;
+          fetchCriteria();
+        }, 3000);
+      }
     }
   } finally {
     loading.value = false

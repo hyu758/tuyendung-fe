@@ -48,21 +48,23 @@
     
     <!-- Phần hiển thị tin nhắn -->
     <div class="w-2/3 flex flex-col">
-      <template v-if="chatStore.activeConversation">
+              <template v-if="chatStore.activeConversation">
         <!-- Header cuộc trò chuyện -->
         <div class="py-3 px-4 border-b border-gray-100 flex items-center justify-between bg-white shadow-sm">
           <div class="flex items-center">
-            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden mr-3">
-              <template v-if="chatStore.activeConversation?.avatar">
-                <img :src="chatStore.activeConversation.avatar" alt="Avatar" class="w-full h-full object-cover" />
+            <div class="w-10 h-10 bg-blue-100 rounded-md flex items-center justify-center overflow-hidden mr-3">
+              <template v-if="activeConversation?.avatar && isValidImageUrl(activeConversation?.avatar)">
+                <img :src="activeConversation.avatar" alt="Avatar" class="w-full h-full object-cover" @error="handleAvatarError" />
               </template>
               <template v-else>
-                <i class="fas fa-user text-blue-500"></i>
+                <div class="w-full h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-md flex items-center justify-center text-white font-bold">
+                  {{ getActiveUserInitials() }}
+                </div>
               </template>
             </div>
             <div>
-              <h3 class="font-medium text-gray-800">{{ chatStore.activeConversation?.displayName }}</h3>
-              <p v-if="chatStore.activeConversation?.isOnline" class="text-xs text-green-500">
+              <h3 class="font-medium text-gray-800">{{ getActiveUserName() }}</h3>
+              <p v-if="activeConversation?.isOnline" class="text-xs text-green-500">
                 <i class="fas fa-circle mr-1 text-[8px]"></i> Đang hoạt động
               </p>
             </div>
@@ -142,6 +144,7 @@
 import { ref, computed, onMounted, watch, nextTick, inject, onUnmounted } from 'vue';
 import { useChatStore } from '../../stores/chat';
 import { useAuthStore } from '../../stores/auth';
+import { useNotificationStore } from '../../stores/notification';
 import { useRoute } from 'vue-router';
 import ChatMessage from '../../components/common/ChatMessage.vue';
 import ChatConversation from '../../components/common/ChatConversation.vue';
@@ -150,6 +153,7 @@ import socketService from '../../services/socketService';
 
 const chatStore = useChatStore();
 const authStore = useAuthStore();
+const notificationStore = useNotificationStore();
 const route = useRoute();
 const searchQuery = ref('');
 const activeConversationId = ref(null);
@@ -259,6 +263,10 @@ const getDisplayName = (conversation) => {
   const userInfo = chatStore.userInfoCache[userId];
   
   if (userInfo && userInfo.fullname) {
+    // Cập nhật avatar nếu có
+    if (userInfo.avatar && conversation.avatar === null) {
+      conversation.avatar = userInfo.avatar;
+    }
     return userInfo.fullname;
   }
   
@@ -484,6 +492,19 @@ watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
     // Nếu có tin nhắn mới và người dùng đang ở gần cuối hoặc tin nhắn là từ người dùng hiện tại, cuộn xuống
     const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
     if (latestMessage && messagesContainer.value) {
+      // Đảm bảo thông tin người dùng được cập nhật khi có tin nhắn mới
+      if (latestMessage.sender !== currentUserId.value) {
+        // Nếu tin nhắn từ người khác
+        const userInfo = chatStore.userInfoCache[latestMessage.sender];
+        if (userInfo && userInfo.avatar && !chatStore.activeConversation?.avatar) {
+          // Cập nhật avatar nếu chưa có
+          if (chatStore.activeConversation) {
+            console.log('Cập nhật avatar cho người dùng đang trò chuyện:', latestMessage.sender);
+            chatStore.activeConversation.avatar = userInfo.avatar;
+          }
+        }
+      }
+      
       const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 300;
       const isFromCurrentUser = latestMessage.sender === currentUserId.value;
@@ -538,7 +559,18 @@ const handleSocketMessage = (data) => {
     // Thêm tin nhắn mới vào store
     chatStore.addMessage(message);
     
-    // Nếu cuộc trò chuyện đang mở, đánh dấu là đã đọc
+    // Nếu tin nhắn đến từ người khác và cuộc trò chuyện không phải đang mở, tạo thông báo
+    const currentUserId = authStore.userInfo?.user_id;
+    if (message.sender !== currentUserId && chatStore.activeConversation !== message.sender) {
+      // Lấy thông tin người gửi để hiển thị tên
+      const senderInfo = chatStore.userInfoCache[message.sender];
+      const senderName = senderInfo?.fullname || `Người dùng #${message.sender}`;
+      
+      // Tạo thông báo mới
+      notificationStore.createMessageNotification(message.sender, message.content, senderName);
+    }
+    
+    // Tiếp tục xử lý tin nhắn
     if (chatStore.activeConversation === message.sender) {
       chatStore.markMessageAsRead(message.id);
       
@@ -570,6 +602,96 @@ const handleSocketMessage = (data) => {
       }
     }, 500);
   }
+};
+
+const handleAvatarError = (e) => {
+  console.warn('Lỗi khi tải avatar trong header:', e);
+  // Xóa thuộc tính src để tránh tiếp tục gây lỗi
+  e.target.src = '';
+  
+  // Lấy tên và chữ cái đầu của người dùng
+  const name = getActiveUserName();
+  const initials = getActiveUserInitials();
+  
+  // Tìm phần tử cha gần nhất
+  const parent = e.target.closest('.overflow-hidden');
+  if (parent) {
+    // Tạo div hiển thị initials
+    const initialsDiv = document.createElement('div');
+    initialsDiv.className = 'w-full h-full bg-gradient-to-r from-blue-400 to-blue-500 flex items-center justify-center text-white font-bold';
+    initialsDiv.textContent = initials;
+    
+    // Thêm vào parent
+    parent.appendChild(initialsDiv);
+    
+    // Ẩn thẻ img
+    e.target.style.display = 'none';
+    
+    console.log(`Đã thay thế avatar lỗi với chữ cái đầu: ${initials} (${name})`);
+  }
+  
+  // Đánh dấu avatar không hợp lệ
+  if (activeConversation.value) {
+    activeConversation.value.avatar = null;
+  }
+};
+
+const isValidImageUrl = (url) => {
+  if (!url) return false;
+  
+  // Kiểm tra URL có hợp lệ không
+  try {
+    // Kiểm tra nếu url là đường dẫn tương đối và không tồn tại
+    if (url.startsWith('src/assets/') || url.startsWith('/src/assets/')) {
+      console.error('Đường dẫn avatar assets không tồn tại:', url);
+      return false;
+    }
+    
+    // Kiểm tra xem URL có hợp lệ không
+    new URL(url);
+    
+    // Kiểm tra định dạng url có phải là một URL của hình ảnh
+    if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i) || 
+        url.includes('cloudinary.com') || 
+        url.includes('res.cloudinary.com')) {
+      return true;
+    }
+    
+    // Kiểm tra các trường hợp URL image API phổ biến
+    return true;
+  } catch (error) {
+    console.error('URL avatar không hợp lệ:', url);
+    return false;
+  }
+};
+
+// Lấy tên người dùng đang chat
+const getActiveUserName = () => {
+  if (!chatStore.activeConversation) return 'Chọn một cuộc trò chuyện';
+  
+  const userId = chatStore.activeConversation;
+  // Tìm trong cache người dùng
+  const userInfo = chatStore.userInfoCache[userId];
+  if (userInfo && userInfo.fullname) {
+    return userInfo.fullname;
+  }
+  
+  // Tìm trong danh sách cuộc trò chuyện đã xử lý
+  const conversation = processedConversations.value.find(conv => conv.userId === userId);
+  if (conversation && conversation.displayName) {
+    return conversation.displayName;
+  }
+  
+  return `Người dùng #${userId}`;
+};
+
+// Lấy các chữ cái đầu của tên người dùng để hiển thị khi không có avatar
+const getActiveUserInitials = () => {
+  const name = getActiveUserName();
+  if (!name || name.startsWith('Người dùng #')) return '?';
+  
+  // Chỉ lấy chữ cái đầu tiên của tên
+  return name.trim().charAt(0).toUpperCase();
 };
 
 onMounted(async () => {

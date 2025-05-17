@@ -212,9 +212,19 @@ export const usePostStore = defineStore('post', {
             page_size: pageSize
           }
         })
-        return {
-          success: true,
-          data: response.data
+        
+        console.log('Recommended API response:', response.data);
+        
+        if (response.data && response.data.status === 200) {
+          return {
+            success: true,
+            data: response.data.data
+          };
+        } else {
+          return {
+            success: true,
+            data: response.data
+          };
         }
       } catch (error) {
         console.error('Error fetching recommended posts:', error)

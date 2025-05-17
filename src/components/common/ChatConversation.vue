@@ -9,10 +9,10 @@
     @click="handleSelect"
   >
     <div class="flex-shrink-0 mr-3 relative">
-      <div v-if="avatar" class="w-12 h-12 rounded-full overflow-hidden shadow-sm">
-        <img :src="avatar" alt="Avatar" class="w-full h-full object-cover" />
+      <div v-if="avatar && isValidImageUrl(avatar)" class="w-12 h-12 rounded-md overflow-hidden shadow-sm">
+        <img :src="avatar" alt="Avatar" class="w-full h-full object-cover" @error="handleImageError" />
       </div>
-      <div v-else class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+      <div v-else class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-md flex items-center justify-center text-white font-bold shadow-sm">
         {{ getInitials(displayName) }}
       </div>
       <div v-if="isOnline" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -26,7 +26,7 @@
             unreadCount > 0 ? 'text-gray-900 font-semibold' : 'text-gray-700'
           ]"
         >
-          {{ displayName }}
+          {{ displayName || `Người dùng #${userId}` }}
         </h3>
         <span 
           class="text-xs text-gray-500"
@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { computed, inject } from 'vue';
+import { computed, inject, ref } from 'vue';
 
 const props = defineProps({
   displayName: {
@@ -105,9 +105,71 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['select']);
+const avatarLoadError = ref(false);
 
 // Tiêm phương thức mở chat từ ứng dụng (nếu có)
 const openChat = inject('openChat', null);
+
+// Kiểm tra URL hình ảnh có hợp lệ không
+const isValidImageUrl = (url) => {
+  if (!url) return false;
+  
+  // Kiểm tra xem url có đúng định dạng không
+  try {
+    // Bỏ qua các đường dẫn tương đối đến assets
+    if (url.startsWith('src/assets/') || url.startsWith('/src/assets/')) {
+      console.error('Đường dẫn avatar assets không tồn tại:', url);
+      return false;
+    }
+    
+    // Thử parse URL
+    const parsedUrl = new URL(url);
+    
+    // Kiểm tra xem đuôi file có phải là ảnh không
+    if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i) ||
+        url.includes('cloudinary.com') ||
+        url.includes('res.cloudinary.com')) {
+      return true;
+    }
+    
+    // Các domain image API phổ biến
+    return true;
+  } catch (e) {
+    console.error('URL avatar không hợp lệ:', url, e);
+    return false;
+  }
+};
+
+// Xử lý lỗi khi tải hình ảnh
+const handleImageError = (e) => {
+  console.warn('Lỗi khi tải avatar:', props.avatar);
+  avatarLoadError.value = true;
+  
+  // Gỡ bỏ thuộc tính src để tránh lỗi liên tục
+  e.target.src = '';
+  
+  // Thay đổi DOM trực tiếp để ẩn ảnh lỗi và hiển thị chữ cái đầu
+  try {
+    // Tìm phần tử cha gần nhất với class 'rounded-md'
+    const parent = e.target.closest('.rounded-md');
+    if (parent) {
+      // Ẩn thẻ img
+      e.target.style.display = 'none';
+      
+      // Tạo div hiển thị initials
+      const initialsDiv = document.createElement('div');
+      initialsDiv.className = 'w-full h-full bg-gradient-to-r from-blue-400 to-blue-500 flex items-center justify-center text-white font-bold';
+      initialsDiv.textContent = getInitials(props.displayName);
+      
+      // Thêm vào parent
+      parent.appendChild(initialsDiv);
+      
+      console.log(`Đã thay thế avatar lỗi cho ${props.displayName} với initials: ${getInitials(props.displayName)}`);
+    }
+  } catch (error) {
+    console.error('Lỗi khi xử lý DOM sau lỗi avatar:', error);
+  }
+};
 
 // Format thời gian
 const formattedTime = computed(() => {
@@ -152,13 +214,8 @@ const formattedTime = computed(() => {
 const getInitials = (name) => {
   if (!name) return '?';
   
-  // Lấy chữ cái đầu tiên của mỗi từ trong tên đầy đủ (tối đa 2 ký tự)
-  return name
-    .split(' ')
-    .filter(word => word.length > 0)
-    .map(word => word.charAt(0).toUpperCase())
-    .slice(0, 2)
-    .join('');
+  // Lấy chữ cái đầu tiên của tên
+  return name.trim().charAt(0).toUpperCase();
 };
 
 // Xử lý khi chọn cuộc trò chuyện

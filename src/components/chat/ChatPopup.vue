@@ -11,10 +11,10 @@
     >
       <div class="flex items-center">
         <div class="flex-shrink-0 mr-2 relative">
-          <div v-if="conversation.avatar" class="w-8 h-8 rounded-full overflow-hidden border border-white">
-            <img :src="conversation.avatar" alt="Avatar" class="w-full h-full object-cover" />
+          <div v-if="conversation.avatar" class="w-8 h-8 rounded-md overflow-hidden border border-white">
+            <img :src="conversation.avatar" alt="Avatar" class="w-full h-full object-cover" @error="handleAvatarError" />
           </div>
-          <div v-else class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+          <div v-else class="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">
             {{ getInitials(conversation.displayName) }}
           </div>
           <div v-if="conversation.isOnline" class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-white"></div>
@@ -92,10 +92,10 @@
           
           <div class="flex-grow flex items-end relative">
             <textarea
-              v-model="newMessage"
+            v-model="newMessage" 
               ref="messageInput" 
               rows="1"
-              placeholder="Nhập tin nhắn..." 
+            placeholder="Nhập tin nhắn..." 
               class="w-full bg-transparent py-2 px-2 focus:outline-none text-sm resize-none overflow-hidden min-h-[36px] max-h-24"
               @keydown.enter.exact.prevent="sendMessage"
               @keydown.shift.enter="() => {}"
@@ -106,14 +106,14 @@
           </div>
           
           <div class="flex-shrink-0 px-2">
-            <button 
-              @click="sendMessage" 
+          <button 
+            @click="sendMessage" 
               class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors"
-              :disabled="!newMessage.trim()"
+            :disabled="!newMessage.trim()"
               :class="{ 'opacity-50 cursor-not-allowed': !newMessage.trim() }"
-            >
-              <i class="fas fa-paper-plane text-sm"></i>
-            </button>
+          >
+            <i class="fas fa-paper-plane text-sm"></i>
+          </button>
           </div>
         </div>
       </div>
@@ -125,6 +125,7 @@
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useChatStore } from '../../stores/chat';
 import { useAuthStore } from '../../stores/auth';
+import { useNotificationStore } from '../../stores/notification';
 import socketService from '../../services/socketService';
 
 const props = defineProps({
@@ -165,6 +166,7 @@ const emit = defineEmits(['close']);
 
 const chatStore = useChatStore();
 const authStore = useAuthStore();
+const notificationStore = useNotificationStore();
 const currentUserId = computed(() => authStore.userInfo?.user_id);
 
 const isMinimized = ref(false);
@@ -224,6 +226,37 @@ const close = () => {
 const getInitials = (name) => {
   if (!name) return '?';
   return name.charAt(0).toUpperCase();
+};
+
+// Thêm hàm xử lý lỗi khi tải avatar
+const handleAvatarError = (e) => {
+  console.warn('Lỗi khi tải avatar trong Popup:', e);
+  
+  // Xóa nguồn ảnh để tránh liên tục tải lỗi
+  e.target.src = '';
+  
+  // Lấy chữ cái đầu
+  const initials = getInitials(props.conversation.displayName);
+  
+  // Tìm phần tử cha gần nhất
+  const parent = e.target.closest('.rounded-md');
+  if (parent) {
+    // Ẩn thẻ img
+    e.target.style.display = 'none';
+    
+    // Tạo phần tử mới để hiển thị initials
+    const initialsDiv = document.createElement('div');
+    initialsDiv.className = 'w-full h-full bg-blue-600 flex items-center justify-center text-white font-bold';
+    initialsDiv.textContent = initials;
+    
+    // Thêm vào parent
+    parent.appendChild(initialsDiv);
+    
+    console.log(`Đã thay thế avatar lỗi với chữ cái đầu: ${initials}`);
+  }
+  
+  // Đánh dấu avatar không hợp lệ
+  props.conversation.avatar = null;
 };
 
 // Format thời gian tin nhắn
@@ -429,6 +462,13 @@ const handleNewMessage = (data) => {
       console.log('[ChatPopup] Đánh dấu tin nhắn là đã đọc:', message.id);
       chatStore.markMessageAsRead(message.id);
     }
+  } else if (message.sender !== myUserId && message.recipient === myUserId && !isMinimized.value) {
+    // Nếu là tin nhắn mới của người khác gửi cho tôi và không phải từ cuộc trò chuyện hiện tại
+    // Tạo thông báo mới cho tin nhắn
+    const senderInfo = chatStore.userInfoCache[message.sender];
+    const senderName = senderInfo?.fullname || `Người dùng #${message.sender}`;
+    
+    notificationStore.createMessageNotification(message.sender, message.content, senderName);
   }
 };
 

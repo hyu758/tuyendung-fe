@@ -338,6 +338,7 @@ const locations = ref([])
 const isFilterVisible = ref(false)
 const hasCriteria = ref(false)
 const isCriteriaLoading = ref(false)
+const isCheckingCriteria = ref(false)
 
 // Truy vấn tìm kiếm
 const searchQuery = reactive({
@@ -426,30 +427,31 @@ const formatDate = (date) => {
   }
 }
 
-const fetchUserCriteria = async () => {
-  if (!authStore.isAuthenticated) return;
-  
-  isCriteriaLoading.value = true;
-  
-  try {
-    const response = await axios.get('/api/criteria/');
-    
-    if (response.data.status === 200) {
-      hasCriteria.value = true;
-      console.log('User has criteria:', hasCriteria.value);
+const checkUserCriteria = async () => {
+  // Chỉ kiểm tra khi đã đăng nhập
+  if (authStore.isAuthenticated) {
+    isCheckingCriteria.value = true;
+    try {
+      const response = await axios.get('/api/criteria/');
+      if (response.data.status === 200) {
+        hasCriteria.value = true;
+        console.log('User has criteria:', hasCriteria.value);
+      }
+    } catch (error) {
+      // Không hiển thị lỗi nếu API trả về 404 (chưa có tiêu chí)
+      if (error.response?.status !== 404) {
+        console.error('Lỗi khi lấy tiêu chí tìm việc:', error);
+      }
+      console.log('User does not have criteria');
       
-      // Không còn tự động điền thông tin từ criteria vào searchQuery nữa
-      // Chỉ đánh dấu là người dùng có criteria
+      // Thêm xử lý để tránh gọi liên tục khi có lỗi 
+      if (!error.response || error.response.status >= 500) {
+        // Đặt timeout để tránh vòng lặp vô hạn
+        console.log('Server error when checking criteria, will not retry');
+      }
+    } finally {
+      isCheckingCriteria.value = false;
     }
-  } catch (err) {
-    // Nếu không có tiêu chí, đó không phải là lỗi
-    if (err.response?.status !== 404) {
-      console.error('Lỗi khi lấy tiêu chí tìm việc:', err);
-    }
-    console.log('User does not have criteria or error occurred');
-  } finally {
-    isCriteriaLoading.value = false;
-    console.log('Criteria loading completed, isCriteriaLoading:', isCriteriaLoading.value);
   }
 };
 
@@ -458,7 +460,7 @@ onMounted(async () => {
   initialLoading.value = true
   
   // Trước tiên, thử lấy tiêu chí từ người dùng
-  await fetchUserCriteria();
+  await checkUserCriteria();
   
   // Sau đó tải việc làm dựa trên truy vấn (có thể đã được điền từ tiêu chí)
   loadJobsFromQuery();

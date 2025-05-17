@@ -334,8 +334,22 @@ router.beforeEach(async (to, from, next) => {
       
       // Chỉ kiểm tra role nếu route yêu cầu role cụ thể
       const roleRequired = to.matched.find(record => record.meta.role)?.meta.role
+      const isCandidateOnly = to.matched.some(record => record.meta.candidateOnly)
+      
       if (roleRequired && authStore.userRole !== roleRequired) {
         // Nếu route yêu cầu role mà user không có role đó
+        console.log(`[Router] Route yêu cầu role ${roleRequired}, nhưng user có role ${authStore.userRole}`)
+        return next('/')
+      }
+      
+      // Kiểm tra quyền truy cập candidateOnly
+      if (isCandidateOnly && authStore.userRole !== 'candidate') {
+        console.log('[Router] Route yêu cầu role candidate nhưng user có role:', authStore.userRole)
+        
+        // Hiển thị thông báo hoặc thực hiện hành động phù hợp
+        if (window.$toast) {
+          window.$toast.error('Chỉ ứng viên mới có thể truy cập trang này')
+        }
         return next('/')
       }
 
@@ -353,8 +367,9 @@ router.beforeEach(async (to, from, next) => {
       
       next()
     } else {
-      // Chuyển hướng đến trang đăng nhập
-      next({
+      // Chuyển hướng đến trang đăng nhập và lưu route hiện tại để redirect sau khi đăng nhập
+      console.log('[Router] User not authenticated, redirecting to login')
+      return next({
         path: '/login',
         query: { redirect: to.fullPath }
       })
@@ -367,18 +382,18 @@ router.beforeEach(async (to, from, next) => {
     }
     if (to.name === 'Login' || to.name === 'Register') {
       if (authStore.userRole === 'employer') {
-        return next('/employer');
+        return next('/employer')
       } else if (authStore.userRole === 'candidate') {
-        return next('/job-search');
+        return next('/job-search')
       } else {
-        return next('/');
+        return next('/')
       }
     }
     next()
   }
   // Route công khai
   else {
-    next();
+    next()
   }
 })
 

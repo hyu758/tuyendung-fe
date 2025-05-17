@@ -167,87 +167,41 @@
                   </div>
                 </div>
 
-                <div class="space-y-4">
-                  <label class="block text-sm font-medium text-gray-700">Logo công ty</label>
-                  <div class="mt-1 flex items-center">
-                    <span class="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100">
-                      <img 
-                        v-if="form.logo" 
-                        :src="previewImage(form.logo)" 
-                        class="h-full w-full object-cover"
-                        alt="Logo preview"
-                      />
-                      <svg v-else class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      @change="e => handleFileUpload(e, 'logo')"
-                      class="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div v-if="errors.logo" class="mt-2 text-sm text-red-600">
-                    {{ errors.logo }}
-                  </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <BaseFileUpload
+                    v-model="form.logo"
+                    label="Logo công ty"
+                    :error="errors.logo"
+                    accept="image/*"
+                    icon="fas fa-building"
+                    previewContainerClass="h-40"
+                    helpText="Tải lên logo công ty (JPG, PNG, tối đa 5MB)"
+                    @error="handleFileError($event, 'logo')"
+                  />
+                  
+                  <BaseFileUpload
+                    v-model="form.background_image"
+                    label="Ảnh nền doanh nghiệp"
+                    :error="errors.background_image"
+                    accept="image/*"
+                    icon="fas fa-image"
+                    previewContainerClass="h-40"
+                    helpText="Tải lên ảnh nền doanh nghiệp (JPG, PNG, tối đa 5MB)"
+                    @error="handleFileError($event, 'background_image')"
+                  />
                 </div>
-
-                <div class="space-y-4">
-                  <label class="block text-sm font-medium text-gray-700">Ảnh nền doanh nghiệp</label>
-                  <div class="mt-1 flex flex-col space-y-2">
-                    <div class="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
-                      <img 
-                        v-if="form.background_image" 
-                        :src="previewImage(form.background_image)" 
-                        class="w-full h-full object-cover"
-                        alt="Background preview"
-                      />
-                      <div v-else class="w-full h-full flex items-center justify-center">
-                        <svg class="h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      @change="e => handleFileUpload(e, 'background_image')"
-                      class="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div v-if="errors.background_image" class="mt-2 text-sm text-red-600">
-                    {{ errors.background_image }}
-                  </div>
-                </div>
-
-                <div class="space-y-4">
-                  <label class="block text-sm font-medium text-gray-700">Giấy phép kinh doanh (Ảnh)</label>
-                  <div class="mt-1 flex flex-col space-y-2">
-                    <div class="w-full h-48 rounded-lg overflow-hidden bg-gray-100">
-                      <img 
-                        v-if="form.business_certificate" 
-                        :src="previewImage(form.business_certificate)"
-                        class="w-full h-full object-contain"
-                        alt="Business certificate preview"
-                      />
-                      <div v-else class="w-full h-full flex items-center justify-center">
-                        <svg class="h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      @change="e => handleFileUpload(e, 'business_certificate')"
-                      class="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div v-if="errors.business_certificate" class="mt-2 text-sm text-red-600">
-                    {{ errors.business_certificate }}
-                  </div>
-                </div>
+                
+                <BaseFileUpload
+                  v-model="form.business_certificate"
+                  label="Giấy phép kinh doanh (Ảnh)"
+                  :error="errors.business_certificate"
+                  accept="image/*"
+                  icon="fas fa-file-alt"
+                  previewType="contain"
+                  previewContainerClass="h-60"
+                  helpText="Tải lên ảnh giấy phép kinh doanh (JPG, PNG, tối đa 5MB)"
+                  @error="handleFileError($event, 'business_certificate')"
+                />
 
                 <BaseInput
                   v-model="form.link_web_site"
@@ -287,6 +241,7 @@ import { useEnterpriseStore } from '../../stores/enterprise'
 import BaseInput from '../../components/common/BaseInput.vue'
 import BaseButton from '../../components/common/BaseButton.vue'
 import BaseAlert from '../../components/common/BaseAlert.vue'
+import BaseFileUpload from '../../components/common/BaseFileUpload.vue'
 
 const router = useRouter()
 const enterpriseStore = useEnterpriseStore()
@@ -365,21 +320,12 @@ const handleSubmit = async () => {
   }
 }
 
-const handleFileUpload = (event, type) => {
-  const file = event.target.files[0]
-  if (file) {
-    // Kiểm tra kích thước file (giới hạn 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      errors.value[type] = 'Kích thước file không được vượt quá 5MB'
-      return
-    }
-    // Kiểm tra loại file
-    if (!file.type.match('image.*')) {
-      errors.value[type] = 'Vui lòng chọn file hình ảnh'
-      return
-    }
-    form[type] = file
-    errors.value[type] = ''
+// Xử lý lỗi file upload
+const handleFileError = (errorMessage, fieldName) => {
+  if (errorMessage) {
+    errors.value[fieldName] = errorMessage
+  } else {
+    errors.value[fieldName] = ''
   }
 }
 

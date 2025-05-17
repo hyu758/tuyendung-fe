@@ -838,7 +838,47 @@ const reportForm = reactive({
 })
 
 const handleImageError = (e) => {
-  e.target.src = '/assets/logo.png'
+  // Nếu đã xử lý rồi hoặc src đang trống, không làm gì cả
+  if (e.target.classList.contains('img-error-handled') || !e.target.src) {
+    return;
+  }
+  
+  console.warn('Lỗi khi tải hình ảnh:', e.target.src);
+  
+  // Đánh dấu đã xử lý để tránh gọi lại nhiều lần
+  e.target.classList.add('img-error-handled');
+  e.target.classList.add('img-error');
+  
+  // Ngăn chặn sự kiện error tiếp tục kích hoạt
+  e.target.onerror = null;
+  
+  // Tắt tính năng tải lại ảnh
+  e.target.loading = 'none';
+  
+  // Thay đổi src thành transparent image nhỏ 1x1 pixel
+  e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  
+  // Ẩn phần tử img
+  e.target.style.display = 'none';
+  
+  // Nếu là logo công ty, hiển thị một div màu xám có chữ cái đầu công ty
+  const companyName = job.value?.enterprise_name || 'Company';
+  const initial = companyName.charAt(0).toUpperCase();
+  
+  // Tìm phần tử cha gần nhất
+  const parent = e.target.parentElement;
+  if (parent) {
+    // Kiểm tra xem đã có placeholder chưa để tránh tạo thêm
+    if (!parent.querySelector('.image-placeholder')) {
+      // Tạo phần tử mới để hiển thị chữ cái đầu
+      const placeholder = document.createElement('div');
+      placeholder.className = 'w-full h-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xl image-placeholder';
+      placeholder.textContent = initial;
+      
+      // Thêm vào parent
+      parent.appendChild(placeholder);
+    }
+  }
 }
 
 const formatSalary = (salary) => {

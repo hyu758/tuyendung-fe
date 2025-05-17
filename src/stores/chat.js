@@ -84,26 +84,62 @@ export const useChatStore = defineStore('chat', {
             if (message.sender === currentUserId || message.recipient === currentUserId) {
               console.log(`Xử lý tin nhắn cuối cùng cho cuộc trò chuyện với ${otherUserId}: "${message.content}"`);
               
-              // Lưu thông tin recipient_fullname vào userInfoCache nếu chưa có
-              if (message.recipient_fullname && message.recipient !== currentUserId) {
-                // Nếu người nhận không phải là người dùng hiện tại, lưu thông tin người nhận
-                if (!this.userInfoCache[message.recipient]) {
-                  this.userInfoCache[message.recipient] = {
-                    user_id: message.recipient,
-                    fullname: message.recipient_fullname,
-                    avatar: null
-                  };
-                  console.log(`Đã lưu thông tin người dùng ${message.recipient} vào cache: ${message.recipient_fullname}`);
+              // Xác định tên và avatar của người đối thoại (kết hợp từ các trường khác nhau)
+              let otherUserName = null;
+              let otherUserAvatar = null;
+              
+              // Lấy tên người nhận (nếu người nhận không phải là người dùng hiện tại)
+              if (message.recipient !== currentUserId && message.recipient_fullname) {
+                otherUserName = message.recipient_fullname;
+                otherUserAvatar = message.recipient_avatar || null;
+              }
+              // Lấy tên người gửi (nếu người gửi không phải là người dùng hiện tại)
+              else if (message.sender !== currentUserId && message.sender_fullname) {
+                otherUserName = message.sender_fullname;
+                otherUserAvatar = message.sender_avatar || null;
+              }
+              
+              // Nếu đã có tên người dùng, cập nhật vào cache
+              if (otherUserName) {
+                // Kiểm tra avatar hợp lệ trước khi lưu
+                if (otherUserAvatar) {
+                  try {
+                    // Bỏ qua các đường dẫn tương đối
+                    if (otherUserAvatar.startsWith('src/assets/') || otherUserAvatar === '') {
+                      otherUserAvatar = null;
+                    } else {
+                      // Thử tạo URL để kiểm tra tính hợp lệ
+                      new URL(otherUserAvatar);
+                    }
+                  } catch (e) {
+                    console.warn(`Avatar không hợp lệ cho người dùng ${otherUserId}:`, otherUserAvatar);
+                    otherUserAvatar = null;
+                  }
                 }
-              } else if (message.recipient_fullname && message.sender !== currentUserId) {
-                // Nếu người gửi không phải là người dùng hiện tại, dùng thông tin này cho người gửi
-                if (!this.userInfoCache[message.sender]) {
-                  this.userInfoCache[message.sender] = {
-                    user_id: message.sender,
-                    fullname: message.recipient_fullname,
-                    avatar: null
+                
+                // Nếu chưa có trong cache hoặc thiếu thông tin, thêm mới
+                if (!this.userInfoCache[otherUserId]) {
+                  this.userInfoCache[otherUserId] = {
+                    user_id: otherUserId,
+                    fullname: otherUserName,
+                    avatar: otherUserAvatar
                   };
-                  console.log(`Đã lưu thông tin người dùng ${message.sender} vào cache: ${message.recipient_fullname}`);
+                  console.log(`Đã lưu thông tin người dùng ${otherUserId} vào cache: ${otherUserName}`);
+                } 
+                // Nếu đã có trong cache, cập nhật thông tin còn thiếu
+                else {
+                  // Cập nhật tên nếu thông tin hiện tại trống hoặc là "Người dùng #xxx"
+                  if (!this.userInfoCache[otherUserId].fullname || 
+                      this.userInfoCache[otherUserId].fullname.startsWith('Người dùng #')) {
+                    this.userInfoCache[otherUserId].fullname = otherUserName;
+                    console.log(`Đã cập nhật tên người dùng ${otherUserId} thành: ${otherUserName}`);
+                  }
+                  
+                  // Cập nhật avatar nếu thông tin hiện tại trống và avatar mới hợp lệ
+                  if (!this.userInfoCache[otherUserId].avatar && otherUserAvatar) {
+                    this.userInfoCache[otherUserId].avatar = otherUserAvatar;
+                    console.log(`Đã cập nhật avatar cho người dùng ${otherUserId}`);
+                  }
                 }
               }
               
@@ -350,9 +386,42 @@ export const useChatStore = defineStore('chat', {
         const response = await axios.get(`/api/users/${userId}/info/`);
         
         if (response.data.status === 200) {
+          const userData = response.data.data;
+          
+          // Kiểm tra và xử lý đường dẫn avatar cẩn thận
+          if (!userData.avatar || 
+              userData.avatar === null || 
+              userData.avatar === undefined ||
+              userData.avatar === "" ||
+              userData.avatar.startsWith('src/assets/')) {
+            // Nếu không có avatar hoặc đường dẫn không hợp lệ, gán giá trị null
+            userData.avatar = null;
+            console.log(`Người dùng ${userId} không có avatar hợp lệ`);
+          } else {
+            // Kiểm tra định dạng avatar có hợp lệ không
+            try {
+              new URL(userData.avatar);
+              // Kiểm tra thêm định dạng ảnh phổ biến
+              if (!userData.avatar.match(/\.(jpeg|jpg|gif|png|webp)$/i) &&
+                  !userData.avatar.includes('cloudinary.com') &&
+                  !userData.avatar.includes('res.cloudinary.com')) {
+                console.warn(`Avatar URL không phải định dạng ảnh phổ biến: ${userData.avatar}`);
+              }
+            } catch (e) {
+              console.error('Avatar URL không hợp lệ:', userData.avatar);
+              userData.avatar = null;
+            }
+          }
+          
+          // Đảm bảo fullname luôn có giá trị
+          if (!userData.fullname || userData.fullname.trim() === '') {
+            userData.fullname = `Người dùng #${userId}`;
+          }
+          
           // Lưu vào cache
-          this.userInfoCache[userId] = response.data.data;
-          return response.data.data;
+          this.userInfoCache[userId] = userData;
+          console.log(`Đã lưu thông tin người dùng ${userId} vào cache:`, userData);
+          return userData;
         }
         return null;
       } catch (error) {

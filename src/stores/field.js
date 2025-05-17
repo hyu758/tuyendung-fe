@@ -28,11 +28,6 @@ export const useFieldStore = defineStore('field', {
 
     async fetchPositionsByField(fieldId) {
       // Kiểm tra cache trước
-      if (this.positionsCache.has(fieldId)) {
-        this.positions = this.positionsCache.get(fieldId)
-        return { success: true, data: this.positions }
-      }
-
       try {
         this.loadingPositions = true
         const response = await axios.get(`/api/positions/field/${fieldId}/`)

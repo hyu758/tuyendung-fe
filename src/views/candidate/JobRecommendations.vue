@@ -99,34 +99,52 @@
                   <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start">
                     <div>
                       <h3 class="text-lg font-medium text-gray-900">
-                        <router-link :to="`/jobs/${job.id}`" class="hover:text-blue-600">{{ job.title }}</router-link>
+                        <router-link :to="`/job/${job.id}`" class="hover:text-blue-600">{{ job.title }}</router-link>
                       </h3>
-                      <p class="mt-1 text-sm text-gray-500">{{ job.enterprise?.name }}</p>
+                      <p class="text-gray-600 text-sm mb-1">{{ job.enterprise?.name || 'Công ty ẩn danh' }}</p>
+                      <div class="flex gap-2 items-center">
+                        <div v-if="job.enterprise?.is_premium">
+                          <span class="inline-flex items-center px-2 py-1 bg-amber-400 text-white rounded-full text-xs font-semibold shadow">
+                            Pro Company
+                          </span>
+                        </div>
+                        <div v-if="job.matchesCriteria">
+                          <span class="inline-flex items-center px-2 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Phù hợp
+                          </span>
+                        </div>
+                      </div>
+                      <!-- Tags -->
+                      <div class="flex flex-wrap gap-2 mt-3">
+                        <div v-if="job.city"
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-gray-100 text-gray-800">
+                          <i class="fas fa-map-marker-alt text-gray-500 mr-1"></i>
+                          {{ job.city }}
+                        </div>
+                        <div v-if="job.experience"
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-gray-100 text-gray-800">
+                          <i class="fas fa-briefcase text-gray-500 mr-1"></i>
+                          {{ job.experience }}
+                        </div>
+                        <div v-if="job.type_working"
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">
+                          {{ job.type_working }}
+                        </div>
+                      </div>
                     </div>
-                    <div class="mt-2 sm:mt-0 flex flex-wrap items-center gap-2">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        <i class="fas fa-map-marker-alt mr-1"></i>
-                        {{ job.city }}
-                      </span>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <i class="fas fa-briefcase mr-1"></i>
-                        {{ job.type_working }}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <div class="flex items-center text-sm text-gray-500">
-                      <i class="fas fa-money-bill-wave mr-1 text-gray-400"></i>
-                      <span>{{ formatSalary(job.salary_min, job.salary_max, job.is_salary_negotiable) }}</span>
-                    </div>
-                    <div class="flex items-center text-sm text-gray-500">
-                      <i class="fas fa-user-graduate mr-1 text-gray-400"></i>
-                      <span>{{ job.experience }}</span>
-                    </div>
-                    <div class="flex items-center text-sm text-gray-500">
-                      <i class="fas fa-clock mr-1 text-gray-400"></i>
-                      <span>Hạn: {{ formatDate(job.deadline) }}</span>
+                    <!-- Mức lương -->
+                    <div class="mt-4 md:mt-0 md:ml-4">
+                      <div v-if="job.salary_min || job.salary_max" class="text-green-600 font-medium">
+                        {{ formatSalary(job.salary_min, job.salary_max, job.is_salary_negotiable) }}
+                      </div>
+                      <div v-else class="text-green-600 font-medium">
+                        Thỏa thuận
+                      </div>
+                      <div class="text-gray-500 text-xs mt-1">
+                        {{ formatDateAgo(job.created_at) }}
+                      </div>
                     </div>
                   </div>
 
@@ -354,7 +372,13 @@ const formatSalary = (min, max, isNegotiable) => {
 // Get enterprise logo abbreviation
 const getEnterpriseLogo = (name) => {
   if (!name) return 'JH';
-  return name.split(' ').map(word => word[0]).join('').substring(0, 2).toUpperCase();
+  
+  try {
+    return name.charAt(0).toUpperCase();
+  } catch (error) {
+    console.error('Error getting enterprise logo:', error);
+    return 'JH';
+  }
 }
 
 // Fetch recommended jobs
@@ -364,21 +388,57 @@ const fetchRecommendedJobs = async () => {
   try {
     const result = await postStore.fetchRecommendedPosts(currentPage.value, pageSize.value);
     
-    if (result.success) {
-      recommendedJobs.value = result.data.results || [];
-      totalItems.value = result.data.count || 0;
+    if (result && result.data && result.data.results) {
+      // Xử lý kết quả từ API
+      recommendedJobs.value = result.data.results.map(job => ({
+        id: job.id,
+        title: job.title,
+        enterprise: {
+          name: job.enterprise_name,
+          logo: job.enterprise_logo,
+          is_premium: job.is_enterprise_premium
+        },
+        city: job.city,
+        district: job.district,
+        type_working: job.type_working,
+        experience: job.experience,
+        deadline: job.deadline,
+        created_at: job.created_at,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        is_salary_negotiable: job.is_salary_negotiable,
+        is_saved: job.is_saved,
+        matchesCriteria: job.matches_criteria === true
+      }));
+      
+      totalItems.value = result.data.total || 0;
       totalPages.value = Math.ceil(totalItems.value / pageSize.value);
+      
+      // Debug log để kiểm tra dữ liệu
+      console.log(`Loaded ${recommendedJobs.value.length} recommended jobs`);
+      console.log('Total items:', totalItems.value);
+      console.log('Total pages:', totalPages.value);
+      
+      // Đặt noCriteria là false vì đã có kết quả
+      noCriteria.value = false;
     } else {
-      // Kiểm tra nếu lỗi là do không có tiêu chí
-      if (result.noCriteria) {
+      // Nếu không có kết quả
+      recommendedJobs.value = [];
+      totalItems.value = 0;
+      totalPages.value = 0;
+      
+      // Kiểm tra xem có phải lỗi do không có tiêu chí không
+      if (result && result.noCriteria) {
         noCriteria.value = true;
-      } else {
-        toast.error(result.error || 'Không thể lấy việc làm gợi ý. Vui lòng thử lại sau.');
+        console.log('No criteria found');
       }
     }
   } catch (error) {
     console.error('Error fetching recommended jobs:', error);
     toast.error('Có lỗi xảy ra khi tải danh sách việc làm gợi ý.');
+    recommendedJobs.value = [];
+    totalItems.value = 0;
+    totalPages.value = 0;
   } finally {
     loading.value = false;
   }
@@ -436,7 +496,15 @@ const nextPage = () => {
 
 // Lifecycle
 onMounted(() => {
-  fetchRecommendedJobs();
+  console.log('JobRecommendations component mounted');
+  fetchRecommendedJobs().then(() => {
+    console.log('After fetching:', {
+      jobs: recommendedJobs.value,
+      totalItems: totalItems.value,
+      isLoading: loading.value,
+      hasNoCriteria: noCriteria.value
+    });
+  });
 })
 </script>
 

@@ -168,8 +168,8 @@ axios.interceptors.response.use(
         const newToken = authStore.token
         originalRequest.headers.Authorization = `Bearer ${newToken}`
         processQueue(null, newToken)
-        
-        return axios(originalRequest)
+      
+      return axios(originalRequest)
       } else {
         // Nếu refresh thất bại, đăng xuất và reject tất cả request
         authStore.logout(true)
@@ -244,7 +244,67 @@ router.isReady().then(() => {
     // Khởi tạo WebSocket chỉ khi đã đăng nhập
     if (localStorage.getItem('token')) {
         socketService.init();
+        
+        // Đăng ký xử lý tin nhắn mới cho toàn bộ ứng dụng
+        socketService.onMessage((data) => {
+            console.log('[Main] Nhận tin nhắn từ socket:', data);
+            
+            // Xử lý thông báo tin nhắn mới
+            if (data && data.type === 'chat_message') {
+                const { useAuthStore } = import('./stores/auth');
+                const { useChatStore } = import('./stores/chat');
+                const { useNotificationStore } = import('./stores/notification');
+                
+                const authStore = useAuthStore();
+                const chatStore = useChatStore();
+                const notificationStore = useNotificationStore();
+                
+                const message = data.message;
+                const currentUserId = authStore.userInfo?.user_id;
+                
+                // Nếu tin nhắn đến từ người khác, tạo thông báo
+                if (message.sender !== currentUserId) {
+                    // Lấy thông tin người gửi từ cache
+                    const senderInfo = chatStore.userInfoCache[message.sender];
+                    const senderName = senderInfo?.fullname || `Người dùng #${message.sender}`;
+                    
+                    // Tạo thông báo tin nhắn mới
+                    notificationStore.createMessageNotification(
+                        message.sender, 
+                        message.content,
+                        senderName
+                    );
+                }
+            }
+        });
     }
+    
+    // Xử lý lỗi hình ảnh toàn cục
+    const handleGlobalImageError = function(event) {
+        // Nếu đã xử lý rồi thì bỏ qua
+        if (event.target.classList.contains('img-error-handled')) {
+            return;
+        }
+        
+        console.warn('Global image error handler:', event.target.src);
+        
+        // Ngăn chặn vòng lặp vô hạn
+        event.target.classList.add('img-error-handled');
+        event.target.onerror = null;
+        
+        // Đặt hình ảnh trong suốt 1x1 pixel
+        event.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        
+        // Ẩn phần tử img để không hiển thị icon lỗi
+        event.target.style.opacity = '0.2';
+    };
+    
+    // Thêm bộ lắng nghe sự kiện toàn cục cho lỗi hình ảnh
+    document.addEventListener('error', function(event) {
+        if (event.target.tagName === 'IMG') {
+            handleGlobalImageError(event);
+        }
+    }, true);
     
     // Mount app
     app.mount('#app')
