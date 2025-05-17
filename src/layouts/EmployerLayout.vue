@@ -122,16 +122,6 @@
               {{ unreadMessageCount > 99 ? '99+' : unreadMessageCount }}
             </span>
           </router-link>
-
-          <router-link 
-            to="/employer/settings"
-            class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-md"
-            :class="{ 'bg-blue-50 text-blue-600': isCurrentRoute('/employer/settings') }"
-            @click="mobileLinkClick"
-          >
-            <i class="fas fa-cog w-5 h-5 mr-3"></i>
-            <span>Cài đặt</span>
-          </router-link>
           
           <!-- Mua Premium -->
           <router-link 
