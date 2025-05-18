@@ -269,6 +269,10 @@
                           :class="{'border-red-500': errors.salary_min}"
                           :disabled="form.is_salary_negotiable"
                         >
+                        <p v-if="form.salary_min" class="mt-1 text-xs text-blue-600 flex items-center">
+                          <i class="fas fa-info-circle mr-1"></i>
+                          {{ formatCurrency(form.salary_min) }} đ
+                        </p>
                         <p v-if="errors.salary_min" class="mt-1 text-sm text-red-500">{{ errors.salary_min }}</p>
                       </div>
                       
@@ -284,6 +288,10 @@
                           :class="{'border-red-500': errors.salary_max}"
                           :disabled="form.is_salary_negotiable"
                         >
+                        <p v-if="form.salary_max" class="mt-1 text-xs text-blue-600 flex items-center">
+                          <i class="fas fa-info-circle mr-1"></i>
+                          {{ formatCurrency(form.salary_max) }} đ
+                        </p>
                         <p v-if="errors.salary_max" class="mt-1 text-sm text-red-500">{{ errors.salary_max }}</p>
                       </div>
                     </div>
@@ -521,6 +529,12 @@ watch(() => form.salary_min, (newVal) => {
     form.salary_max = newVal
   }
 })
+
+// Hàm format số tiền
+const formatCurrency = (value) => {
+  if (!value) return '0'
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
 
 watch(() => form.is_salary_negotiable, (isNegotiable) => {
   if (isNegotiable) {

@@ -140,7 +140,7 @@
                 required
                 prefixIcon="lock"
                 :error="errors.password"
-                class="transform transition-all duration-200 focus-within:scale-105"
+                class="transform transition-all duration-200"
               />
               
               <BaseInput
@@ -152,7 +152,7 @@
                 required
                 prefixIcon="lock"
                 :error="errors.confirmPassword"
-                class="transform transition-all duration-200 focus-within:scale-105"
+                class="transform transition-all duration-200"
               />
             </div>
             
@@ -227,6 +227,13 @@ const handleSubmit = async () => {
   errors.value = {}
   authStore.error = null
   
+  // Trim values
+  if (username.value) username.value = username.value.trim()
+  if (email.value) email.value = email.value.trim()
+  if (fullname.value) fullname.value = fullname.value.trim()
+  if (password.value) password.value = password.value.trim()
+  if (confirmPassword.value) confirmPassword.value = confirmPassword.value.trim()
+  
   // Xác thực các trường
   validateFields()
   
@@ -299,12 +306,22 @@ const isValidEmail = (email) => {
 const validateFields = () => {
   // Validate các trường cơ bản
   if (!username.value) errors.value.username = 'Vui lòng nhập tên đăng nhập'
+  else if (username.value.trim() === '') errors.value.username = 'Tên đăng nhập không thể chỉ có khoảng trắng'
+  
   if (!email.value) errors.value.email = 'Vui lòng nhập email'
+  else if (email.value.trim() === '') errors.value.email = 'Email không thể chỉ có khoảng trắng'
+  else if (!isValidEmail(email.value)) errors.value.email = 'Email không hợp lệ'
+  
   if (!fullname.value) errors.value.fullname = 'Vui lòng nhập họ và tên'
+  else if (fullname.value.trim() === '') errors.value.fullname = 'Họ và tên không thể chỉ có khoảng trắng'
+  
   if (!password.value) errors.value.password = 'Vui lòng nhập mật khẩu'
+  else if (password.value.trim() === '') errors.value.password = 'Mật khẩu không thể chỉ có khoảng trắng'
+  
   if (password.value !== confirmPassword.value) {
     errors.value.confirmPassword = 'Mật khẩu xác nhận không khớp'
   }
+  
   if (!acceptTerms.value) {
     errors.value.acceptTerms = 'Vui lòng đồng ý với điều khoản sử dụng'
   }
