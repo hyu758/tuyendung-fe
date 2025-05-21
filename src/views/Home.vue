@@ -49,8 +49,12 @@
                     class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   >
                     <option value="">Tất cả địa điểm</option>
-                    <option v-for="location in locations" :key="location" :value="location">
-                      {{ location }}
+                    <option 
+                      v-for="province in addressStore.provinces" 
+                      :key="province.code" 
+                      :value="province.name"
+                    >
+                      {{ province.name }}
                     </option>
                   </select>
                   <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
@@ -91,38 +95,6 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 80" class="w-full h-auto">
             <path fill="#f9fafb" fill-opacity="1" d="M0,32L80,42.7C160,53,320,75,480,69.3C640,64,800,32,960,21.3C1120,11,1280,21,1360,26.7L1440,32L1440,80L1360,80C1280,80,1120,80,960,80C800,80,640,80,480,80C320,80,160,80,80,80L0,80Z"></path>
           </svg>
-        </div>
-      </section>
-
-      <!-- Thống kê nhanh -->
-      <section class="py-10 bg-gray-50">
-        <div class="container mx-auto px-4">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="bg-white rounded-xl p-6 shadow-sm text-center hover:shadow-md transition-shadow">
-              <div class="text-blue-600 text-3xl font-bold mb-1">
-                <span>10.000+</span>
-              </div>
-              <p class="text-gray-600">Ứng viên</p>
-            </div>
-            <div class="bg-white rounded-xl p-6 shadow-sm text-center hover:shadow-md transition-shadow">
-              <div class="text-blue-600 text-3xl font-bold mb-1">
-                <span>5.000+</span>
-              </div>
-              <p class="text-gray-600">Nhà tuyển dụng</p>
-            </div>
-            <div class="bg-white rounded-xl p-6 shadow-sm text-center hover:shadow-md transition-shadow">
-              <div class="text-blue-600 text-3xl font-bold mb-1">
-                <span>20.000+</span>
-              </div>
-              <p class="text-gray-600">Việc làm</p>
-            </div>
-            <div class="bg-white rounded-xl p-6 shadow-sm text-center hover:shadow-md transition-shadow">
-              <div class="text-blue-600 text-3xl font-bold mb-1">
-                <span>95%</span>
-              </div>
-              <p class="text-gray-600">Tỷ lệ hài lòng</p>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -474,12 +446,14 @@ import { usePostStore } from '../stores/post'
 import { useFieldStore } from '../stores/field'
 import { useAuthStore } from '../stores/auth'
 import { useEnterpriseStore } from '../stores/enterprise'
+import { useAddressStore } from '../stores/address'
 import SelectRole from './auth/SelectRole.vue'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const addressStore = useAddressStore()
 const toast = useToast()
 
 // State
@@ -494,15 +468,6 @@ const loadingPremium = ref(true)
 const premiumSlider = ref(null)
 
 // Dữ liệu mẫu (thường sẽ được lấy từ API)
-const locations = [
-  'Hà Nội', 
-  'Hồ Chí Minh', 
-  'Đà Nẵng', 
-  'Hải Phòng', 
-  'Cần Thơ', 
-  'Khác'
-]
-
 const popularTags = [
   'Công nghệ thông tin', 
   'Marketing', 
@@ -559,7 +524,11 @@ const handleImageError = (e) => {
 // Lifecycle hooks
 onMounted(async () => {
   const fieldStore = useFieldStore();
+  
   try {
+    // Lấy danh sách tỉnh/thành từ address store
+    await addressStore.fetchProvinces();
+    
     const result = await fieldStore.fetchFields();
     console.log(result);
     if (result.success) {
@@ -581,7 +550,7 @@ const searchJobs = () => {
     path: '/job-search',
     query: {
       q: searchKeyword.value,
-      location: searchLocation.value
+      city: searchLocation.value
     }
   })
 }

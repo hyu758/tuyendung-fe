@@ -36,15 +36,6 @@
             </div>
           </div>
         </div>
-        <div class="absolute right-0 bottom-4">
-          <button
-            class="mr-2 px-4 py-2 rounded-lg font-medium flex items-center transition-colors premium-follow-btn"
-            :class="enterprise?.is_premium ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow-lg hover:from-yellow-400 hover:to-amber-500' : 'bg-white text-emerald-600 hover:bg-emerald-50'"
-          >
-            <i class="fas fa-plus mr-2"></i>
-            Theo dõi công ty
-          </button>
-        </div>
       </div>
     </div>
 
