@@ -191,10 +191,9 @@
                 </div>
 
                 <div v-memo="[form.level, errors.level]">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Cấp bậc <span class="text-red-500">*</span></label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Cấp bậc</label>
                   <select
                     v-model="form.level"
-                    required
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     :class="{'border-red-500': errors.level}"
                   >
