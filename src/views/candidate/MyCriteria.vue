@@ -400,6 +400,7 @@ const handleCriteriaUpdated = async (updatedCriteria) => {
     }
   }
   
+  // Chỉ lấy thông tin position nếu position không rỗng
   if (updatedCriteria.position && typeof updatedCriteria.position === 'number') {
     try {
       const positionResponse = await axios.get(`/api/position/${updatedCriteria.position}/`)
@@ -414,11 +415,20 @@ const handleCriteriaUpdated = async (updatedCriteria) => {
         name: 'Không thể tải thông tin'
       }
     }
+  } else {
+    // Nếu không có position, gán giá trị null để hiển thị "Chưa thiết lập"
+    updatedCriteria.position = null;
   }
   
-  criteria.value = updatedCriteria
+  // Cập nhật lại toàn bộ thông tin tiêu chí
+  criteria.value = { ...updatedCriteria }
   isEditing.value = false
   toast.success('Cập nhật tiêu chí tìm việc thành công')
+  
+  // Làm mới dữ liệu từ server để đảm bảo hiển thị đúng
+  setTimeout(() => {
+    fetchCriteria()
+  }, 500)
 }
 
 // Navigate to recommendations

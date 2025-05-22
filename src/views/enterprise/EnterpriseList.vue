@@ -50,9 +50,9 @@
                   class="block w-full border border-gray-300 rounded-lg py-2.5 pl-10 pr-10 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="">Tất cả thành phố</option>
-                  <option value="Hà Nội">Hà Nội</option>
-                  <option value="Hồ Chí Minh">Hồ Chí Minh</option>
-                  <option value="Đà Nẵng">Đà Nẵng</option>
+                  <option v-for="province in provinces" :key="province.code" :value="province.name">
+                    {{ province.name }}
+                  </option>
                 </select>
                 <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                   <i class="fas fa-map-marker-alt text-gray-400"></i>
@@ -72,10 +72,9 @@
                   class="block w-full border border-gray-300 rounded-lg py-2.5 pl-10 pr-10 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 >
                   <option value="">Tất cả lĩnh vực</option>
-                  <option value="Công nghệ thông tin">Công nghệ thông tin</option>
-                  <option value="Tài chính - Ngân hàng">Tài chính - Ngân hàng</option>
-                  <option value="Giáo dục">Giáo dục</option>
-                  <option value="Y tế">Y tế</option>
+                  <option v-for="field in fields" :key="field.id" :value="field.name">
+                    {{ field.name }}
+                  </option>
                 </select>
                 <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                   <i class="fas fa-industry text-gray-400"></i>
@@ -145,13 +144,26 @@
           <div class="relative">
             <select
               id="sort"
-              v-model="searchParams.sortBy"
+              v-model="searchParams.sort_by"
               class="pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer bg-white transition-all"
               @change="handleSearch"
             >
+              <option value="company_name">Tên công ty</option>
               <option value="created_at">Mới nhất</option>
-              <option value="name">Tên công ty</option>
-              <option value="size">Quy mô</option>
+              <option value="scale">Quy mô</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+              <i class="fas fa-chevron-down text-xs"></i>
+            </div>
+          </div>
+          <div class="relative ml-2">
+            <select
+              v-model="searchParams.sort_order"
+              class="pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer bg-white transition-all"
+              @change="handleSearch"
+            >
+              <option value="asc">Tăng dần</option>
+              <option value="desc">Giảm dần</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
               <i class="fas fa-chevron-down text-xs"></i>
@@ -309,13 +321,20 @@
 <script setup>
 import { ref, reactive, onMounted, watch, computed, onUnmounted } from 'vue'
 import { useEnterpriseStore } from '../../stores/enterprise'
+import { useAddressStore } from '../../stores/address'
+import { useFieldStore } from '../../stores/field'
 import { debounce } from 'lodash'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '../../composables/useToast'
 
 const enterpriseStore = useEnterpriseStore()
+const addressStore = useAddressStore()
+const fieldStore = useFieldStore()
 const loading = ref(true)
+const loadingFilters = ref(true)
 const enterprises = ref([])
+const provinces = ref([])
+const fields = ref([])
 const isFilterVisible = ref(true)
 const isMobileView = ref(false)
 
@@ -332,8 +351,9 @@ const searchParams = reactive({
   field: '',
   scale: '',
   page: 1,
-  pageSize: 10,
-  sortBy: 'created_at' // Thêm trường sắp xếp
+  page_size: 10,
+  sort_by: 'company_name',
+  sort_order: 'asc'
 })
 
 // Hiển thị các trang phân trang
@@ -354,6 +374,36 @@ const displayedPages = computed(() => {
   
   return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i)
 })
+
+// Lấy danh sách tỉnh thành
+const loadProvinces = async () => {
+  try {
+    loadingFilters.value = true
+    const result = await addressStore.fetchProvinces()
+    if (result.success) {
+      provinces.value = result.data
+    }
+  } catch (err) {
+    console.error('Error loading provinces:', err)
+  } finally {
+    loadingFilters.value = false
+  }
+}
+
+// Lấy danh sách lĩnh vực
+const loadFields = async () => {
+  try {
+    loadingFilters.value = true
+    const result = await fieldStore.fetchFields()
+    if (result.success) {
+      fields.value = result.data
+    }
+  } catch (err) {
+    console.error('Error loading fields:', err)
+  } finally {
+    loadingFilters.value = false
+  }
+}
 
 // Lấy thông tin các công ty
 const loadEnterprises = async () => {
@@ -389,7 +439,8 @@ const resetFilters = () => {
   searchParams.field = ''
   searchParams.scale = ''
   searchParams.page = 1
-  searchParams.sortBy = 'created_at'
+  searchParams.sort_by = 'company_name'
+  searchParams.sort_order = 'asc'
   loadEnterprises()
 }
 
@@ -412,12 +463,19 @@ const checkScreenSize = () => {
   isMobileView.value = window.innerWidth < 1024
 }
 
-onMounted(() => {
+onMounted(async () => {
   // Kiểm tra kích thước màn hình khi component mounted
   checkScreenSize()
   
   // Thêm event listener cho resize
   window.addEventListener('resize', checkScreenSize)
+  
+  // Tải dữ liệu cho bộ lọc và danh sách công ty
+  await Promise.all([
+    loadProvinces(),
+    loadFields()
+  ])
+  
   loadEnterprises()
 })
 

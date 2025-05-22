@@ -493,7 +493,8 @@ const handleFieldChange = debounce(async () => {
       if (result.success) {
         console.log('Positions data:', result.data)
         
-        positions.value = result.data.results
+        // Cập nhật đúng định dạng dữ liệu từ API
+        positions.value = Array.isArray(result.data) ? result.data : []
         
         console.log('Updated positions:', positions.value)
       } else {

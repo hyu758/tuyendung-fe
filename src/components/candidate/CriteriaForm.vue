@@ -188,7 +188,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useAddressStore } from '@/stores/address'
 import { useFieldStore } from '@/stores/field'
@@ -306,6 +306,10 @@ const loadPositions = async () => {
     return;
   }
   
+  // Xóa vị trí cũ khi thay đổi lĩnh vực
+  form.position = '';
+  positions.value = [];
+  
   try {
     const fieldStore = useFieldStore();
     const result = await fieldStore.fetchPositionsByField(form.field);
@@ -320,6 +324,13 @@ const loadPositions = async () => {
     useToast().error('Không thể lấy danh sách vị trí. Vui lòng thử lại sau.');
   }
 }
+
+// Watch field để reset position khi thay đổi field
+watch(() => form.field, (newField, oldField) => {
+  if (newField !== oldField) {
+    form.position = '';
+  }
+});
 
 // Lấy thông tin tiêu chí hiện tại (nếu là chế độ cập nhật)
 const loadExistingCriteria = () => {
@@ -345,7 +356,20 @@ const submitForm = async () => {
   isSubmitting.value = true;
   
   try {
+    // Tạo bản sao của form để tránh thay đổi trực tiếp
     const formData = { ...form };
+    
+    // Kiểm tra xem position có thuộc về field hiện tại không
+    if (formData.position && formData.field) {
+      // Kiểm tra xem position có trong danh sách positions hiện tại không
+      const isValidPosition = positions.value.some(pos => pos.id === parseInt(formData.position));
+      
+      // Nếu không hợp lệ, xóa position
+      if (!isValidPosition) {
+        console.warn('Phát hiện position không thuộc về field hiện tại, đã xóa position');
+        formData.position = '';
+      }
+    }
     
     // Call API to create or update
     if (isEditMode.value) {

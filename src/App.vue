@@ -8,6 +8,7 @@ import BaseAlert from './components/common/BaseAlert.vue'
 import socketService from './services/socketService'
 import ChatManager from './components/chat/ChatManager.vue'
 import { useToast } from 'vue-toastification'
+import Footer from './components/layouts/Footer.vue'
 
 
 const route = useRoute()
@@ -232,85 +233,8 @@ const showStoredNotification = () => {
     </main>
 
     <!-- Footer chỉ hiển thị khi không phải trang employer -->
-    <footer v-if="!isEmployerPage" class="bg-white border-t border-gray-200 mt-auto">
-      <div class="container mx-auto px-4 py-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Về JobHub</h3>
-            <p class="text-gray-600">
-              JobHub là nền tảng kết nối người tìm việc và nhà tuyển dụng, giúp tìm kiếm cơ hội việc làm phù hợp.
-            </p>
-          </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Liên kết nhanh</h3>
-            <ul class="space-y-2">
-              <li>
-                <router-link to="/about" class="text-gray-600 hover:text-blue-600">
-                  Về chúng tôi
-                </router-link>
-              </li>
-              <li>
-                <router-link to="/contact" class="text-gray-600 hover:text-blue-600">
-                  Liên hệ
-                </router-link>
-              </li>
-              <li>
-                <router-link to="/blog" class="text-gray-600 hover:text-blue-600">
-                  Blog
-                </router-link>
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Cho người tìm việc</h3>
-            <ul class="space-y-2">
-              <li>
-                <router-link to="/job-search" class="text-gray-600 hover:text-blue-600">
-                  Tìm việc
-                </router-link>
-              </li>
-              <li>
-                <router-link to="/companies" class="text-gray-600 hover:text-blue-600">
-                  Công ty
-                </router-link>
-              </li>
-              <li>
-                <router-link to="/career-advice" class="text-gray-600 hover:text-blue-600">
-                  Tư vấn nghề nghiệp
-                </router-link>
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Cho nhà tuyển dụng</h3>
-            <ul class="space-y-2">
-              <li>
-                <router-link to="/post-job" class="text-gray-600 hover:text-blue-600">
-                  Đăng tin tuyển dụng
-                </router-link>
-              </li>
-              <li>
-                <router-link to="/pricing" class="text-gray-600 hover:text-blue-600">
-                  Bảng giá
-                </router-link>
-              </li>
-              <li>
-                <router-link to="/recruitment-solutions" class="text-gray-600 hover:text-blue-600">
-                  Giải pháp tuyển dụng
-                </router-link>
-              </li>
-            </ul>
-          </div>
-        </div>
-        
-        <div class="border-t border-gray-200 mt-8 pt-8 text-center text-gray-600">
-          <p>&copy; {{ new Date().getFullYear() }} JobHub. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
+    <Footer v-if="!isEmployerPage" class="bg-white border-t border-gray-200 mt-auto">
+    </Footer>
 
     <!-- Đảm bảo ChatManager được hiển thị khi người dùng đã đăng nhập -->
     <ChatManager ref="chatManager" v-if="isAuthenticated" />

@@ -42,10 +42,15 @@ import {
   faCalendarAlt,
   faArrowRight,
   faCrown,
-  faExclamationTriangle
+  faExclamationTriangle,
+  faChevronRight,
+  faPhoneAlt
 } from '@fortawesome/free-solid-svg-icons'
 import { 
-  faFacebook, faTwitter, faLinkedin, faGithub, faGoogle 
+  faFacebook, faTwitter, faLinkedin, faGithub, faGoogle,
+  faFacebookF,
+  faInstagram,
+  faLinkedinIn
 } from '@fortawesome/free-brands-svg-icons'
 import {
   faHeart as farHeart
@@ -93,7 +98,9 @@ library.add(
   faArrowRight,
   farHeart,
   faCrown,
-  faExclamationTriangle
+  faExclamationTriangle,
+  faChevronRight,
+  faPhoneAlt
 )
 
 // Cấu hình Axios

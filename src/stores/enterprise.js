@@ -202,26 +202,34 @@ export const useEnterpriseStore = defineStore('enterprise', {
       }))
     },
 
-    async searchEnterprises({ q = '', city = '', field = '', scale = '', page = 1, pageSize = 10, sortBy = '', sortOrder = 'asc' } = {}) {
+    async searchEnterprises(params) {
       try {
         this.loading = true
-        const params = new URLSearchParams({
-          ...(q && { q }),
-          ...(city && { city }),
-          ...(field && { field }),
-          ...(scale && { scale }),
-          page,
-          page_size: pageSize,
-          ...(sortBy && { sort_by: sortBy }),
-          ...(sortOrder && { sort_order: sortOrder })
-        })
         
-        const response = await axios.get(`/api/enterprises/search/?${params.toString()}`)
-        return { success: true, data: response.data }
+        // Tạo object params mới để đảm bảo tên tham số đúng với backend
+        const searchParams = {
+          q: params.q || '',
+          city: params.city || '',
+          field: params.field || '',
+          scale: params.scale || '',
+          page: params.page || 1,
+          page_size: params.page_size || 10,
+          sort_by: params.sort_by || 'company_name',
+          sort_order: params.sort_order || 'asc'
+        }
+        
+        const response = await axios.get('/api/enterprises/search/', { params: searchParams })
+        
+        return {
+          success: true,
+          data: response.data
+        }
       } catch (error) {
         console.error('Error searching enterprises:', error)
-        this.error = error.response?.data?.message || 'Có lỗi xảy ra khi tìm kiếm công ty'
-        return { success: false, error: this.error }
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi tìm kiếm doanh nghiệp'
+        }
       } finally {
         this.loading = false
       }

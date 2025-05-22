@@ -585,7 +585,6 @@ const handleSaveJob = async (jobId) => {
       const result = await postStore.savePost(jobId);
       if (result.success) {
         featuredJobs.value[jobIndex].is_saved = true;
-        toast.success('Đã lưu việc làm thành công');
       } else {
         toast.error(result.error || 'Có lỗi xảy ra khi lưu việc làm');
       }
@@ -594,7 +593,6 @@ const handleSaveJob = async (jobId) => {
       const result = await postStore.deleteSavedPostByPostId(jobId);
       if (result.success) {
         featuredJobs.value[jobIndex].is_saved = false;
-        toast.success('Đã bỏ lưu việc làm thành công');
       } else {
         toast.error(result.error || 'Có lỗi xảy ra khi bỏ lưu việc làm');
       }
