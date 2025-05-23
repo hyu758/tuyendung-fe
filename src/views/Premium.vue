@@ -282,7 +282,6 @@ export default {
     onMounted(async () => {
       // Kiểm tra hạn Premium
       if (premiumStore.isPremium && premiumStore.isPremiumExpired) {
-        console.log('Premium page - Premium đã hết hạn, đang hủy Premium...')
         await premiumStore.cancelPremium()
       }
 

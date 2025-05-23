@@ -346,8 +346,6 @@ const passwordStrength = ref(0)
 
 // Kiểm tra tài khoản Premium
 const isPremium = computed(() => {
-  console.log('Profile data:', profileStore.profile);
-  console.log('User data:', authStore.user);
   // Ưu tiên lấy từ profile nếu có, nếu không thì lấy từ authStore
   return profileStore.profile?.is_premium === true || authStore.user?.is_premium === true || false;
 })
@@ -497,14 +495,13 @@ onMounted(async () => {
   }
   
   // Kiểm tra trạng thái Premium
-  checkPremiumExpiry()
+  checkAndCancelPremium()
 })
 
 // Kiểm tra hạn Premium
-async function checkPremiumExpiry() {
+async function checkAndCancelPremium() {
   // Kiểm tra xem Premium đã hết hạn chưa
   if (premiumStore.isPremium && premiumStore.isPremiumExpired) {
-    console.log('Profile page - Premium đã hết hạn, đang hủy Premium...')
     await premiumStore.cancelPremium()
   }
 }

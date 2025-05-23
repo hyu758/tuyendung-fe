@@ -23,13 +23,11 @@ class SocketService {
   // Khởi tạo kết nối WebSocket
   init() {
     if (this.connecting || this.connected) {
-      console.log('WebSocket đã kết nối hoặc đang kết nối, không khởi tạo lại');
       return;
     }
 
     this.connecting = true;
     this.connectionAttempts++;
-    console.log(`Đang thử kết nối WebSocket lần thứ ${this.connectionAttempts}`);
 
     // Lấy store notification
     this.notificationStore = useNotificationStore();
@@ -42,14 +40,12 @@ class SocketService {
   // Kết nối socket.io - Không sử dụng nữa
   connectSocketIO() {
     if (!this.enableSocketIO) {
-      console.log('Socket.IO đã bị vô hiệu hóa');
       this.connecting = false;
       this.tryAlternativeConnection();
       return;
     }
     
     try {
-      console.log('Đang thử kết nối qua Socket.IO tới:', API_URL);
       this.useSocketIO = true;
       
       this.socket = io(API_URL, {
@@ -62,7 +58,6 @@ class SocketService {
       });
 
       this.socket.on('connect', () => {
-        console.log('Socket.IO connected với ID:', this.socket.id);
         this.connected = true;
         this.connecting = false;
         this.connectionAttempts = 0;
@@ -72,20 +67,17 @@ class SocketService {
       });
 
       this.socket.on('disconnect', (reason) => {
-        console.log('Socket.IO disconnected, reason:', reason);
         this.connected = false;
         this.connecting = false;
         
         if (reason !== 'io client disconnect') {
           setTimeout(() => {
-            console.log('Đang thử kết nối lại Socket.IO...');
             this.init();
           }, 3000);
         }
       });
 
       this.socket.on('message', (data) => {
-        console.log('Nhận tin nhắn qua Socket.IO:', data);
         this.handleMessage(data);
       });
 
@@ -104,21 +96,17 @@ class SocketService {
   // Kết nối WebSocket thông thường
   connectWebSocket() {
     try {
-      console.log('Đang thử kết nối qua WebSocket thuần tới:', `${SOCKET_URL}/api/ws/notifications/`);
       this.useSocketIO = false;
       
       try {
         this.socket = new WebSocket(`${SOCKET_URL}/api/ws/notifications/`);
-        console.log('Đang kết nối WebSocket qua /api/ws/notifications/');
       } catch (error) {
         console.error('Lỗi kết nối đường dẫn 1, thử đường dẫn 2:', error);
         this.socket = new WebSocket(`${SOCKET_URL}/ws/notifications/`);
-        console.log('Đang kết nối WebSocket qua /ws/notifications/');
       }
 
       // Xử lý sự kiện kết nối thành công
       this.socket.onopen = () => {
-        console.log('WebSocket kết nối thành công!');
         this.connected = true;
         this.connecting = false;
         this.connectionAttempts = 0;
@@ -129,7 +117,6 @@ class SocketService {
 
       // Xử lý sự kiện khi nhận được thông báo
       this.socket.onmessage = (event) => {
-        console.log('WebSocket raw data:', event.data);
         try {
           const data = JSON.parse(event.data);
           this.handleMessage(data);
@@ -140,14 +127,12 @@ class SocketService {
 
       // Xử lý sự kiện đóng kết nối
       this.socket.onclose = (event) => {
-        console.log('WebSocket bị đóng với mã:', event.code, 'Lý do:', event.reason);
         this.connected = false;
         this.connecting = false;
         
         // Tự động kết nối lại sau 3 giây nếu không phải là đóng có chủ ý
         if (event.code !== 1000) {
           setTimeout(() => {
-            console.log('Đang thử kết nối lại WebSocket...');
             this.init();
           }, 3000);
         }
@@ -169,22 +154,17 @@ class SocketService {
   // Thử phương thức kết nối thay thế nếu phương thức hiện tại thất bại
   tryAlternativeConnection() {
     if (this.connectionAttempts >= this.maxConnectionAttempts) {
-      console.log('Đã vượt quá số lần thử kết nối tối đa');
       return;
     }
 
     if (this.useSocketIO && this.enableSocketIO) {
-      console.log('Socket.IO thất bại, chuyển sang WebSocket thuần');
       this.connectWebSocket();
     } else {
-      console.log("api_url", API_URL)
-      console.log('WebSocket thuần thất bại, không thử Socket.IO');
       // Chỉ tăng số lần thử và thử lại WebSocket
       this.connectionAttempts++;
       
       // Thử lại WebSocket sau 3 giây
       setTimeout(() => {
-        console.log('Thử kết nối lại WebSocket...');
         this.connectWebSocket();
       }, 3000);
     }
@@ -194,11 +174,9 @@ class SocketService {
   authenticateConnection() {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.log('Không có token, không thể xác thực WebSocket');
       return;
     }
 
-    console.log('Đang gửi token để xác thực WebSocket');
     if (this.useSocketIO) {
       this.socket.emit('authenticate', { token });
     } else {
@@ -211,14 +189,13 @@ class SocketService {
 
   // Xử lý tin nhắn nhận được
   handleMessage(data) {
-    console.log('🔔 Đã nhận tin nhắn WebSocket:', data);
     
     // Xử lý các loại message
     if (data.type === 'auth_required') {
       this.authenticateConnection();
     } 
     else if (data.type === 'auth_success') {
-      console.log('✅ WebSocket xác thực thành công');
+      // Authentication successful
     }
     else if (data.type === 'auth_fail') {
       console.error('❌ WebSocket xác thực thất bại');
@@ -230,7 +207,6 @@ class SocketService {
       
       // Gọi tất cả các message handlers đã đăng ký
       if (this.messageHandlers && this.messageHandlers.length > 0) {
-        console.log(`Gọi ${this.messageHandlers.length} message handlers đã đăng ký`);
         this.messageHandlers.forEach(handler => {
           try {
             handler(data);
@@ -242,7 +218,6 @@ class SocketService {
     }
     else {
       // Xử lý thông báo thông thường
-      console.log('🔔 Nhận thông báo thông thường');
       this.handleRegularNotification();
     }
   }
@@ -251,19 +226,9 @@ class SocketService {
   handleNewMessage(data) {
     // Lấy dữ liệu tin nhắn đúng cách (có thể nằm trong data.data hoặc trực tiếp trong data)
     const messageData = data.data?.type === 'new_message' ? data.data : data;
-    console.log('📩 New message received via WebSocket. Original data:', data);
-    console.log('📩 Extracted message data:', messageData);
     
     // Lấy chatStore
     const chatStore = useChatStore();
-    console.log('Current chatStore state:', {
-      activeConversation: chatStore.activeConversation,
-      hasMessages: chatStore.activeConversation ? 
-        (chatStore.messagesByUser[chatStore.activeConversation] ? 
-          `${chatStore.messagesByUser[chatStore.activeConversation].length} messages` : 'No messages'
-        ) : 'No active conversation',
-      userInfo: chatStore.userInfo
-    });
     
     // Cập nhật số lượng tin nhắn chưa đọc
     chatStore.fetchUnreadMessages();
@@ -279,8 +244,6 @@ class SocketService {
       recipient_fullname: messageData.recipient_fullname || null
     };
     
-    console.log('💬 Tin nhắn mới được chuyển đổi:', newMessage);
-    
     // Xác định người dùng hiện tại
     const currentUserId = chatStore.userInfo?.user_id;
     if (!currentUserId) {
@@ -290,7 +253,6 @@ class SocketService {
     
     // Kiểm tra xem tin nhắn có liên quan đến người dùng hiện tại không
     if (newMessage.sender !== currentUserId && newMessage.recipient !== currentUserId) {
-      console.log('❌ Tin nhắn không liên quan đến người dùng hiện tại, bỏ qua');
       return;
     }
     
@@ -298,9 +260,6 @@ class SocketService {
     const otherPartyId = currentUserId === newMessage.sender 
                        ? newMessage.recipient 
                        : newMessage.sender;
-    
-    console.log('ID của bên còn lại trong cuộc trò chuyện:', otherPartyId);
-    console.log('So sánh với ID cuộc trò chuyện đang mở:', chatStore.activeConversation);
     
     // Lưu thông tin recipient_fullname vào userInfoCache từ tin nhắn socket nếu có
     if (newMessage.recipient_fullname) {
@@ -315,7 +274,6 @@ class SocketService {
           fullname: newMessage.recipient_fullname,
           avatar: null
         };
-        console.log(`Đã lưu thông tin người dùng ${targetUserId} vào cache từ socket: ${newMessage.recipient_fullname}`);
       }
     }
     
@@ -331,33 +289,21 @@ class SocketService {
       // Chỉ cập nhật nếu tin nhắn mới hơn tin nhắn cũ
       if (!oldMessage || new Date(newMessage.created_at) > new Date(oldMessage.created_at)) {
         chatStore.lastMessages[otherPartyIdNum] = newMessage;
-        console.log(`✅ Đã cập nhật tin nhắn cuối cùng trong lastMessages cho người dùng ${otherPartyIdNum}: "${newMessage.content}"`);
-      } else {
-        console.log(`⚠️ Không cập nhật lastMessages vì tin nhắn cũ hơn tin nhắn hiện tại cho ${otherPartyIdNum}`);
       }
-    } else {
-      console.log('❌ Tin nhắn không thuộc về người dùng hiện tại, không cập nhật lastMessages');
     }
     
     // Thêm tin nhắn mới vào store - bất kể tin nhắn của ai
     const result = chatStore.addMessage(newMessage);
-    console.log('Kết quả thêm tin nhắn:', result);
     
     // Kiểm tra nếu cuộc trò chuyện này đang mở
     const isActiveConversation = chatStore.activeConversation === otherPartyId;
-    console.log('Đây có phải là cuộc trò chuyện đang mở không?', isActiveConversation);
     
     if (isActiveConversation) {
-      console.log('✅ Đây là cuộc trò chuyện đang mở, đánh dấu là đã đọc');
-      
       // Nếu người dùng hiện tại là người nhận, đánh dấu tin nhắn là đã đọc
       if (currentUserId === newMessage.recipient) {
-        console.log('👁️ Người dùng hiện tại là người nhận, đánh dấu tin nhắn đã đọc');
         chatStore.markMessageAsRead(newMessage.id);
       }
     } else {
-      console.log('❌ Đây không phải cuộc trò chuyện đang mở');
-      
       // Cập nhật danh sách cuộc trò chuyện
       chatStore.updateConversation(newMessage.sender, newMessage.recipient);
       
@@ -368,9 +314,8 @@ class SocketService {
     // Luôn tải tin nhắn mới nhất cho tất cả cuộc trò chuyện để cập nhật giao diện
     // Lưu ý: Điều này đảm bảo danh sách cuộc trò chuyện luôn có tin nhắn mới nhất
     setTimeout(() => {
-      console.log('🔄 Đang tải tin nhắn mới nhất cho tất cả cuộc trò chuyện sau khi nhận tin nhắn mới');
       chatStore.fetchLatestMessages().then(() => {
-        console.log('✅ Đã cập nhật tin nhắn mới nhất cho tất cả cuộc trò chuyện');
+        // Latest messages updated
       });
     }, 500);
     
@@ -404,7 +349,6 @@ class SocketService {
       } else {
         this.socket.send(JSON.stringify(message));
       }
-      console.log('Đã gửi tin nhắn qua WebSocket:', message);
       return true;
     } catch (error) {
       console.error('Lỗi khi gửi tin nhắn WebSocket:', error);
@@ -418,12 +362,10 @@ class SocketService {
 
     if (this.useSocketIO) {
       if (this.connected) {
-        console.log('Đóng kết nối Socket.IO');
         this.socket.disconnect();
       }
     } else {
       if (this.connected) {
-        console.log('Đóng kết nối WebSocket');
         this.socket.close(1000, 'User logout'); // 1000 là mã đóng kết nối bình thường
       }
     }
@@ -445,10 +387,7 @@ class SocketService {
     
     // Kiểm tra xem handler đã được đăng ký chưa
     if (!this.messageHandlers.includes(handler)) {
-      console.log('Đăng ký message handler mới');
       this.messageHandlers.push(handler);
-    } else {
-      console.log('Message handler đã được đăng ký trước đó');
     }
   }
   
@@ -461,10 +400,7 @@ class SocketService {
     
     const index = this.messageHandlers.indexOf(handler);
     if (index !== -1) {
-      console.log('Hủy đăng ký message handler');
       this.messageHandlers.splice(index, 1);
-    } else {
-      console.log('Không tìm thấy message handler để hủy đăng ký');
     }
   }
 }

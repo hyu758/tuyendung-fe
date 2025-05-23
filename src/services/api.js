@@ -95,7 +95,6 @@ export const chatService = {
     return axios.get('/api/conversations/')
   },
   getMessages(userId, options = {}) {
-    console.log('Gọi API lấy tin nhắn với userId:', userId, 'options:', options);
     const { page = 1, limit = 30 } = options;
     
     return axios.get(`/api/messages/`, { 
@@ -108,7 +107,6 @@ export const chatService = {
     });
   },
   getLatestMessages() {
-    console.log('Gọi API lấy tin nhắn mới nhất cho tất cả cuộc trò chuyện');
     return axios.get('/api/messages/latest/', {
       params: {
         separate_by_user: true  // Thêm tham số để API server lọc tin nhắn theo từng người
@@ -116,7 +114,6 @@ export const chatService = {
     });
   },
   sendMessage(recipientId, content) {
-    console.log('Gửi tin nhắn đến recipientId:', recipientId);
     
     // Lấy token từ localStorage
     const token = localStorage.getItem('token');
@@ -132,7 +129,6 @@ export const chatService = {
         
         // Lấy user_id từ token đã giải mã
         userId = decodedToken.user_id;
-        console.log('Đã lấy được user_id từ token:', userId);
       } catch (error) {
         console.error('Lỗi khi giải mã token:', error);
       }

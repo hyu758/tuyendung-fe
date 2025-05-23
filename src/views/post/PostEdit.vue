@@ -332,10 +332,8 @@ onMounted(async () => {
     // Load field data
     if (form.value.field) {
       const fieldResult = await fieldStore.getFieldById(form.value.field)
-      console.log(fieldResult)
       if (fieldResult.success) {
         currentField.value = fieldResult.data
-        console.log(currentField.value)
       }
     }
 

@@ -141,26 +141,8 @@ const props = defineProps({
   }
 });
 
-// Debug: Log props khi component được tạo
-console.log('ChatPopup được khởi tạo với props:', props.conversation);
 
-// Debug: Theo dõi thay đổi của props
-watch(() => props.conversation, (newConversation) => {
-  console.log('Props conversation đã thay đổi:', newConversation);
-}, { deep: true });
 
-// Theo dõi thay đổi của props.conversation.userId
-watch(() => props.conversation.userId, (newUserId, oldUserId) => {
-  console.log(`Props userId đã thay đổi từ ${oldUserId} thành ${newUserId}`);
-  
-  if (newUserId !== oldUserId) {
-    // Cập nhật activeConversation trong store
-    chatStore.activeConversation = newUserId;
-    
-    // Tải lại tin nhắn với userId mới
-    loadInitialMessages();
-  }
-});
 
 const emit = defineEmits(['close']);
 
@@ -188,7 +170,6 @@ const sortedMessages = computed(() => {
 
 // Toggle trạng thái thu nhỏ/mở rộng
 const toggleMinimize = () => {
-  console.log('Toggle minimize:', !isMinimized.value);
   isMinimized.value = !isMinimized.value;
   
   // Nếu mở rộng, cuộn xuống tin nhắn mới nhất và focus vào input
@@ -207,7 +188,6 @@ const toggleMinimize = () => {
 
 // Đóng popup chat
 const close = () => {
-  console.log('Đóng popup chat, userId:', props.conversation.userId);
   isHidden.value = true;
   
   // Reset conversation trong store
@@ -218,7 +198,6 @@ const close = () => {
   // Đợi animation hoàn thành rồi emit sự kiện đóng
   setTimeout(() => {
     emit('close');
-    console.log('Đã emit sự kiện đóng cho userId:', props.conversation.userId);
   }, 300);
 };
 
@@ -230,7 +209,6 @@ const getInitials = (name) => {
 
 // Thêm hàm xử lý lỗi khi tải avatar
 const handleAvatarError = (e) => {
-  console.warn('Lỗi khi tải avatar trong Popup:', e);
   
   // Xóa nguồn ảnh để tránh liên tục tải lỗi
   e.target.src = '';
@@ -252,7 +230,6 @@ const handleAvatarError = (e) => {
     // Thêm vào parent
     parent.appendChild(initialsDiv);
     
-    console.log(`Đã thay thế avatar lỗi với chữ cái đầu: ${initials}`);
   }
   
   // Đánh dấu avatar không hợp lệ
@@ -330,12 +307,8 @@ const sendMessage = async (e) => {
       messageInput.value?.focus();
     });
     
-    console.log('Gửi tin nhắn mới:', content, 'tới người dùng:', props.conversation.userId);
-    
     // Gửi tin nhắn qua store
     const message = await chatStore.sendMessage(props.conversation.userId, content);
-    
-    console.log('Tin nhắn đã được gửi:', message);
     
     // Cuộn xuống sau khi tin nhắn được gửi
     await nextTick();
@@ -348,14 +321,12 @@ const sendMessage = async (e) => {
 // Cuộn xuống tin nhắn cuối cùng
 const scrollToBottom = () => {
   if (messagesContainer.value) {
-    console.log('Thực hiện cuộn xuống tin nhắn cuối cùng');
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     
     // Thêm thời gian chờ để đảm bảo DOM đã cập nhật hoàn toàn
     setTimeout(() => {
       if (messagesContainer.value) {
         messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-        console.log('Thực hiện cuộn lần thứ hai để đảm bảo');
       }
     }, 100);
   }
@@ -375,7 +346,6 @@ const handleScroll = async () => {
       // Lưu lại vị trí scroll hiện tại
       const oldScrollHeight = messagesContainer.value.scrollHeight;
       
-      console.log('Tải thêm tin nhắn cũ, trang:', chatStore.page);
       
       // Lưu số lượng tin nhắn hiện tại
       const currentMessagesCount = chatStore.messagesByUser[props.conversation.userId]?.length || 0;
@@ -389,7 +359,6 @@ const handleScroll = async () => {
       // Kiểm tra xem có tin nhắn mới được thêm vào không
       const newMessagesCount = chatStore.messagesByUser[props.conversation.userId]?.length || 0;
       if (newMessagesCount > currentMessagesCount) {
-        console.log('Đã nhận được tin nhắn cũ:', newMessagesCount - currentMessagesCount);
         
         // Giữ nguyên vị trí scroll sau khi thêm tin nhắn
         await nextTick();
@@ -397,7 +366,6 @@ const handleScroll = async () => {
         messagesContainer.value.scrollTop = newScrollHeight - oldScrollHeight;
       } else {
         hasMoreMessages.value = false;
-        console.log('Không còn tin nhắn cũ nào');
       }
     } catch (error) {
       console.error('Lỗi khi tải thêm tin nhắn cũ:', error);
@@ -409,7 +377,6 @@ const handleScroll = async () => {
 
 // Xử lý tin nhắn mới từ socket
 const handleNewMessage = (data) => {
-  console.log('[ChatPopup] Nhận tin nhắn mới từ socket:', data);
   
   // Chuyển đổi dữ liệu tin nhắn
   let message;
@@ -430,16 +397,13 @@ const handleNewMessage = (data) => {
   } else if (data.type === 'chat_message') {
     message = data.message;
   } else {
-    console.log('[ChatPopup] Không phải tin nhắn chat, bỏ qua');
     return;
   }
   
   if (!message || !message.id) {
-    console.log('[ChatPopup] Dữ liệu tin nhắn không hợp lệ, bỏ qua');
     return;
   }
   
-  console.log('[ChatPopup] Tin nhắn được xử lý:', message);
   
   // Kiểm tra xem tin nhắn có thuộc cuộc trò chuyện này không
   const userIdNow = props.conversation.userId;
@@ -452,14 +416,11 @@ const handleNewMessage = (data) => {
     (message.sender === userIdNow && message.recipient === myUserId) || 
     (message.sender === myUserId && message.recipient === userIdNow);
   
-  console.log(`[ChatPopup] Tin nhắn có liên quan đến cuộc trò chuyện này (${userIdNow})? ${isRelevant}`, 
-      { sender: message.sender, recipient: message.recipient, myId: myUserId });
   
   // Chỉ xử lý tin nhắn liên quan đến cuộc trò chuyện này
   if (isRelevant) {
     // Đánh dấu là đã đọc nếu tin nhắn từ người khác và chưa được đọc
     if (message.sender === userIdNow && !message.is_read) {
-      console.log('[ChatPopup] Đánh dấu tin nhắn là đã đọc:', message.id);
       chatStore.markMessageAsRead(message.id);
     }
   } else if (message.sender !== myUserId && message.recipient === myUserId && !isMinimized.value) {
@@ -476,7 +437,6 @@ const handleNewMessage = (data) => {
 const loadInitialMessages = async () => {
   loading.value = true;
   try {
-    console.log('Tải tin nhắn ban đầu cho cuộc trò chuyện với người dùng:', props.conversation.userId);
     
     // Sử dụng fetchMessages thay vì getMessages để cập nhật tin nhắn vào store
     await chatStore.fetchMessages(props.conversation.userId, true);
@@ -484,7 +444,6 @@ const loadInitialMessages = async () => {
     // Lấy tin nhắn từ store
     messages.value = [...(chatStore.messagesByUser[props.conversation.userId] || [])];
     
-    console.log('Đã tải được', messages.value.length, 'tin nhắn ban đầu');
     
     // Cuộn xuống tin nhắn cuối cùng
     await nextTick();
@@ -495,9 +454,6 @@ const loadInitialMessages = async () => {
       msg => !msg.is_read && msg.sender === props.conversation.userId
     );
     
-    if (unreadMessages.length > 0) {
-      console.log('Đánh dấu', unreadMessages.length, 'tin nhắn là đã đọc');
-    }
     
     for (const message of unreadMessages) {
       await chatStore.markMessageAsRead(message.id);
@@ -514,7 +470,6 @@ const loadInitialMessages = async () => {
 watch(() => chatStore.messagesByUser[props.conversation.userId], (newMessages) => {
   if (!newMessages) return;
   
-  console.log('[ChatPopup] Tin nhắn của cuộc trò chuyện hiện tại đã thay đổi, số lượng tin nhắn:', newMessages.length);
   
   // Lọc ra chỉ những tin nhắn thuộc cuộc trò chuyện hiện tại
   const userIdNow = props.conversation.userId;
@@ -525,7 +480,6 @@ watch(() => chatStore.messagesByUser[props.conversation.userId], (newMessages) =
     (msg.sender === myUserId && msg.recipient === userIdNow)
   );
   
-  console.log(`[ChatPopup] Tìm thấy ${relevantMessages.length} tin nhắn thuộc cuộc trò chuyện ${userIdNow}`);
   
   // Cập nhật danh sách tin nhắn
   messages.value = [...relevantMessages];
@@ -533,7 +487,6 @@ watch(() => chatStore.messagesByUser[props.conversation.userId], (newMessages) =
 
 // Theo dõi thay đổi của messages để cuộn xuống tự động
 watch(() => messages.value.length, () => {
-  console.log('Số lượng tin nhắn đã thay đổi, tự động cuộn xuống');
   nextTick(() => {
     scrollToBottom();
   });
@@ -541,11 +494,9 @@ watch(() => messages.value.length, () => {
 
 // Thiết lập người dùng đang chat là active conversation trong store
 onMounted(async () => {
-  console.log('ChatPopup đã được gắn vào DOM');
-  
+    
   // Thiết lập active conversation trong store là người dùng hiện tại đang chat
   chatStore.activeConversation = props.conversation.userId;
-  console.log('Đã thiết lập activeConversation:', chatStore.activeConversation);
   
   await loadInitialMessages();
   
@@ -558,13 +509,10 @@ onMounted(async () => {
       resizeTextarea();
     }
   });
-  
-  console.log('Đã thiết lập ChatPopup hoàn tất');
 });
 
 // Xóa event listener khi component bị hủy
 onUnmounted(() => {
-  console.log('ChatPopup đã bị hủy', props.conversation.userId);
   
   // Reset conversation trong store
   if (chatStore.activeConversation === props.conversation.userId) {
@@ -578,8 +526,6 @@ onUnmounted(() => {
   
   // Hủy lắng nghe socket
   socketService.offMessage(handleNewMessage);
-  
-  console.log('Đã dọn dẹp tài nguyên của ChatPopup');
 });
 
 // Điều chỉnh chiều cao của textarea theo nội dung

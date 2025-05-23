@@ -44,7 +44,9 @@ import {
   faCrown,
   faExclamationTriangle,
   faChevronRight,
-  faPhoneAlt
+  faChevronLeft,
+  faPhoneAlt,
+  faFlag
 } from '@fortawesome/free-solid-svg-icons'
 import { 
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle,
@@ -100,7 +102,9 @@ library.add(
   faCrown,
   faExclamationTriangle,
   faChevronRight,
-  faPhoneAlt
+  faChevronLeft,
+  faPhoneAlt,
+  faFlag
 )
 
 // Cấu hình Axios
@@ -232,14 +236,12 @@ app.component('font-awesome-icon', FontAwesomeIcon)
 app.directive('scroll-bottom', {
   updated: (el, binding) => {
     if (binding.value !== binding.oldValue) {
-      console.log('v-scroll-bottom directive updated, scrolling to bottom');
       setTimeout(() => {
         el.scrollTop = el.scrollHeight;
       }, 100);
     }
   },
   mounted: (el) => {
-    console.log('v-scroll-bottom directive mounted, scrolling to bottom');
     setTimeout(() => {
       el.scrollTop = el.scrollHeight;
     }, 100);
@@ -254,8 +256,6 @@ router.isReady().then(() => {
         
         // Đăng ký xử lý tin nhắn mới cho toàn bộ ứng dụng
         socketService.onMessage((data) => {
-            console.log('[Main] Nhận tin nhắn từ socket:', data);
-            
             // Xử lý thông báo tin nhắn mới
             if (data && data.type === 'chat_message') {
                 const { useAuthStore } = import('./stores/auth');

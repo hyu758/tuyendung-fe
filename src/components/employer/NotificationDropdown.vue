@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useNotificationStore } from '../../stores/notification';
 import NotificationItem from './NotificationItem.vue';
 import socketService from '../../services/socketService';
@@ -137,22 +137,54 @@ const handleClickOutside = (event) => {
   }
 };
 
+// Handler cho thông báo từ socket
+const handleSocketNotification = (data) => {
+  // Chỉ xử lý thông báo thông thường (không phải tin nhắn)
+  if (data.type === 'new_message' || (data.data && data.data.type === 'new_message')) {
+    return;
+  }
+  
+  // Cập nhật số lượng thông báo chưa đọc
+  notificationStore.fetchUnreadCount();
+  
+  // Nếu dropdown đang mở, refresh danh sách thông báo
+  if (isOpen.value) {
+    notificationStore.fetchNotifications(true);
+  }
+  
+  // Hiển thị toast notification cho thông báo mới
+  addToast({
+    type: 'info',
+    message: 'Bạn có thông báo mới',
+    duration: 3000
+  });
+};
+
 // Watch for changes to isOpen
 watch(isOpen, (newValue) => {
   notificationStore.setDropdownState(newValue);
 });
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('click', handleClickOutside);
   
   // Khởi tạo kết nối WebSocket
   socketService.init();
   
+  // Đăng ký listener cho thông báo từ socket
+  socketService.onMessage(handleSocketNotification);
+  
   // Lấy số lượng thông báo chưa đọc khi component được mounted
-  notificationStore.fetchUnreadCount();
+  await notificationStore.fetchUnreadCount();
+  
+  // Chờ DOM update xong rồi kiểm tra kết nối socket
+  await nextTick();
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  
+  // Hủy đăng ký listener khi component bị destroy
+  socketService.offMessage(handleSocketNotification);
 });
 </script> 

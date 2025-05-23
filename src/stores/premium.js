@@ -110,7 +110,6 @@ export const usePremiumStore = defineStore('premium', {
     
     async checkPremiumExpiry() {
       if (this.isPremiumExpired) {
-        console.log('Premium đã hết hạn, đang hủy Premium...')
         return await this.cancelPremium()
       }
       return { success: true, active: this.isPremiumActive }
@@ -146,6 +145,12 @@ export const usePremiumStore = defineStore('premium', {
       this.selectedPackage = null
       this.paymentUrl = null
       this.error = null
+    },
+    
+    async checkAndCancelPremium() {
+      if (this.isPremium && this.isPremiumExpired) {
+        await this.cancelPremium()
+      }
     }
   }
 }) 

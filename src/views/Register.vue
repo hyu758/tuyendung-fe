@@ -272,18 +272,15 @@ const handleSubmit = async () => {
       }, 3000)
     } else {
       // Xử lý các lỗi chi tiết từ backend
-      console.log('Received errors from backend:', result.errors);
-      
       if (result.errors) {
-        // Gán lỗi từ backend vào biến errors của component
+        // Gán lỗi vào object errors để hiển thị theo từng field
         Object.keys(result.errors).forEach(field => {
-          // Trường hợp lỗi là mảng, lấy thông báo đầu tiên
           if (Array.isArray(result.errors[field])) {
-            errors.value[field] = result.errors[field][0];
+            errors.value[field] = result.errors[field][0]
           } else {
-            errors.value[field] = result.errors[field];
+            errors.value[field] = result.errors[field]
           }
-        });
+        })
       }
       
       // Nếu không có lỗi cụ thể, hiển thị lỗi chung

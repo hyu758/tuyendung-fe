@@ -86,7 +86,6 @@ export const usePostStore = defineStore('post', {
     async deletePost(id) {
       try {
         const url = `/api/posts/delete/${id}/`;
-        console.log("DELETE URL:", url);
         const response = await axios.delete(url);
         return {
           success: true,
@@ -213,7 +212,6 @@ export const usePostStore = defineStore('post', {
           }
         })
         
-        console.log('Recommended API response:', response.data);
         
         if (response.data && response.data.status === 200) {
           return {

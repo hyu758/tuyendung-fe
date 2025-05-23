@@ -266,10 +266,7 @@ const toggleSave = () => {
   emit('saveJob', props.job.id)
 }
 
-// Log job info on mount
-onMounted(() => {
-  console.log('Job card mounted:', props.job)
-})
+
 </script>
 
 <style scoped>

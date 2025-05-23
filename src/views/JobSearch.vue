@@ -435,19 +435,16 @@ const checkUserCriteria = async () => {
       const response = await axios.get('/api/criteria/');
       if (response.data.status === 200) {
         hasCriteria.value = true;
-        console.log('User has criteria:', hasCriteria.value);
       }
     } catch (error) {
       // Không hiển thị lỗi nếu API trả về 404 (chưa có tiêu chí)
       if (error.response?.status !== 404) {
         console.error('Lỗi khi lấy tiêu chí tìm việc:', error);
       }
-      console.log('User does not have criteria');
-      
+
       // Thêm xử lý để tránh gọi liên tục khi có lỗi 
       if (!error.response || error.response.status >= 500) {
         // Đặt timeout để tránh vòng lặp vô hạn
-        console.log('Server error when checking criteria, will not retry');
       }
     } finally {
       isCheckingCriteria.value = false;
@@ -509,18 +506,8 @@ const loadJobsFromQuery = async () => {
   try {
     const response = await axios.get('/api/posts/search/', { params: searchQuery })
     const data = response.data.data
-    console.log('API response data:', data)
     
-    // Kiểm tra các giá trị matches_criteria từ backend
-    if (data.results && data.results.length > 0) {
-      console.log('Sample matches_criteria values:', 
-        data.results.map(job => ({
-          id: job.id,
-          title: job.title,
-          matches_criteria: job.matches_criteria
-        }))
-      )
-    }
+
 
     // Chuẩn bị kết quả mới trước khi gán vào state
     const newJobs = data.results.map(job => ({

@@ -478,7 +478,7 @@ onMounted(async () => {
   }
   
   if (provincesResult.success) {
-    console.log('Provinces loaded:', addressStore.provinces)
+    // Provinces loaded successfully
   }
 })
 
@@ -490,12 +490,8 @@ const handleFieldChange = debounce(async () => {
     if (form.field_id) {
       const result = await fieldStore.fetchPositionsByField(form.field_id)
       if (result.success) {
-        console.log('Positions data:', result.data)
-        
         // Cập nhật đúng định dạng dữ liệu từ API
         positions.value = Array.isArray(result.data) ? result.data : []
-        
-        console.log('Updated positions:', positions.value)
       } else {
         console.error('Failed to fetch positions:', result.error)
       }
@@ -505,14 +501,6 @@ const handleFieldChange = debounce(async () => {
   }
 }, 300)
 
-// Thêm watch để debug
-watch(() => positions.value, (newVal) => {
-  console.log('Positions changed:', newVal)
-}, { deep: true })
-
-watch(() => form.position, (newVal) => {
-  console.log('Selected position changed:', newVal)
-})
 
 const handleProvinceChange = (name) => {
   const province = addressStore.provinces.find(p => p.name === name)
@@ -520,7 +508,6 @@ const handleProvinceChange = (name) => {
     form.district = ''
     addressStore.setSelectedProvince(province.code)
   }
-  
 }
 
 // Thêm watch để validate mức lương
@@ -570,9 +557,7 @@ const handleSubmit = async () => {
       field: form.field_id
     }
     
-    console.log('Dữ liệu gửi đi:', postData)
     const result = await postStore.createPost(postData)
-    console.log('Kết quả trả về:', result)
     
     // Xử lý kết quả thành công
     if (result.success) {
@@ -603,7 +588,7 @@ const handleSubmit = async () => {
       }
     }
   } catch (err) {
-      console.error('Error creating post:', err)
+    console.error('Error creating post:', err)
     $toast.error('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.')
   } finally {
     isSubmitting.value = false

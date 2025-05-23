@@ -138,8 +138,6 @@ export const useEnterpriseStore = defineStore('enterprise', {
             }
           }
         })
-
-        console.log('FormData being sent:', Object.fromEntries(formData))
         
         const response = await axios.post('api/enterprises/create/', formData, {
           headers: {

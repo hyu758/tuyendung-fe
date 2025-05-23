@@ -843,7 +843,6 @@ const handleImageError = (e) => {
     return;
   }
   
-  console.warn('Lỗi khi tải hình ảnh:', e.target.src);
   
   // Đánh dấu đã xử lý để tránh gọi lại nhiều lần
   e.target.classList.add('img-error-handled');
@@ -916,7 +915,6 @@ const fetchJobDetail = async () => {
     const response = await postStore.fetchPostById(route.params.id)
     job.value = response.data.data
   } catch (error) {
-    console.error('Error fetching job details:', error)
   } finally {
     loading.value = false
   }
@@ -1073,13 +1071,11 @@ const submitApplication = async () => {
         has_applicants: true
       }
       
-      console.log('Đã cập nhật trạng thái ứng tuyển:', job.value.latest_application_date)
       
       // Hiển thị toast thành công
       showToast('Ứng tuyển thành công! CV của bạn đã được gửi đến nhà tuyển dụng.', 'success')
     }
   } catch (error) {
-    console.error('Lỗi khi gửi ứng tuyển:', error)
     
     // Xử lý thông báo từ API
     if (error.response?.data) {
@@ -1244,18 +1240,9 @@ const showPremiumRequiredModal = (feature) => {
 
 // Mở chat với nhà tuyển dụng
 const chatWithEmployer = () => {
-  console.log('------------ DEBUG CHAT WITH EMPLOYER ------------');
-  console.log('Auth status:', {
-    isLoggedIn: authStore.isLoggedIn,
-    isAuthenticated: authStore.isAuthenticated,
-    userRole: authStore.userRole,
-    isCandidate: authStore.isCandidate,
-    isPremium: authStore.userInfo?.is_premium,
-    token: !!localStorage.getItem('token')
-  });
+
   
   if (!authStore.isLoggedIn) {
-    console.error('Không thể chat: Người dùng chưa đăng nhập');
     // Chuyển hướng đến trang đăng nhập kèm theo URL redirect
     addToast({
       title: 'Cần đăng nhập',
@@ -1270,7 +1257,6 @@ const chatWithEmployer = () => {
   }
   
   if (!authStore.isCandidate) {
-    console.error('Không thể chat: Người dùng không phải là ứng viên');
     addToast({
       title: 'Không thể nhắn tin',
       message: 'Chỉ tài khoản ứng viên mới có thể nhắn tin với nhà tuyển dụng',
@@ -1280,7 +1266,6 @@ const chatWithEmployer = () => {
   }
   
   if (!authStore.userInfo?.is_premium) {
-    console.error('Không thể chat: Người dùng không phải là Premium');
     showPremiumRequiredModal('chat');
     return
   }
@@ -1298,26 +1283,14 @@ const chatWithEmployer = () => {
   // Tìm ID của nhà tuyển dụng, ưu tiên theo thứ tự: user_id, enterprise_id, enterprise
   let employerId = null
   
-  // Lấy các thông tin quan trọng của job object để kiểm tra
-  console.log('Thông tin job để nhắn tin:', {
-    id: job.value.id,
-    title: job.value.title,
-    user_id: job.value.user_id,
-    enterprise_id: job.value.enterprise_id, 
-    enterprise: job.value.enterprise,
-    enterprise_name: job.value.enterprise_name
-  })
   
   // Xác định employerId theo thứ tự ưu tiên
   if (job.value.user_id) {
     employerId = job.value.user_id
-    console.log('Sử dụng user_id:', employerId)
   } else if (job.value.enterprise_id) {
     employerId = job.value.enterprise_id
-    console.log('Sử dụng enterprise_id:', employerId)
   } else if (job.value.enterprise) {
     employerId = job.value.enterprise
-    console.log('Sử dụng enterprise:', employerId)
   }
   
   // Kiểm tra xem có ID không
@@ -1330,16 +1303,10 @@ const chatWithEmployer = () => {
     return
   }
   
-  // Đảm bảo kết nối socket được khởi tạo trước khi chuyển hướng
   if (!socketService.connected) {
-    console.log('Đang khởi tạo kết nối Socket trước khi chuyển trang...')
     socketService.init()
   }
   
-  // Logic để mở chat với nhà tuyển dụng
-  console.log(`Chuyển hướng đến trang nhắn tin với nhà tuyển dụng ID: ${employerId}`)
-  
-  // Chờ một chút để đảm bảo socket đã kết nối
   setTimeout(() => {
     router.push({
       name: 'candidate-messages',
@@ -1347,7 +1314,6 @@ const chatWithEmployer = () => {
         user: employerId 
       }
     }).catch(error => {
-      console.error('Lỗi chuyển hướng đến trang chat:', error)
       addToast({
         title: 'Lỗi chuyển hướng',
         message: 'Không thể mở trang chat, vui lòng thử lại sau',
@@ -1394,7 +1360,6 @@ const handleSaveJob = async (relatedJob) => {
       })
     }
   } catch (error) {
-    console.error('Lỗi khi lưu/bỏ lưu công việc:', error)
     addToast({
       title: 'Lỗi',
       message: 'Đã xảy ra lỗi khi thực hiện thao tác',
@@ -1427,7 +1392,6 @@ const navigateToJob = (jobId) => {
 // Watch for route param changes to reload job data when clicking on related jobs
 watch(() => route.params.id, (newId, oldId) => {
   if (newId !== oldId && newId) {
-    console.log(`Job ID changed from ${oldId} to ${newId}, reloading job data...`)
     loading.value = true
     fetchJobDetail()
     // Scroll to top of page
@@ -1484,7 +1448,6 @@ const submitReport = async () => {
       })
     }
   } catch (error) {
-    console.error('Lỗi khi gửi báo cáo:', error)
     
     if (error.response?.data?.message) {
       reportError.value = error.response.data.message
@@ -1499,8 +1462,6 @@ const submitReport = async () => {
 onMounted(() => {
   // Tải thông tin profile để cập nhật trạng thái Premium
   authStore.fetchUserProfile().then(() => {
-    console.log('[DEBUG] Thông tin người dùng sau khi tải profile:', authStore.userInfo);
-    console.log('[DEBUG] Trạng thái premium sau khi tải profile:', authStore.userInfo?.is_premium);
   });
   
   fetchJobDetail()

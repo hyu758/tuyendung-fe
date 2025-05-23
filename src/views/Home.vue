@@ -482,7 +482,6 @@ const categories = ref([]);
 const fetchPosts = async () =>{
   const postStore = usePostStore();
   const result = await postStore.fetchPosts(1, 9, "-salary-max");
-  console.log(result);
   if (result.success){
     featuredJobs.value = result.data.data.results;
   }
@@ -530,7 +529,6 @@ onMounted(async () => {
     await addressStore.fetchProvinces();
     
     const result = await fieldStore.fetchFields();
-    console.log(result);
     if (result.success) {
       categories.value = result.data;
     }

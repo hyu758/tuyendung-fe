@@ -21,7 +21,7 @@
             </a>
           </div>
         </div>
-
+        
         <!-- Liên kết -->
         <div>
           <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2 inline-block">
@@ -89,7 +89,7 @@
             </li>
           </ul>
         </div>
-
+        
         <!-- Liên hệ -->
         <div>
           <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b-2 border-blue-500 pb-2 inline-block">
@@ -131,7 +131,7 @@
           </form>
         </div>
       </div>
-
+      
       <!-- Bản quyền -->
       <div class="mt-8 pt-4 border-t border-gray-200 text-center">
         <p class="text-gray-500 text-sm">
@@ -144,7 +144,7 @@
 
 <script setup>
 // Không cần logic JavaScript phức tạp cho Footer
-</script>
+</script> 
 
 <style scoped>
 /* Animation cho hover effects */

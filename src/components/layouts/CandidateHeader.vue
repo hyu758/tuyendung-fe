@@ -477,7 +477,6 @@ const username = ref('')
 
 watch(() => authStore.user, (newUser) => {
   if (newUser) {
-    console.log('New user is_active:', newUser.is_active)
     // Kiểm tra premium khi thông tin người dùng thay đổi
     checkPremiumExpiry()
   }
@@ -566,7 +565,6 @@ const logoutMobile = () => {
 // Tải thêm thông báo trên mobile
 const loadMoreMobileNotifications = async () => {
   if (!isAuthenticated.value) {
-    console.log('Không thể tải thông báo khi chưa đăng nhập');
     return;
   }
   await notificationStore.fetchNotifications();
@@ -600,10 +598,7 @@ async function checkPremiumExpiry() {
   // Nếu người dùng có Premium, kiểm tra xem có hết hạn chưa
   if (premiumStore.isPremium) {
     if (premiumStore.isPremiumExpired) {
-      console.log('Premium đã hết hạn, đang hủy Premium...')
       await premiumStore.cancelPremium()
-    } else {
-      console.log('Premium còn hạn sử dụng')
     }
   }
 }
@@ -626,7 +621,6 @@ const markAllAsRead = async () => {
       });
     }
   } catch (error) {
-    console.error('Error marking all as read:', error);
     addToast({
       type: 'error',
       message: 'Đã xảy ra lỗi khi đánh dấu thông báo đã đọc'

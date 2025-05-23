@@ -38,26 +38,16 @@ watch(() => authStore.isAuthenticated, (newValue) => {
 
 // Kiểm tra token khi app khởi động
 onMounted(async () => {
-  console.log('App mounted, checking authentication...')
-  
   // Nếu có token trong localStorage, kiểm tra tính hợp lệ
   if (authStore.token || localStorage.getItem('token')) {
-    console.log('Token found, checking validity...')
-    const isValid = await authStore.checkTokenValidity()
-    
-    if (!isValid) {
-      console.log('Token invalid or expired')
-      // Không cần logout ở đây vì checkTokenValidity đã xử lý
-    } else {
-      console.log('Token valid')
-    }
+    await authStore.checkTokenValidity()
+
   }
   
   // Thiết lập kiểm tra token định kỳ (5 phút kiểm tra một lần)
   startTokenCheckInterval()
   
   if (localStorage.getItem('token') && !authStore.user) {
-    console.log('App mounted - Initializing user data from token')
     await authStore.updateUserFromToken()
     
     // Kiểm tra hạn Premium nếu người dùng đã đăng nhập
@@ -73,7 +63,7 @@ onMounted(async () => {
   
   // Theo dõi chatManager ref
   watchEffect(() => {
-    console.log('App.vue - chatManager ref:', chatManager.value)
+    // chatManager ref changed
   })
   
   // Hiển thị thông báo khi component được mounted
@@ -91,16 +81,14 @@ onUnmounted(() => {
 
 // Hàm kiểm tra hạn Premium và xử lý khi hết hạn
 async function checkPremiumExpiry() {
-  console.log('Kiểm tra hạn Premium')
   if (premiumStore.isPremium) {
     if (premiumStore.isPremiumExpired) {
-      console.log('Premium đã hết hạn, đang hủy Premium...')
       const result = await premiumStore.cancelPremium()
       if (result.success) {
         showNotification('info', 'Gói Premium của bạn đã hết hạn và đã được hủy tự động.')
       }
     } else {
-      console.log('Premium còn hạn sử dụng')
+      // Premium còn hạn sử dụng
     }
   }
 }
@@ -152,9 +140,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 // Cung cấp phương thức mở chat cho toàn bộ ứng dụng
 const openChat = (userId) => {
-  console.log('openChat được gọi trong App.vue với userId:', userId)
   if (chatManager.value) {
-    console.log('Gọi phương thức openChat của chatManager')
     chatManager.value.openChat(userId)
   } else {
     console.warn('chatManager không tồn tại, không thể mở chat')
@@ -179,7 +165,6 @@ const startTokenCheckInterval = () => {
   
   // Thiết lập interval mới (5 phút = 300000ms)
   tokenCheckInterval = setInterval(async () => {
-    console.log('Periodic token check...')
     if (authStore.isAuthenticated) {
       await authStore.checkTokenValidity()
     }

@@ -154,13 +154,9 @@ const chatStore = useChatStore();
 const chatManager = inject('chatManager', null);
 const openChatFunction = inject('openChat', null);
 
-// Debug: Log các tham số đã inject
-console.log('ChatDropdown - chatManager đã inject:', !!chatManager);
-console.log('ChatDropdown - openChat đã inject:', !!openChatFunction);
-
 // Theo dõi thay đổi của chatManager
 watch(() => chatManager, (newVal, oldVal) => {
-  console.log('ChatDropdown - chatManager đã thay đổi:', newVal);
+  // chatManager changed
 }, { deep: true });
 
 const userRole = computed(() => authStore.userRole);
@@ -169,10 +165,6 @@ const currentUserId = computed(() => authStore.userInfo?.user_id);
 
 // Kiểm tra xem người dùng có phải là Premium không
 const userIsPremium = computed(() => {
-  // Debug trạng thái premium
-  console.log('[DEBUG] Thông tin người dùng:', authStore.userInfo);
-  console.log('[DEBUG] Trạng thái premium:', authStore.userInfo?.is_premium);
-  
   // Chỉ kiểm tra trường is_premium từ API
   return authStore.userInfo?.is_premium === true;
 });
@@ -181,8 +173,6 @@ const userIsPremium = computed(() => {
 const handleSocketMessage = (data) => {
   // Chỉ xử lý tin nhắn khi người dùng là Premium
   if (!userIsPremium.value) return;
-  
-  console.log('ChatDropdown nhận được tin nhắn mới qua socket:', data);
   
   if (data && (data.type === 'chat_message' || data.type === 'new_message')) {
     const message = data.message || data.data;
@@ -197,30 +187,36 @@ const handleSocketMessage = (data) => {
       const messageExists = recentMessages.value.some(msg => msg.id === message.id);
       
       if (!messageExists) {
-        // Lấy thông tin người gửi
-        const userId = message.sender;
-        chatStore.fetchUserInfo(userId).then(userInfo => {
-          const newMessage = {
-            id: message.id,
-            senderId: message.sender,
-            sender: message.sender,
-            recipient: message.recipient,
-            content: message.content,
-            created_at: message.created_at || new Date().toISOString(),
-            is_read: false,
-            senderName: userInfo?.fullname || `Người dùng #${userId}`,
-            avatar: userInfo?.avatar || null,
-            isOnline: true
-          };
-          
-          // Thêm vào đầu danh sách
-          recentMessages.value = [newMessage, ...recentMessages.value.filter(msg => msg.id !== newMessage.id)];
-          
-          // Hiển thị thông báo (nếu cần)
-          if (!isOpen.value) {
-            // Có thể thêm thông báo âm thanh hoặc animation ở đây
-          }
-        });
+        // Sử dụng trực tiếp tên từ dữ liệu socket
+        let displayName;
+        if (message.sender_fullname) {
+          displayName = message.sender_fullname;
+        } else if (message.conversation_partner_fullname) {
+          displayName = message.conversation_partner_fullname;
+        } else {
+          displayName = `Người dùng #${message.sender}`;
+        }
+        
+        const newMessage = {
+          id: message.id,
+          senderId: message.sender,
+          sender: message.sender,
+          recipient: message.recipient,
+          content: message.content,
+          created_at: message.created_at || new Date().toISOString(),
+          is_read: false,
+          senderName: displayName,
+          avatar: null,
+          isOnline: true
+        };
+        
+        // Thêm vào đầu danh sách
+        recentMessages.value = [newMessage, ...recentMessages.value.filter(msg => msg.id !== newMessage.id)];
+        
+        // Hiển thị thông báo (nếu cần)
+        if (!isOpen.value) {
+          // Có thể thêm thông báo âm thanh hoặc animation ở đây
+        }
       }
     }
   }
@@ -266,30 +262,26 @@ const loadUnreadMessages = async () => {
   try {
     const messages = await chatStore.fetchUnreadMessages();
     
-    // Tạo danh sách người dùng cần lấy thông tin
-    const userIdsToFetch = [];
-    for (const msg of messages) {
-      if (!chatStore.userInfoCache[msg.sender]) {
-        userIdsToFetch.push(msg.sender);
-      }
-    }
-    
-    // Tải thông tin người dùng một lần cho tất cả IDs
-    if (userIdsToFetch.length > 0) {
-      await Promise.all(userIdsToFetch.map(id => chatStore.fetchUserInfo(id)));
-    }
-    
     // Chỉ lấy tin nhắn chưa đọc để bổ sung vào danh sách
     const unreadMessages = messages.map(msg => {
-      // Lấy thông tin người dùng từ cache
-      const userInfo = chatStore.userInfoCache[msg.sender];
+      // Sử dụng trực tiếp tên từ API response
+      let displayName;
+      if (msg.conversation_partner_fullname) {
+        displayName = msg.conversation_partner_fullname;
+      } else if (msg.sender_fullname) {
+        displayName = msg.sender_fullname;
+      } else if (msg.recipient_fullname) {
+        displayName = msg.recipient_fullname;
+      } else {
+        displayName = `Người dùng #${msg.sender}`;
+      }
       
       return {
         ...msg,
         senderId: msg.sender,
-        senderName: userInfo?.fullname || `Người dùng #${msg.sender}`,
+        senderName: displayName,
         isOnline: false,
-        avatar: userInfo?.avatar || null
+        avatar: null // API chưa trả về avatar
       };
     });
     
@@ -321,32 +313,23 @@ const loadRecentConversations = async () => {
     
     // Xử lý các cuộc trò chuyện để hiển thị
     const conversations = [];
-    const userIdsToFetch = [];
-    
-    // Tạo danh sách người dùng cần lấy thông tin
-    for (const message of latestMessages || []) {
-      const isUserSender = message.sender === currentUserId.value;
-      const otherUserId = isUserSender ? message.recipient : message.sender;
-      
-      // Kiểm tra xem đã có thông tin user này trong cache chưa
-      if (!chatStore.userInfoCache[otherUserId]) {
-        userIdsToFetch.push(otherUserId);
-      }
-    }
-    
-    // Tải thông tin người dùng một lần duy nhất cho tất cả IDs
-    if (userIdsToFetch.length > 0) {
-      console.log(`Tải thông tin cho ${userIdsToFetch.length} người dùng`);
-      await Promise.all(userIdsToFetch.map(id => chatStore.fetchUserInfo(id)));
-    }
     
     // Xử lý tin nhắn mới nhất để hiển thị
     for (const message of latestMessages || []) {
       const isUserSender = message.sender === currentUserId.value;
       const otherUserId = isUserSender ? message.recipient : message.sender;
       
-      // Lấy thông tin người dùng từ cache
-      const userInfo = chatStore.userInfoCache[otherUserId];
+      // Sử dụng trực tiếp tên từ API response
+      let displayName;
+      if (message.conversation_partner_fullname) {
+        displayName = message.conversation_partner_fullname;
+      } else if (isUserSender && message.recipient_fullname) {
+        displayName = message.recipient_fullname;
+      } else if (!isUserSender && message.sender_fullname) {
+        displayName = message.sender_fullname;
+      } else {
+        displayName = `Người dùng #${otherUserId}`;
+      }
       
       conversations.push({
         id: message.id,
@@ -356,8 +339,8 @@ const loadRecentConversations = async () => {
         content: message.content,
         created_at: message.created_at,
         is_read: message.is_read,
-        senderName: userInfo?.fullname || `Người dùng #${otherUserId}`,
-        avatar: userInfo?.avatar || null,
+        senderName: displayName,
+        avatar: null, // API chưa trả về avatar
         isOnline: false // Có thể cập nhật từ websocket sau
       });
     }
@@ -384,13 +367,9 @@ const openNewMessageModal = () => {
   // Kiểm tra người dùng có phải Premium không
   if (!userIsPremium.value) {
     // Không chuyển hướng đến trang Premium, chỉ hiển thị thông báo
-    console.log('Người dùng không phải Premium, hiển thị thông báo');
-    // Có thể thêm toast hoặc thông báo ở đây nếu cần
     return;
   }
   
-  console.log('Mở modal soạn tin nhắn mới');
-  // Phần này sẽ xử lý sau khi có component cho modal soạn tin nhắn mới
 };
 
 // Mở box chat nhỏ khi click vào tin nhắn
@@ -398,42 +377,33 @@ const openChatPopup = (userId) => {
   // Kiểm tra người dùng có phải Premium không
   if (!userIsPremium.value) {
     // Không chuyển hướng đến trang Premium, chỉ hiển thị thông báo
-    console.log('Người dùng không phải Premium, hiển thị thông báo');
-    // Có thể thêm toast hoặc thông báo ở đây nếu cần
     return;
   }
   
-  console.log('Mở box chat nhỏ với người dùng:', userId);
   
   // Đóng dropdown
   isOpen.value = false;
   
   // Thử sử dụng hàm openChat được inject
   if (openChatFunction) {
-    console.log('Sử dụng hàm openChat đã inject');
     try {
       openChatFunction(userId);
-      console.log('Đã gọi openChatFunction thành công');
+      return;
     } catch (error) {
       console.error('Lỗi khi gọi openChatFunction:', error);
     }
-    return;
   }
   
   // Nếu không có openChat, sử dụng chatManager
   if (chatManager && chatManager.value) {
-    console.log('Sử dụng chatManager.value.openChat');
     try {
       chatManager.value.openChat(userId);
-      console.log('Đã gọi chatManager.value.openChat thành công');
     } catch (error) {
       console.error('Lỗi khi gọi chatManager.value.openChat:', error);
     }
   } else if (chatManager) {
-    console.log('Sử dụng chatManager.openChat');
     try {
       chatManager.openChat(userId);
-      console.log('Đã gọi chatManager.openChat thành công');
     } catch (error) {
       console.error('Lỗi khi gọi chatManager.openChat:', error);
     }
@@ -448,17 +418,13 @@ const initSocketConnection = () => {
   if (!userIsPremium.value) return;
   
   if (!socketService.connected) {
-    console.log('Khởi tạo kết nối socket trong ChatDropdown');
     socketService.init();
     
     // Kiểm tra trạng thái kết nối sau 2 giây
     setTimeout(() => {
       if (!socketService.connected) {
-        console.log('⚠️ Socket chưa kết nối sau 2 giây, thử kết nối lại...');
         socketService.disconnect();
         socketService.init();
-      } else {
-        console.log('✅ Socket đã kết nối thành công!');
       }
     }, 2000);
   }
@@ -502,8 +468,7 @@ onMounted(() => {
   
   // Tải thông tin profile để cập nhật trạng thái Premium
   authStore.fetchUserProfile().then(() => {
-    console.log('[DEBUG] Thông tin người dùng sau khi tải profile:', authStore.userInfo);
-    console.log('[DEBUG] Trạng thái premium sau khi tải profile:', authStore.userInfo?.is_premium);
+    // Profile loaded
   });
   
   // Chỉ khởi tạo kết nối socket và đăng ký handler khi người dùng là Premium
@@ -523,7 +488,6 @@ onMounted(() => {
     // Thiết lập kiểm tra kết nối socket định kỳ
     const socketCheckInterval = setInterval(() => {
       if (!socketService.connected) {
-        console.log('⚠️ Socket đã ngắt kết nối, thử kết nối lại...');
         socketService.init();
       }
     }, 30000); // Kiểm tra mỗi 30 giây

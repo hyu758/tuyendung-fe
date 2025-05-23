@@ -292,7 +292,6 @@ async function loadData() {
     // Load categories
     const fieldStore = useFieldStore()
     const fields = await fieldStore.fetchFields()
-    console.log(fields)
     if (fields?.data) {
       categories.value = fields.data.map(field => field.name)
     }

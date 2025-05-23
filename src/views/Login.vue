@@ -145,8 +145,6 @@ const handleSubmit = async () => {
     
     // Xử lý các lỗi cụ thể từ backend
     if (!result?.success && result?.errors) {
-      console.log('Received errors from backend:', result.errors);
-      
       // Gán lỗi từ backend vào biến errors
       Object.keys(result.errors).forEach(field => {
         // Trường hợp lỗi là mảng, lấy thông báo đầu tiên

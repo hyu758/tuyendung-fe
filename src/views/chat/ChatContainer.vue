@@ -163,7 +163,6 @@ const isAtBottom = ref(true);
 
 // Inject userId từ component cha nếu có
 const injectedUserId = inject('chatUserId', null);
-console.log('Giá trị userId được inject từ component cha:', injectedUserId);
 
 // ID của người dùng hiện tại
 const currentUserId = computed(() => authStore.userInfo?.user_id);
@@ -171,10 +170,8 @@ const currentUserId = computed(() => authStore.userInfo?.user_id);
 // Theo dõi thay đổi của tham số user trong URL
 watch(() => route.query.user, (newUserId) => {
   if (newUserId) {
-    console.log('Tham số user đã thay đổi:', newUserId);
     const userId = parseInt(newUserId, 10);
     if (!isNaN(userId)) {
-      console.log('Chọn cuộc trò chuyện mới từ URL thay đổi:', userId);
       selectConversation(userId);
     }
   }
@@ -256,7 +253,6 @@ const activeConversation = computed(() => {
 
 // Lấy tên hiển thị của người dùng
 const getDisplayName = (conversation) => {
-  console.log('Lấy tên hiển thị cho conversation:', conversation);
   
   // Kiểm tra cache một lần nữa để đảm bảo có tên mới nhất
   const userId = conversation.userId;
@@ -275,11 +271,9 @@ const getDisplayName = (conversation) => {
 
 // Chọn một cuộc trò chuyện
 const selectConversation = async (userId) => {
-  console.log('Đang chọn cuộc trò chuyện với userId:', userId);
   chatStore.activeConversation = userId;
   activeConversationId.value = userId;
   if (chatStore.activeConversation === userId && chatStore.sortedMessages.length > 0) {
-    console.log('Cuộc trò chuyện này đã được chọn và có tin nhắn, không tải lại');
     return;
   }
   chatStore.page = 1;
@@ -303,7 +297,6 @@ const selectConversation = async (userId) => {
     await nextTick();
   setTimeout(() => {
     scrollToBottom();
-    console.log('Đã cuộn xuống tin nhắn mới nhất sau khi chọn cuộc trò chuyện');
   }, 100);
   } catch (error) {
     console.error('Lỗi khi tải tin nhắn:', error);
@@ -320,7 +313,6 @@ const markMessagesAsRead = async () => {
   );
   
   if (unreadMessages.length > 0) {
-    console.log(`Đánh dấu ${unreadMessages.length} tin nhắn là đã đọc`);
     
     // Đánh dấu từng tin nhắn là đã đọc
     for (const message of unreadMessages) {
@@ -340,16 +332,12 @@ const sendMessage = async (content) => {
   try {
     // Gửi tin nhắn và lấy kết quả trả về
     const newMessage = await chatStore.sendMessage(chatStore.activeConversation, content);
-    console.log('📤 Đã gửi tin nhắn mới:', newMessage);
-    
-    // Cập nhật tin nhắn mới nhất và thời gian cho cuộc trò chuyện hiện tại
-    // (Đảm bảo UI được cập nhật ngay lập tức)
+
     const currentConversation = processedConversations.value.find(
       conv => conv.userId === chatStore.activeConversation
     );
     
     if (currentConversation) {
-      console.log('Cập nhật tin nhắn mới nhất cho cuộc trò chuyện hiện tại:', currentConversation.userId);
       currentConversation.lastMessage = content;
       currentConversation.lastMessageTime = new Date().toISOString();
     }
@@ -357,9 +345,7 @@ const sendMessage = async (content) => {
     // Thử tải tin nhắn mới nhất sau khi gửi tin nhắn để cập nhật danh sách
     setTimeout(async () => {
       try {
-        console.log('Tải tin nhắn mới nhất sau khi gửi tin nhắn');
         await chatStore.fetchLatestMessages();
-        console.log('Đã cập nhật tin nhắn mới nhất cho tất cả cuộc trò chuyện');
       } catch (error) {
         console.error('Lỗi khi tải tin nhắn mới nhất sau khi gửi:', error);
       }
@@ -369,9 +355,7 @@ const sendMessage = async (content) => {
       const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
       
       if (latestMessage && latestMessage.content === content) {
-        console.log('✅ Tin nhắn đã được thêm vào danh sách, không cần mô phỏng');
       } else {
-        console.log('⚠️ Không tìm thấy tin nhắn mới trong danh sách, mô phỏng tin nhắn');
         if (newMessage) {
           chatStore.addMessage({
             ...newMessage,
@@ -393,14 +377,12 @@ const sendMessage = async (content) => {
 // Cuộn xuống tin nhắn cuối cùng
 const scrollToBottom = () => {
   if (messagesContainer.value) {
-    console.log('Thực hiện cuộn xuống cuối cùng');
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     
     // Thử cuộn xuống lần nữa sau một khoảng thời gian ngắn
     setTimeout(() => {
       if (messagesContainer.value) {
         messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-        console.log('Đã cuộn xuống lần thứ hai để đảm bảo hiển thị tin nhắn mới nhất');
       }
     }, 100);
   }
@@ -417,7 +399,6 @@ const handleScroll = async () => {
   
   // Khi người dùng cuộn lên gần đầu (20px từ đỉnh), tải thêm tin nhắn cũ hơn
   if (scrollTop <= 20 && !loadingOlderMessages.value && chatStore.hasMoreMessages) {
-    console.log('Đang tải thêm tin nhắn cũ hơn...');
     
     // Lưu lại vị trí cuộn và chiều cao trước khi tải
     const previousScrollHeight = scrollHeight;
@@ -442,8 +423,6 @@ const handleScroll = async () => {
         
         // Điều chỉnh cuộn để giữ vị trí người dùng đang xem
         messagesContainer.value.scrollTop = newScrollTop;
-        
-        console.log(`Đã điều chỉnh scrollTop từ 0 đến ${newScrollTop}px`);
       }
     } catch (error) {
       console.error('Lỗi khi tải thêm tin nhắn cũ hơn:', error);
@@ -458,7 +437,6 @@ const handleScroll = async () => {
 
 // Theo dõi nội dung tin nhắn để phát hiện thay đổi
 watch(() => JSON.stringify(chatStore.sortedMessages), () => {
-  console.log('Nội dung tin nhắn đã thay đổi (deep check)');
   
   // Đánh dấu tin nhắn mới là đã đọc
   markMessagesAsRead();
@@ -474,7 +452,6 @@ watch(() => JSON.stringify(chatStore.sortedMessages), () => {
     const isFromCurrentUser = latestMessage && latestMessage.sender === currentUserId.value;
     
     if (isNearBottom || isFromCurrentUser) {
-      console.log('Nội dung thay đổi và người dùng gần cuối hoặc gửi tin nhắn mới, đang cuộn xuống');
       // Cuộn xuống ngay lập tức và thêm một lần nữa sau khi DOM cập nhật
       scrollToBottom();
       nextTick(() => {
@@ -487,7 +464,6 @@ watch(() => JSON.stringify(chatStore.sortedMessages), () => {
 // Cập nhật watcher cho tin nhắn - đảm bảo theo dõi tin nhắn cuối cùng
 watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
   if (newLength > oldLength) {
-    console.log(`Số lượng tin nhắn đã tăng từ ${oldLength} lên ${newLength}`);
     
     // Nếu có tin nhắn mới và người dùng đang ở gần cuối hoặc tin nhắn là từ người dùng hiện tại, cuộn xuống
     const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
@@ -499,7 +475,6 @@ watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
         if (userInfo && userInfo.avatar && !chatStore.activeConversation?.avatar) {
           // Cập nhật avatar nếu chưa có
           if (chatStore.activeConversation) {
-            console.log('Cập nhật avatar cho người dùng đang trò chuyện:', latestMessage.sender);
             chatStore.activeConversation.avatar = userInfo.avatar;
           }
         }
@@ -510,7 +485,6 @@ watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
       const isFromCurrentUser = latestMessage.sender === currentUserId.value;
       
       if (isNearBottom || isFromCurrentUser) {
-        console.log('Có tin nhắn mới và người dùng gần cuối hoặc tin nhắn từ user hiện tại, cuộn xuống');
         scrollToBottom();
       }
     }
@@ -520,7 +494,6 @@ watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
 // Theo dõi activeConversation
 watch(() => chatStore.activeConversation, (newConversation, oldConversation) => {
   if (newConversation !== oldConversation) {
-    console.log(`Active conversation changed from ${oldConversation} to ${newConversation}`);
     
     // Cuộn xuống khi chuyển sang cuộc trò chuyện mới
     nextTick(() => {
@@ -531,7 +504,6 @@ watch(() => chatStore.activeConversation, (newConversation, oldConversation) => 
 
 // Thêm theo dõi thay đổi tin nhắn để cập nhật danh sách cuộc trò chuyện
 watch(() => chatStore.sortedMessages, (newMessages, oldMessages) => {
-  console.log('Tin nhắn thay đổi, danh sách cuộc trò chuyện sẽ được cập nhật');
   
   // Kiểm tra nếu có tin nhắn mới được thêm vào
   if (newMessages.length > oldMessages.length) {
@@ -539,7 +511,6 @@ watch(() => chatStore.sortedMessages, (newMessages, oldMessages) => {
     
     // Kiểm tra nếu tin nhắn mới thuộc cuộc trò chuyện đang mở
     if (chatStore.activeConversation === latestMessage.sender) {
-        console.log('Tin nhắn mới thuộc cuộc trò chuyện đang mở');
         
         // Đánh dấu tin nhắn đã đọc nếu người dùng hiện tại là người nhận
         if (latestMessage.recipient === currentUserId.value && !latestMessage.is_read) {
@@ -552,7 +523,6 @@ watch(() => chatStore.sortedMessages, (newMessages, oldMessages) => {
 // Thêm vào ngay trước onMounted
 // Xử lý cập nhật tin nhắn thông qua socket
 const handleSocketMessage = (data) => {
-  console.log('Nhận tin nhắn từ socket:', data);
   if (data && data.type === 'chat_message') {
     const message = data.message;
     
@@ -582,7 +552,6 @@ const handleSocketMessage = (data) => {
       if (currentConversation) {
         currentConversation.lastMessage = message.content;
         currentConversation.lastMessageTime = message.created_at;
-        console.log('Cập nhật tin nhắn mới nhất cho cuộc trò chuyện đang mở:', currentConversation);
       }
       
       // Cuộn xuống để xem tin nhắn mới
@@ -594,9 +563,7 @@ const handleSocketMessage = (data) => {
     // Tải lại tin nhắn mới nhất cho tất cả cuộc trò chuyện để cập nhật UI
     setTimeout(async () => {
       try {
-        console.log('Tải tin nhắn mới nhất sau khi nhận tin nhắn từ socket');
         await chatStore.fetchLatestMessages();
-        console.log('Đã cập nhật tin nhắn mới nhất cho tất cả cuộc trò chuyện');
       } catch (error) {
         console.error('Lỗi khi tải tin nhắn mới nhất sau khi nhận tin nhắn socket:', error);
       }
@@ -626,8 +593,7 @@ const handleAvatarError = (e) => {
     
     // Ẩn thẻ img
     e.target.style.display = 'none';
-    
-    console.log(`Đã thay thế avatar lỗi với chữ cái đầu: ${initials} (${name})`);
+
   }
   
   // Đánh dấu avatar không hợp lệ
@@ -695,15 +661,12 @@ const getActiveUserInitials = () => {
 };
 
 onMounted(async () => {
-  console.log('ChatContainer đã được mount');
   initSocketConnection();
   let targetUserId = null;
   if (route.query.user) {
     targetUserId = parseInt(route.query.user, 10);
-    console.log('Tìm thấy tham số user trong URL:', targetUserId);
   } else if (injectedUserId) {
     targetUserId = injectedUserId;
-    console.log('Sử dụng userId được inject:', targetUserId);
   }
   try {
     await Promise.all([
@@ -711,9 +674,7 @@ onMounted(async () => {
       chatStore.fetchUnreadMessages()
     ]);
     await chatStore.fetchLatestMessages();
-    console.log('Đã tải xong dữ liệu ban đầu, số cuộc trò chuyện:', chatStore.conversations.length);
     if (targetUserId && !isNaN(targetUserId)) {
-      console.log('Thực hiện chọn cuộc trò chuyện với userId:', targetUserId);
       await selectConversation(targetUserId);
     }
     startSocketConnectionChecker();
@@ -725,19 +686,14 @@ onMounted(async () => {
 
 // Khởi tạo kết nối WebSocket
 const initSocketConnection = () => {
-  console.log('Đang khởi tạo kết nối WebSocket...');
-  
-  // Thử kết nối trước
+
   socketService.init();
   
   // Kiểm tra trạng thái kết nối sau 2 giây
   setTimeout(() => {
     if (!socketService.connected) {
-      console.log('⚠️ WebSocket chưa kết nối sau 2 giây, thử kết nối lại...');
-      socketService.disconnect(); // Đảm bảo đóng kết nối cũ
-      socketService.init(); // Thử kết nối lại
-    } else {
-      console.log('✅ WebSocket đã kết nối thành công!');
+      socketService.disconnect(); 
+      socketService.init(); 
     }
   }, 2000);
 };
@@ -753,17 +709,14 @@ const startSocketConnectionChecker = () => {
   // Thiết lập interval mới kiểm tra mỗi 30 giây
   socketCheckInterval = setInterval(() => {
     if (!socketService.connected) {
-      console.log('⚠️ Phát hiện WebSocket đã ngắt kết nối, đang thử kết nối lại...');
       socketService.init();
-    } else {
-      console.log('✓ WebSocket vẫn đang kết nối');
     }
   }, 30000); // 30 giây
 };
 
 onUnmounted(() => {
-  console.log('ChatContainer đã được unmount');
   
+
   // Xóa interval kiểm tra socket
   if (socketCheckInterval) {
     clearInterval(socketCheckInterval);

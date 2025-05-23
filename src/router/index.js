@@ -306,8 +306,6 @@ router.beforeEach(async (to, from, next) => {
   if (authStore.isAuthenticated && 
       (userRole === 'none') && 
       to.name !== 'SelectRole') {
-
-    console.log('[Router] User has role "none", redirecting to SelectRole');
     return next({ name: 'SelectRole' });
   }
   
@@ -338,13 +336,11 @@ router.beforeEach(async (to, from, next) => {
       
       if (roleRequired && authStore.userRole !== roleRequired) {
         // Nếu route yêu cầu role mà user không có role đó
-        console.log(`[Router] Route yêu cầu role ${roleRequired}, nhưng user có role ${authStore.userRole}`)
         return next('/')
       }
       
       // Kiểm tra quyền truy cập candidateOnly
       if (isCandidateOnly && authStore.userRole !== 'candidate') {
-        console.log('[Router] Route yêu cầu role candidate nhưng user có role:', authStore.userRole)
         
         // Hiển thị thông báo hoặc thực hiện hành động phù hợp
         if (window.$toast) {
@@ -368,7 +364,6 @@ router.beforeEach(async (to, from, next) => {
       next()
     } else {
       // Chuyển hướng đến trang đăng nhập và lưu route hiện tại để redirect sau khi đăng nhập
-      console.log('[Router] User not authenticated, redirecting to login')
       return next({
         path: '/login',
         query: { redirect: to.fullPath }

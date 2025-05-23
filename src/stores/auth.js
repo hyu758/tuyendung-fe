@@ -18,7 +18,6 @@ export const useAuthStore = defineStore('auth', {
     
     // Thêm getter isLoggedIn để đảm bảo nhất quán với isAuthenticated
     isLoggedIn(state) {
-      console.log('isLoggedIn getter called');
       // Kiểm tra cả token và thông tin người dùng
       return !!state.token && !!this.userInfo;
     },
@@ -32,7 +31,6 @@ export const useAuthStore = defineStore('auth', {
         const base64Url = this.token.split('.')[1]
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
         const decoded = JSON.parse(window.atob(base64))
-        console.log('Decoded token:', decoded);
         return decoded
       } catch (e) {
         console.error('Lỗi khi giải mã JWT token:', e)
@@ -56,20 +54,17 @@ export const useAuthStore = defineStore('auth', {
     
     // Các getter dựa trên userInfo
     isActivated() {
-      console.log('isActivated getter - userInfo:', this.userInfo);
       const user = this.userInfo;
       return user ? user.is_active === true : false;
     },
     
     isEmployer() {
       const user = this.userInfo;
-      console.log('isEmployer getter - user:', user);
       return user && user.is_recruiter === true;
     },
     
     isCandidate() {
       const user = this.userInfo;
-      console.log('isCandidate getter - user:', user, 'is_applicant:', user?.is_applicant);
       return user && user.is_applicant === true;
     },
     
@@ -290,15 +285,12 @@ export const useAuthStore = defineStore('auth', {
     
     updateUserFromToken() {
       try {
-        console.log('Đang cập nhật thông tin từ token');
         // Lấy token từ localStorage nếu cần
         if (!this.token) {
           this.token = localStorage.getItem('token');
-          console.log('Lấy token từ localStorage:', !!this.token);
         }
         
         if (!this.token) {
-          console.log('Không có token để cập nhật thông tin người dùng');
           return false;
         }
         
@@ -313,11 +305,8 @@ export const useAuthStore = defineStore('auth', {
         // Kiểm tra token đã hết hạn chưa
         const currentTime = Math.floor(Date.now() / 1000);
         if (decoded.exp && currentTime >= decoded.exp) {
-          console.log('Token đã hết hạn khi cập nhật thông tin');
           return false;
         }
-        
-        console.log('Thông tin token được giải mã:', JSON.stringify(decoded));
         
         // Cập nhật thông tin user
         this.user = {
@@ -331,16 +320,11 @@ export const useAuthStore = defineStore('auth', {
         
         // Cập nhật _userRole từ token và lưu vào localStorage
         if (decoded.role) {
-          console.log('updateUserFromToken: Role từ token:', decoded.role);
           this.setUserRole(decoded.role);
-          console.log('updateUserFromToken: Role từ token đã được lưu:', decoded.role);
         }
-        
-        console.log('Đã cập nhật thông tin người dùng từ token:', this.user);
         
         // Kiểm tra trạng thái kích hoạt
         if (decoded.is_active === false) {
-          console.log('Tài khoản chưa được kích hoạt');
           return false;
         }
         
@@ -359,12 +343,10 @@ export const useAuthStore = defineStore('auth', {
       try {
         if (!this.token) return;
         
-        console.log('Đang tải thông tin profile từ API...');
         const response = await axios.get('/api/profile/');
         
         if (response.data.status === 200 && response.data.data) {
           const profileData = response.data.data;
-          console.log('Đã tải thông tin profile:', profileData);
           
           // Cập nhật thông tin Premium vào user
           this.user = {
@@ -377,8 +359,6 @@ export const useAuthStore = defineStore('auth', {
             balance: profileData.balance,
             name_display: profileData.name_display
           };
-          
-          console.log('Đã cập nhật thông tin Premium:', this.user.is_premium);
         }
       } catch (error) {
         console.error('Lỗi khi tải thông tin profile:', error);
@@ -450,7 +430,6 @@ export const useAuthStore = defineStore('auth', {
       try {
         const refreshToken = localStorage.getItem('refreshToken')
         if (!refreshToken) {
-          console.log('Không tìm thấy refresh token');
           return false;
         }
         
@@ -464,13 +443,12 @@ export const useAuthStore = defineStore('auth', {
           // Kiểm tra thời hạn
           const currentTime = Math.floor(Date.now() / 1000);
           if (decoded.exp && currentTime >= decoded.exp) {
-            console.log('Refresh token đã hết hạn');
             this.createNotification('error', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
             this.logout(true);
             return false;
           }
         } catch (decodeError) {
-          console.log('Không thể giải mã refresh token, tiếp tục thử refresh');
+          // Continue to try refresh
         }
         
         // Xác định baseURL dựa trên môi trường
@@ -484,9 +462,6 @@ export const useAuthStore = defineStore('auth', {
         }
         
         // Sử dụng fetch thay vì axios để tránh gửi access token hết hạn trong header
-        console.log('Gọi API refresh token bằng fetch...');
-        console.log('Base URL được sử dụng:', baseURL);
-        
         const response = await fetch(`${baseURL}/api/token-refresh/`, {
           method: 'POST',
           headers: {
@@ -498,7 +473,6 @@ export const useAuthStore = defineStore('auth', {
         });
         
         const data = await response.json();
-        console.log('Phản hồi token refresh:', data);
         
         if (response.ok && data.status === 200) {
           const newToken = data.data.access;
@@ -516,7 +490,6 @@ export const useAuthStore = defineStore('auth', {
         
         // Nếu response không ok hoặc status khác 200
         if (data.code === 'token_not_valid') {
-          console.log('Refresh token không hợp lệ');
           this.createNotification('error', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
           this.logout(true);
         }
@@ -525,7 +498,6 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         console.error('Lỗi khi refresh token:', error);
         // Đảm bảo gọi logout cho mọi loại lỗi khi refresh token
-        console.log('Đăng xuất do lỗi khi refresh token');
         this.createNotification('error', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
         this.logout(true);
         return false;
@@ -587,18 +559,14 @@ export const useAuthStore = defineStore('auth', {
     
     // Thêm một action mới để kiểm tra tính hợp lệ của token và thời hạn token
     async checkTokenValidity() {
-      console.log('Đang kiểm tra tính hợp lệ của token...');
-      
       try {
         if (!this.token) {
-          console.log('Không có token, không cần kiểm tra');
           return false;
         }
         
         // Lấy decoded token để kiểm tra thời hạn
         const decoded = this.decodedToken;
         if (!decoded || !decoded.exp) {
-          console.log('Token không hợp lệ hoặc không có thời hạn');
           this.createNotification('error', 'Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại');
           this.logout(true);
           return false;
@@ -608,16 +576,12 @@ export const useAuthStore = defineStore('auth', {
         const currentTime = Math.floor(Date.now() / 1000); // Thời gian hiện tại (giây)
         const tokenExp = decoded.exp; // Thời gian hết hạn của token (giây)
         
-        console.log('Token expires at:', new Date(tokenExp * 1000).toLocaleString());
-        console.log('Current time:', new Date(currentTime * 1000).toLocaleString());
-        
         // Kiểm tra refresh token hết hạn chưa
         const refreshToken = localStorage.getItem('refreshToken');
         let refreshTokenExpiry = null;
         let shouldRefreshEarly = false;
         
         if (!refreshToken) {
-          console.log('Không tìm thấy refresh token');
           this.createNotification('error', 'Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại');
           this.logout(true);
           return false;
@@ -630,11 +594,9 @@ export const useAuthStore = defineStore('auth', {
           const decodedRefresh = JSON.parse(window.atob(base64));
           
           refreshTokenExpiry = decodedRefresh.exp;
-          console.log('Refresh token expires at:', new Date(refreshTokenExpiry * 1000).toLocaleString());
           
           // Kiểm tra nếu refresh token đã hết hạn
           if (refreshTokenExpiry && currentTime >= refreshTokenExpiry) {
-            console.log('Refresh token đã hết hạn');
             this.createNotification('error', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
             this.logout(true);
             return false;
@@ -642,7 +604,6 @@ export const useAuthStore = defineStore('auth', {
           
           // Nếu refresh token cũng sắp hết hạn (còn dưới 1 ngày), hiển thị thông báo
           if (refreshTokenExpiry - currentTime < 86400) { // 86400 giây = 1 ngày
-            console.log('Refresh token sắp hết hạn');
             // Tạo thông báo phiên làm việc sắp hết hạn, cần đăng nhập lại
             this.createNotification('warning', 'Phiên làm việc của bạn sẽ hết hạn trong vòng 24 giờ tới. Vui lòng đăng nhập lại để tiếp tục sử dụng.');
             shouldRefreshEarly = true;
@@ -657,21 +618,17 @@ export const useAuthStore = defineStore('auth', {
         // Nếu access token gần hết hạn (còn dưới 5 phút) hoặc đã hết hạn, thử refresh
         // Hoặc refresh sớm nếu refresh token sắp hết hạn
         if (tokenExp - currentTime < 300 || currentTime >= tokenExp || shouldRefreshEarly) {
-          console.log('Token đã hết hạn hoặc gần hết hạn, thử refresh token...');
           const refreshed = await this.refreshToken();
           
           if (!refreshed) {
-            console.log('Không thể refresh token, tiến hành đăng xuất');
             this.createNotification('error', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
             this.logout(true);
             return false;
           }
           
-          console.log('Đã refresh token thành công');
           return true;
         }
         
-        console.log('Token vẫn còn hiệu lực');
         return true;
       } catch (error) {
         console.error('Lỗi khi kiểm tra token:', error);
@@ -683,10 +640,8 @@ export const useAuthStore = defineStore('auth', {
     
     // Thêm method để set userRole
     setUserRole(role) {
-      console.log('setUserRole called with:', role);
       this._userRole = role;
       localStorage.setItem('user_role', role);
-      console.log('_userRole sau khi set:', this._userRole);
     }
   }
 }) 

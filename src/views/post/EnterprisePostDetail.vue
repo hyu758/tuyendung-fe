@@ -573,12 +573,9 @@ const loadData = async () => {
     const postId = route.params.id
     const postResult = await postStore.fetchPostById(postId)
     
-    console.log('API response:', postResult) // Debug
-    
     if (postResult.success) {
       // Lấy dữ liệu từ cấu trúc API chính xác (lưu ý API trả về data.data)
       post.value = postResult.data.data
-      console.log('Post data:', post.value)
       
       // Mặc định là true vì đây là giao diện nhà tuyển dụng
       canViewSubmittedCVs.value = post.value.can_view_applicants || true

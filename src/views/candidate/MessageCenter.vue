@@ -75,7 +75,6 @@ const isLoading = ref(true);
 // Kiểm tra người dùng có phải Premium không
 const checkPremiumStatus = () => {
   if (!authStore.isLoggedIn) {
-    console.log('Người dùng chưa đăng nhập, chuyển hướng đến trang đăng nhập');
     router.replace({ 
       name: 'Login',
       query: { redirect: route.fullPath }
@@ -84,14 +83,13 @@ const checkPremiumStatus = () => {
   }
   
   if (!authStore.isCandidate) {
-    console.log('Người dùng không phải ứng viên, chuyển hướng đến trang chủ');
     router.replace({ name: 'Home' });
     return false;
   }
   
   // Không chuyển hướng khi không phải premium, chỉ ghi log
   if (!authStore.userInfo?.is_premium) {
-    console.log('Người dùng không phải Premium, nhưng vẫn hiển thị giao diện với thông báo nâng cấp');
+    
   }
   
   return true;
@@ -104,7 +102,6 @@ provide('isPremiumUser', computed(() => authStore.userInfo?.is_premium || false)
 
 // Xử lý khi nhận được tin nhắn mới qua socket
 const handleNewMessage = (data) => {
-  console.log('MessageCenter nhận được tin nhắn mới qua socket:', data);
   
   // Tải lại số lượng tin nhắn chưa đọc
   chatStore.fetchUnreadMessages();
@@ -116,20 +113,13 @@ const handleNewMessage = (data) => {
     const senderId = parseInt(messageData.sender_id, 10);
     const recipientId = parseInt(messageData.recipient_id, 10);
     
-    if (senderId === userId || recipientId === userId) {
-      console.log('Tin nhắn liên quan đến cuộc trò chuyện đang mở, cập nhật tin nhắn');
-    }
   }
 };
 
 onMounted(() => {
-  console.log('MessageCenter đã được mount');
-  console.log('Tham số URL hiện tại:', route.query);
   
   // Tải thông tin profile trước khi kiểm tra
   authStore.fetchUserProfile().then(() => {
-    console.log('[DEBUG] Thông tin người dùng sau khi tải profile:', authStore.userInfo);
-    console.log('[DEBUG] Trạng thái premium sau khi tải profile:', authStore.userInfo?.is_premium);
     
     // Kiểm tra trạng thái người dùng
     if (!checkPremiumStatus()) {
@@ -139,43 +129,27 @@ onMounted(() => {
     // Reset store để tránh xung đột dữ liệu từ các màn hình khác
     chatStore.resetStore();
     
-    // Tải số lượng tin nhắn chưa đọc ngay khi component mount
     chatStore.fetchUnreadMessages()
       .finally(() => {
         setTimeout(() => {
           isLoading.value = false;
-        }, 500); // Thêm timeout nhỏ để có hiệu ứng loading
+        }, 500);
       });
-    
-    // Khởi tạo kết nối socket nếu chưa được kết nối
-    if (!socketService.connected) {
-      console.log('Khởi tạo kết nối socket trong MessageCenter');
+        if (!socketService.connected) {
       socketService.init();
     }
-    
-    // Đăng ký handler cho tin nhắn mới nhận được qua socket
-    socketService.onMessage(handleNewMessage);
-    
-    // Log thông tin user_id từ URL nếu có
-    if (route.query.user) {
-      console.log('Đang truy cập trang tin nhắn với userId:', route.query.user);
-      
-      // Kiểm tra xem user_id có phải là số không
+        socketService.onMessage(handleNewMessage);
+        if (route.query.user) {
       const userId = parseInt(route.query.user, 10);
       if (isNaN(userId)) {
-        console.error('user_id không hợp lệ:', route.query.user);
-        // Quay về trang tin nhắn không có tham số
         router.replace({ name: 'candidate-messages' });
       }
     }
   });
 });
 
-// Hủy kết nối và event handlers khi component unmounted
 onUnmounted(() => {
-  console.log('MessageCenter unmounted: Hủy đăng ký socket handlers');
   
-  // Hủy đăng ký handler tin nhắn
   socketService.offMessage(handleNewMessage);
 });
 </script>
