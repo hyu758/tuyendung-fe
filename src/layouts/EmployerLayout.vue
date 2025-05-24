@@ -149,14 +149,9 @@
 
     <!-- Main Content -->
     <div class="transition-all duration-300 md:ml-64">
-      <!-- Simplified Header -->
       <header class="bg-white h-16 border-b border-gray-200 sticky top-0 z-20">
         <div class="flex justify-end items-center h-full px-6">
-          <!-- Notifications -->
-          <NotificationDropdown />
-
-          <!-- Tin nhắn -->
-          <div class="ml-4 relative">
+          <div class="mr-4 relative">
             <router-link 
               to="/employer/messages" 
               class="flex items-center text-gray-600 hover:text-blue-600 transition duration-150 relative group"
@@ -175,38 +170,8 @@
               </div>
             </router-link>
           </div>
+          <NotificationDropdown />
 
-          <!-- User Menu -->
-          <div class="relative ml-4" ref="profileDropdown">
-            <button 
-              @click="toggleDropdown"
-              class="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
-              aria-label="Menu người dùng"
-              title="Menu người dùng"
-              aria-expanded="false"
-              :aria-expanded="showDropdown"
-            >
-              <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <i class="fas fa-user text-gray-500"></i>
-              </div>
-              <i class="fas fa-chevron-down text-sm text-gray-400"></i>
-            </button>
-
-            <!-- Dropdown Menu -->
-            <div v-if="showDropdown" 
-              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-40"
-              role="menu"
-              aria-orientation="vertical"
-            >
-              <a href="#" 
-                @click.prevent="logout"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                role="menuitem"
-              >
-                <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
-              </a>
-            </div>
-          </div>
         </div>
       </header>
 

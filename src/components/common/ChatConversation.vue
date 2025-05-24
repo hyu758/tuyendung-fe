@@ -51,12 +51,6 @@
         >
           {{ lastMessage }}
         </p>
-        <span 
-          v-if="unreadCount > 0"
-          class="ml-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-sm font-bold"
-        >
-          {{ unreadCount > 99 ? '99+' : unreadCount }}
-        </span>
       </div>
     </div>
   </div>
@@ -232,7 +226,7 @@ const handleSelect = () => {
     emit('select');
   }
 };
-</script>
+</script> 
 
 <style scoped>
 .bg-red-25 {

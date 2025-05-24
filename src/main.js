@@ -46,7 +46,15 @@ import {
   faChevronRight,
   faChevronLeft,
   faPhoneAlt,
-  faFlag
+  faFlag,
+  faLevelDownAlt,
+  faExclamation,
+  faMobileAlt,
+  faArrowDown,
+  faUserEdit,
+  faMars,
+  faVenus,
+  faShieldAlt
 } from '@fortawesome/free-solid-svg-icons'
 import { 
   faFacebook, faTwitter, faLinkedin, faGithub, faGoogle,
@@ -104,7 +112,15 @@ library.add(
   faChevronRight,
   faChevronLeft,
   faPhoneAlt,
-  faFlag
+  faFlag,
+  faLevelDownAlt,
+  faExclamation,
+  faMobileAlt,
+  faArrowDown,
+  faUserEdit,
+  faMars,
+  faVenus,
+  faShieldAlt
 )
 
 // Cấu hình Axios

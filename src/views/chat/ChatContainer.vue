@@ -1,5 +1,164 @@
 <template>
-  <div class="h-full flex bg-white shadow-md rounded-lg overflow-hidden">
+  <!-- Mobile view -->
+  <div class="h-full md:hidden">
+    <!-- Mobile: Chỉ danh sách cuộc trò chuyện -->
+    <div v-if="!showMobileChat" class="h-full flex flex-col bg-white">
+      <div class="py-4 px-4 border-b border-gray-100 bg-white">
+        <h2 class="text-xl font-semibold text-gray-800 mb-3">Tin nhắn</h2>
+        <div class="relative">
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Tìm kiếm cuộc trò chuyện..."
+            class="w-full border-gray-200 border rounded-xl pl-10 pr-3 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-gray-50"
+          />
+          <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <i class="fas fa-search"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto">
+        <div v-if="chatStore.loading && !chatStore.activeConversation" class="p-6 text-center">
+          <i class="fas fa-circle-notch fa-spin text-blue-500 text-2xl"></i>
+          <p class="mt-3 text-gray-500">Đang tải danh sách...</p>
+        </div>
+        
+        <div v-else-if="filteredConversations.length === 0" class="p-6 text-center">
+          <i class="fas fa-comments text-gray-300 text-5xl"></i>
+          <p class="mt-3 text-gray-500">Không có cuộc trò chuyện nào</p>
+        </div>
+        
+        <template v-else>
+          <div 
+            v-for="conversation in filteredConversations"
+            :key="conversation.id"
+            class="flex items-center px-4 py-4 cursor-pointer transition-colors border-b border-gray-50 hover:bg-gray-50"
+            :class="{ 
+              'bg-blue-50 border-l-4 border-l-blue-500': chatStore.activeConversation === conversation.userId,
+              'border-l-4 border-l-red-400 bg-red-25': conversation.unreadCount > 0
+            }"
+            @click="openMobileChat(conversation.userId)"
+          >
+            <div class="flex-shrink-0 mr-3 relative">
+              <div v-if="conversation.avatar && isValidImageUrl(conversation.avatar)" class="w-12 h-12 rounded-full overflow-hidden shadow-sm">
+                <img :src="conversation.avatar" alt="Avatar" class="w-full h-full object-cover" @error="handleImageError" />
+              </div>
+              <div v-else class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                {{ getInitials(getDisplayName(conversation)) }}
+              </div>
+            </div>
+            
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-center mb-1">
+                <h3 
+                  class="text-base font-medium truncate"
+                  :class="[
+                    conversation.unreadCount > 0 ? 'text-gray-900 font-semibold' : 'text-gray-700'
+                  ]"
+                >
+                  {{ getDisplayName(conversation) }}
+                </h3>
+                <span 
+                  class="text-sm"
+                  :class="[
+                    conversation.unreadCount > 0 ? 'text-red-600 font-medium' : 'text-gray-500'
+                  ]"
+                >
+                  {{ formatTime(conversation.lastMessageTime) }}
+                </span>
+              </div>
+              <p 
+                class="text-sm truncate" 
+                :class="{ 
+                  'text-gray-900 font-medium': conversation.unreadCount > 0,
+                  'text-gray-500': conversation.unreadCount === 0
+                }"
+              >
+                {{ conversation.lastMessage || 'Chưa có tin nhắn' }}
+              </p>
+            </div>
+            
+            <div class="ml-2">
+              <i class="fas fa-chevron-right text-gray-400"></i>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+    
+    <!-- Mobile: Chat view fullscreen -->
+    <div v-else class="h-full flex flex-col bg-white">
+      <!-- Header với nút back -->
+      <div class="py-3 px-4 border-b border-gray-100 flex items-center bg-white shadow-sm">
+        <button @click="closeMobileChat" class="mr-3 p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <i class="fas fa-arrow-left text-gray-600"></i>
+        </button>
+        <div class="flex items-center flex-1">
+          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden mr-3">
+            <template v-if="activeConversation?.avatar && isValidImageUrl(activeConversation?.avatar)">
+              <img :src="activeConversation.avatar" alt="Avatar" class="w-full h-full object-cover" @error="handleAvatarError" />
+            </template>
+            <template v-else>
+              <div class="w-full h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                {{ getActiveUserInitials() }}
+              </div>
+            </template>
+          </div>
+          <div>
+            <h3 class="font-medium text-gray-800">{{ getActiveUserName() }}</h3>
+            <p v-if="activeConversation?.isOnline" class="text-xs text-green-500">
+              <i class="fas fa-circle mr-1 text-[8px]"></i> Đang hoạt động
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Messages container -->
+      <div 
+        class="flex-1 p-4 overflow-y-auto flex flex-col relative bg-gray-50" 
+        ref="messagesContainer"
+        @scroll="handleScroll"
+      >
+        <div v-if="loadingOlderMessages" class="py-2 text-center mb-2">
+          <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
+          <p class="text-xs text-gray-500">Đang tải thêm tin nhắn cũ hơn...</p>
+        </div>
+        
+        <div v-if="chatStore.loading && !chatStore.sortedMessages.length" class="my-auto text-center">
+          <i class="fas fa-circle-notch fa-spin text-blue-500 text-xl"></i>
+          <p class="mt-2 text-gray-500">Đang tải tin nhắn...</p>
+        </div>
+        
+        <div v-else-if="!chatStore.sortedMessages.length" class="my-auto text-center py-12">
+          <i class="fas fa-comment-dots text-gray-300 text-5xl mb-3"></i>
+          <p class="mt-2 text-gray-500">Chưa có tin nhắn. Hãy gửi tin nhắn đầu tiên!</p>
+        </div>
+        
+        <template v-else>
+          <div class="flex flex-col space-y-3">
+            <chat-message
+              v-for="message in chatStore.sortedMessages"
+              :key="message.id"
+              :content="message.content"
+              :is-current-user="message.sender === currentUserId"
+              :is-read="message.is_read"
+              :created-at="message.created_at"
+            />
+          </div>
+        </template>
+      </div>
+      
+      <!-- Chat input -->
+      <chat-input 
+        :loading="chatStore.loading" 
+        @send-message="sendMessage" 
+      />
+    </div>
+  </div>
+  
+  <!-- Desktop view -->
+  <div class="h-full hidden md:flex bg-white shadow-md rounded-lg overflow-hidden">
     <!-- Sidebar với danh sách cuộc trò chuyện -->
     <div class="w-1/3 border-r border-gray-100 flex flex-col">
       <div class="py-3 px-4 border-b border-gray-100 bg-white">
@@ -161,6 +320,7 @@ const activeConversationId = ref(null);
 const messagesContainer = ref(null);
 const loadingOlderMessages = ref(false);
 const isAtBottom = ref(true);
+const showMobileChat = ref(false);
 
 // Inject userId từ component cha nếu có
 const injectedUserId = inject('chatUserId', null);
@@ -173,10 +333,42 @@ watch(() => route.query.user, (newUserId) => {
   if (newUserId) {
     const userId = parseInt(newUserId, 10);
     if (!isNaN(userId)) {
+      // Trên mobile, tự động mở chat view
+      if (window.innerWidth < 768) {
+        openMobileChat(userId);
+      } else {
       selectConversation(userId);
+      }
     }
   }
 }, { immediate: false });
+
+// Watch mobile chat state để handle browser back button
+watch(() => showMobileChat.value, (isOpen) => {
+  if (typeof window !== 'undefined') {
+    if (isOpen) {
+      // Prevent browser back when in mobile chat
+      history.pushState({ mobileChat: true }, '', window.location.href);
+      
+      // Tự động cuộn xuống khi vào mobile chat
+      nextTick(() => {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 150);
+      });
+    }
+  }
+});
+
+// Handle browser back button on mobile
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', (event) => {
+    if (window.innerWidth < 768 && showMobileChat.value) {
+      event.preventDefault();
+      closeMobileChat();
+    }
+  });
+}
 
 // Danh sách cuộc trò chuyện đã được xử lý
 const processedConversations = computed(() => {
@@ -290,6 +482,7 @@ const getDisplayName = (conversation) => {
 
 // Chọn một cuộc trò chuyện
 const selectConversation = async (userId) => {
+  console.log(`🚀 [selectConversation] Selecting conversation with user ${userId}`);
   chatStore.activeConversation = userId;
   activeConversationId.value = userId;
   
@@ -304,8 +497,9 @@ const selectConversation = async (userId) => {
   
   try {
     // Luôn refresh để load đầy đủ cuộc trò chuyện
+    console.log(`📥 [selectConversation] Fetching messages for user ${userId}...`);
     const messages = await chatStore.fetchMessages(userId, true);
-    console.log('📨 [selectConversation] Đã load', messages?.length || 0, 'tin nhắn');
+    console.log(`✅ [selectConversation] Loaded ${messages?.length || 0} messages`);
     
     if (!messages || messages.length < 20) {
       chatStore.hasMoreMessages = false;
@@ -316,9 +510,25 @@ const selectConversation = async (userId) => {
     await markMessagesAsRead();
     await nextTick();
     
-    setTimeout(() => {
-      scrollToBottom();
-    }, 100);
+    // Cuộn xuống với delay khác nhau cho mobile và desktop
+    if (showMobileChat.value) {
+      // Mobile - delay lâu hơn
+  setTimeout(() => {
+        console.log(`📱 [selectConversation Mobile] Scrolling to bottom...`);
+        scrollToBottom();
+      }, 200);
+      
+      setTimeout(() => {
+        console.log(`📱 [selectConversation Mobile] Final scroll...`);
+        scrollToBottom();
+      }, 500);
+    } else {
+      // Desktop
+      setTimeout(() => {
+        console.log(`💻 [selectConversation Desktop] Scrolling to bottom...`);
+    scrollToBottom();
+  }, 100);
+    }
   } catch (error) {
     console.error('❌ [selectConversation] Lỗi khi tải tin nhắn:', error);
   } finally {
@@ -385,14 +595,28 @@ const sendMessage = async (content) => {
 // Cuộn xuống tin nhắn cuối cùng
 const scrollToBottom = () => {
   if (messagesContainer.value) {
+    console.log('🔄 [scrollToBottom] Bắt đầu cuộn xuống...');
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     
     // Thử cuộn xuống lần nữa sau một khoảng thời gian ngắn
     setTimeout(() => {
       if (messagesContainer.value) {
         messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        console.log(`📍 [scrollToBottom] Đã cuộn xuống - scrollTop: ${messagesContainer.value.scrollTop}, scrollHeight: ${messagesContainer.value.scrollHeight}`);
       }
     }, 100);
+    
+    // Thêm một lần cuộn nữa cho mobile để đảm bảo
+    if (showMobileChat.value) {
+      setTimeout(() => {
+        if (messagesContainer.value) {
+          messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+          console.log(`📱 [scrollToBottom Mobile] Final scroll - scrollTop: ${messagesContainer.value.scrollTop}`);
+        }
+      }, 300);
+    }
+  } else {
+    console.warn('⚠️ [scrollToBottom] messagesContainer.value is null');
   }
 };
 
@@ -457,6 +681,7 @@ const isRecentMessage = (message) => {
 
 // Theo dõi nội dung tin nhắn để phát hiện thay đổi
 watch(() => JSON.stringify(chatStore.sortedMessages), () => {
+  console.log(`📝 [Messages Watcher] Messages changed, length: ${chatStore.sortedMessages.length}`);
   
   // Đánh dấu tin nhắn mới là đã đọc
   markMessagesAsRead();
@@ -472,11 +697,14 @@ watch(() => JSON.stringify(chatStore.sortedMessages), () => {
     const isFromCurrentUser = latestMessage && latestMessage.sender === currentUserId.value;
     const isRecentMsg = latestMessage && isRecentMessage(latestMessage);
     
+    console.log(`📊 [Messages Watcher] isNearBottom: ${isNearBottom}, isFromCurrentUser: ${isFromCurrentUser}, isRecent: ${isRecentMsg}, isMobile: ${showMobileChat.value}`);
+    
     // Chỉ cuộn xuống khi:
     // 1. Người dùng đang gần cuối VÀ tin nhắn cuối là tin nhắn mới (recent)
-    // 2. HOẶC tin nhắn mới là từ người dùng hiện tại
-    if ((isNearBottom && isRecentMsg) || isFromCurrentUser) {
-      console.log('🔽 Cuộn xuống vì:', isFromCurrentUser ? 'tin nhắn từ user hiện tại' : 'ở gần cuối và có tin nhắn mới');
+    // 2. HOẶC tin nhắn mới là từ người dùng hiện tại  
+    // 3. HOẶC đang ở mobile (cuộn xuống luôn để UX tốt hơn)
+    if ((isNearBottom && isRecentMsg) || isFromCurrentUser || showMobileChat.value) {
+      console.log(`✅ [Messages Watcher] Scrolling to bottom...`);
       scrollToBottom();
       nextTick(() => {
         scrollToBottom();
@@ -514,7 +742,6 @@ watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
       // 1. Tin nhắn từ user hiện tại
       // 2. HOẶC (user đang gần cuối VÀ tin nhắn là tin nhắn mới)
       if (isFromCurrentUser || (isNearBottom && isRecentMsg)) {
-        console.log('🔽 Cuộn xuống vì tin nhắn mới:', isFromCurrentUser ? 'từ user hiện tại' : 'gần cuối và tin nhắn recent');
         scrollToBottom();
       }
     }
@@ -528,6 +755,13 @@ watch(() => chatStore.activeConversation, (newConversation, oldConversation) => 
     // Cuộn xuống khi chuyển sang cuộc trò chuyện mới
     nextTick(() => {
       scrollToBottom();
+      
+      // Đặc biệt cho mobile - cuộn lại sau một chút để đảm bảo
+      if (showMobileChat.value) {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 200);
+      }
     });
   }
 });
@@ -574,10 +808,10 @@ const handleSocketMessage = (data) => {
       
       // Nếu tin nhắn thuộc cuộc trò chuyện đang mở, cuộn xuống
       if (chatStore.activeConversation === otherPartyId) {
-        nextTick(() => {
-          scrollToBottom();
-        });
-      }
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }
     }
   }
 };
@@ -613,31 +847,28 @@ const handleAvatarError = (e) => {
   }
 };
 
+const handleImageError = (e) => {
+  e.target.style.display = 'none';
+};
+
 const isValidImageUrl = (url) => {
   if (!url) return false;
   
-  // Kiểm tra URL có hợp lệ không
   try {
-    // Kiểm tra nếu url là đường dẫn tương đối và không tồn tại
     if (url.startsWith('src/assets/') || url.startsWith('/src/assets/')) {
-      console.error('Đường dẫn avatar assets không tồn tại:', url);
       return false;
     }
     
-    // Kiểm tra xem URL có hợp lệ không
     new URL(url);
     
-    // Kiểm tra định dạng url có phải là một URL của hình ảnh
     if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i) || 
         url.includes('cloudinary.com') || 
         url.includes('res.cloudinary.com')) {
       return true;
     }
     
-    // Kiểm tra các trường hợp URL image API phổ biến
     return true;
   } catch (error) {
-    console.error('URL avatar không hợp lệ:', url);
     return false;
   }
 };
@@ -671,6 +902,81 @@ const getActiveUserInitials = () => {
   return name.trim().charAt(0).toUpperCase();
 };
 
+// Mobile chat functions
+const openMobileChat = async (userId) => {
+  console.log(`📱 [openMobileChat] Opening mobile chat for user ${userId}`);
+  showMobileChat.value = true;
+  
+  await selectConversation(userId);
+  
+  // Đảm bảo cuộn xuống cuối cho mobile chat với nhiều lần thử
+  await nextTick();
+  
+  setTimeout(() => {
+    console.log(`📱 [openMobileChat] First scroll attempt...`);
+    scrollToBottom();
+  }, 100);
+  
+  setTimeout(() => {
+    console.log(`📱 [openMobileChat] Second scroll attempt...`);
+    scrollToBottom();
+  }, 300);
+  
+  setTimeout(() => {
+    console.log(`📱 [openMobileChat] Final scroll attempt...`);
+    scrollToBottom();
+  }, 600);
+};
+
+const closeMobileChat = () => {
+  showMobileChat.value = false;
+  chatStore.resetActiveConversation();
+};
+
+// Utility functions
+const formatTime = (timeStr) => {
+  if (!timeStr) return '';
+  
+  const date = new Date(timeStr);
+  const now = new Date();
+  const diffInMs = now - date;
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  
+  if (diffInMinutes < 1) {
+    return 'Vừa xong';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} phút`;
+  } else if (diffInHours < 24 && date.getDate() === now.getDate()) {
+    // Nếu là trong ngày hiện tại, hiển thị giờ
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } else if (diffInDays < 7) {
+    // Nếu trong vòng 7 ngày, hiển thị thứ
+    const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const dayOfWeek = weekdays[date.getDay()];
+    return dayOfWeek;
+  } else if (date.getFullYear() === now.getFullYear()) {
+    // Nếu cùng năm, hiển thị ngày/tháng
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${day}/${month}`;
+  } else {
+    // Nếu khác năm, hiển thị ngày/tháng/năm
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(2);
+    return `${day}/${month}/${year}`;
+  }
+};
+
+const getInitials = (name) => {
+  if (!name) return '?';
+  return name.trim().charAt(0).toUpperCase();
+};
+
 onMounted(async () => {
   let targetUserId = null;
   if (route.query.user) {
@@ -691,16 +997,51 @@ onMounted(async () => {
     console.error('Lỗi khi khởi tạo ChatContainer:', error);
   }
   
-  // Chỉ đăng ký listener, không khởi tạo socket connection mới
-  // (Layout đã xử lý socket connection)
   socketService.onMessage(handleSocketMessage);
 });
 
 onUnmounted(() => {
-  console.log('🔌 [ChatContainer] Component unmounted, chỉ hủy listener');
-  
-  // Chỉ xóa listener, không ngắt kết nối socket 
-  // (để layout tiếp tục sử dụng cho unread count)
   socketService.offMessage(handleSocketMessage);
 });
-</script> 
+</script>
+
+<style scoped>
+.bg-red-25 {
+  background-color: #fef7f7;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  /* Ensure mobile chat takes full height */
+  .mobile-chat {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* Better touch targets on mobile */
+  .mobile-conversation-item {
+    min-height: 72px;
+  }
+  
+  /* Optimize chat input for mobile */
+  .mobile-chat-input textarea {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
+
+/* Custom scrollbar for mobile */
+@media (max-width: 768px) {
+  .mobile-messages::-webkit-scrollbar {
+    width: 3px;
+  }
+  
+  .mobile-messages::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .mobile-messages::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+  }
+}
+</style> 

@@ -344,15 +344,6 @@
                 <i class="fas fa-bookmark mr-2"></i> Việc đã lưu
               </router-link>
               
-              <button 
-                class="block text-gray-700 hover:text-blue-600 w-full text-left" 
-                @click="closeMobileMenu(); toggleMobileNotification()"
-              >
-                <i class="fas fa-bell mr-2"></i> Thông báo
-                <span v-if="notificationStore.unreadCount > 0" class="ml-2 bg-red-500 text-white py-0.5 px-2 rounded-full text-xs">
-                  {{ notificationStore.unreadCount }}
-                </span>
-              </button>
               
               <router-link to="/candidate/messages" class="block text-gray-700 hover:text-blue-600" @click="closeMobileMenu">
                 <i class="fas fa-comment mr-2"></i> Tin nhắn

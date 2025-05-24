@@ -120,7 +120,6 @@ class SocketService {
       this.socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("SOCKET CALLED", data);
           this.handleMessage(data);
         } catch (error) {
           console.error('Lỗi xử lý dữ liệu WebSocket:', error, 'Raw data:', event.data);
@@ -246,7 +245,6 @@ class SocketService {
     
     // Xác định người dùng hiện tại từ authStore thay vì chatStore
     const currentUserId = authStore.userInfo?.user_id;
-    console.log("SOCKET CALLED - Current User ID:", currentUserId, "Auth User Info:", authStore.userInfo);
     
     if (!currentUserId) {
       console.error('Không có thông tin người dùng hiện tại, không thể xử lý tin nhắn');
@@ -257,7 +255,6 @@ class SocketService {
     
     // Kiểm tra xem tin nhắn có liên quan đến người dùng hiện tại không
     if (newMessage.sender !== currentUserId && newMessage.recipient !== currentUserId) {
-      console.log('Tin nhắn không liên quan đến người dùng hiện tại, bỏ qua');
       return;
     }
     
@@ -307,7 +304,6 @@ class SocketService {
       if (currentUserId === newMessage.recipient && currentUserId !== newMessage.sender) {
         // Cập nhật unread count mà không gọi API
         chatStore.unreadCount++;
-        console.log('📧 [Socket] Tăng unread count:', chatStore.unreadCount);
       }
       
       // Cập nhật cuộc trò chuyện để đưa lên đầu danh sách
