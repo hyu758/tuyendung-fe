@@ -39,6 +39,7 @@ export const useAuthStore = defineStore('auth', {
     },
     
     userInfo() {
+      console.log("USER INFO CALLED", this.user);
       if (this.user) return this.user
       const decoded = this.decodedToken
       if (!decoded) return null

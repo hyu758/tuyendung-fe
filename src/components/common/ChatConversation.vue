@@ -3,8 +3,11 @@
     class="flex items-center px-4 py-3 cursor-pointer transition-colors border-b border-gray-100"
     :class="{ 
       'bg-blue-50': isActive,
-      'hover:bg-gray-50': !isActive,
-      'border-l-4 border-l-blue-500': isActive
+      'hover:bg-gray-50': !isActive && unreadCount === 0,
+      'hover:bg-blue-25': !isActive && unreadCount > 0,
+      'border-l-4 border-l-blue-500': isActive,
+      'border-l-4 border-l-red-400': !isActive && unreadCount > 0,
+      'bg-red-25': !isActive && unreadCount > 0
     }"
     @click="handleSelect"
   >
@@ -16,22 +19,23 @@
         {{ getInitials(displayName) }}
       </div>
       <div v-if="isOnline" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+      <div v-if="unreadCount > 0" class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
     </div>
     
     <div class="flex-1 min-w-0">
       <div class="flex justify-between items-center">
         <h3 
-          class="text-sm font-medium truncate"
+          class="text-sm truncate"
           :class="[
-            unreadCount > 0 ? 'text-gray-900 font-semibold' : 'text-gray-700'
+            unreadCount > 0 ? 'text-gray-900 font-bold' : 'text-gray-700 font-medium'
           ]"
         >
           {{ displayName || `Người dùng #${userId}` }}
         </h3>
         <span 
-          class="text-xs text-gray-500"
+          class="text-xs"
           :class="[
-            unreadCount > 0 ? 'text-blue-600 font-semibold' : 'text-gray-500'
+            unreadCount > 0 ? 'text-red-600 font-bold' : 'text-gray-500'
           ]"
         >
           {{ formattedTime }}
@@ -41,15 +45,15 @@
         <p 
           class="text-sm truncate flex-1" 
           :class="{ 
-            'text-gray-700 font-medium': !isRead && unreadCount > 0,
-            'text-gray-500': isRead || unreadCount === 0
+            'text-gray-900 font-semibold': unreadCount > 0,
+            'text-gray-500': unreadCount === 0
           }"
         >
           {{ lastMessage }}
         </p>
         <span 
           v-if="unreadCount > 0"
-          class="ml-2 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-sm"
+          class="ml-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-sm font-bold"
         >
           {{ unreadCount > 99 ? '99+' : unreadCount }}
         </span>
@@ -228,4 +232,14 @@ const handleSelect = () => {
     emit('select');
   }
 };
-</script> 
+</script>
+
+<style scoped>
+.bg-red-25 {
+  background-color: #fef7f7;
+}
+
+.hover\:bg-blue-25:hover {
+  background-color: #f0f9ff;
+}
+</style> 

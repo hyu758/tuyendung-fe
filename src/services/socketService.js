@@ -1,9 +1,10 @@
 import { io } from 'socket.io-client';
 import { useNotificationStore } from '../stores/notification';
 import { useChatStore } from '../stores/chat';
+import { useAuthStore } from '../stores/auth';
 
-// URL của WebSocket API - sử dụng giá trị mặc định nếu biến môi trường không tồn tại
-const API_URL = 'https://api.tuyendungtlu.site';
+// URL của WebSocket API - sử dụng biến môi trường hoặc fallback về localhost
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const SOCKET_URL = API_URL.replace(/^http/, 'ws');
 
 class SocketService {
@@ -119,6 +120,7 @@ class SocketService {
       this.socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log("SOCKET CALLED", data);
           this.handleMessage(data);
         } catch (error) {
           console.error('Lỗi xử lý dữ liệu WebSocket:', error, 'Raw data:', event.data);
@@ -227,11 +229,9 @@ class SocketService {
     // Lấy dữ liệu tin nhắn đúng cách (có thể nằm trong data.data hoặc trực tiếp trong data)
     const messageData = data.data?.type === 'new_message' ? data.data : data;
     
-    // Lấy chatStore
+    // Lấy chatStore và authStore
     const chatStore = useChatStore();
-    
-    // Cập nhật số lượng tin nhắn chưa đọc
-    chatStore.fetchUnreadMessages();
+    const authStore = useAuthStore();
     
     // Tạo đối tượng tin nhắn từ dữ liệu nhận được
     const newMessage = {
@@ -239,24 +239,29 @@ class SocketService {
       sender: parseInt(messageData.sender_id, 10),
       recipient: parseInt(messageData.recipient_id, 10),
       content: messageData.content,
-      is_read: messageData.is_read || false,
+      is_read: false, // Tin nhắn mới luôn chưa đọc
       created_at: messageData.created_at || new Date().toISOString(),
       recipient_fullname: messageData.recipient_fullname || null
     };
     
-    // Xác định người dùng hiện tại
-    const currentUserId = chatStore.userInfo?.user_id;
+    // Xác định người dùng hiện tại từ authStore thay vì chatStore
+    const currentUserId = authStore.userInfo?.user_id;
+    console.log("SOCKET CALLED - Current User ID:", currentUserId, "Auth User Info:", authStore.userInfo);
+    
     if (!currentUserId) {
       console.error('Không có thông tin người dùng hiện tại, không thể xử lý tin nhắn');
+      console.error('AuthStore token:', authStore.token ? 'Có token' : 'Không có token');
+      console.error('AuthStore user:', authStore.user);
       return;
     }
     
     // Kiểm tra xem tin nhắn có liên quan đến người dùng hiện tại không
     if (newMessage.sender !== currentUserId && newMessage.recipient !== currentUserId) {
+      console.log('Tin nhắn không liên quan đến người dùng hiện tại, bỏ qua');
       return;
     }
     
-    // Đảm bảo rằng người gửi hoặc người nhận tương ứng với ID cuộc trò chuyện đang mở
+    // Xác định ID của người đối thoại (không phải người dùng hiện tại)
     const otherPartyId = currentUserId === newMessage.sender 
                        ? newMessage.recipient 
                        : newMessage.sender;
@@ -277,51 +282,37 @@ class SocketService {
       }
     }
     
-    // Kiểm tra tin nhắn thuộc về cuộc trò chuyện nào (từ người gửi hoặc người nhận) rồi mới cập nhật
-    // Cập nhật lastMessages trước khi thêm tin nhắn vào store
-    if (newMessage.sender === currentUserId || newMessage.recipient === currentUserId) {
-      // Chắc chắn otherPartyId là số
-      const otherPartyIdNum = typeof otherPartyId === 'string' ? parseInt(otherPartyId, 10) : otherPartyId;
-      
-      // Kiểm tra xem có tin nhắn cũ trong lastMessages không
-      const oldMessage = chatStore.lastMessages[otherPartyIdNum];
-      
-      // Chỉ cập nhật nếu tin nhắn mới hơn tin nhắn cũ
-      if (!oldMessage || new Date(newMessage.created_at) > new Date(oldMessage.created_at)) {
-        chatStore.lastMessages[otherPartyIdNum] = newMessage;
-      }
-    }
+    // Cập nhật lastMessages với thông tin is_read đúng
+    const otherPartyIdNum = typeof otherPartyId === 'string' ? parseInt(otherPartyId, 10) : otherPartyId;
     
-    // Thêm tin nhắn mới vào store - bất kể tin nhắn của ai
-    const result = chatStore.addMessage(newMessage);
+    // Luôn cập nhật lastMessages với tin nhắn mới (tin nhắn socket luôn mới nhất)
+    chatStore.lastMessages[otherPartyIdNum] = newMessage;
     
     // Kiểm tra nếu cuộc trò chuyện này đang mở
     const isActiveConversation = chatStore.activeConversation === otherPartyId;
     
     if (isActiveConversation) {
+      // Nếu đang trong cuộc trò chuyện, thêm tin nhắn vào store
+      chatStore.addMessage(newMessage, otherPartyIdNum);
+      
       // Nếu người dùng hiện tại là người nhận, đánh dấu tin nhắn là đã đọc
       if (currentUserId === newMessage.recipient) {
         chatStore.markMessageAsRead(newMessage.id);
+        // Cập nhật lại lastMessages với is_read = true
+        chatStore.lastMessages[otherPartyIdNum].is_read = true;
       }
     } else {
-      // Cập nhật danh sách cuộc trò chuyện
-      chatStore.updateConversation(newMessage.sender, newMessage.recipient);
+      // Nếu không phải cuộc trò chuyện đang mở
+      // CHỈ cập nhật số lượng tin nhắn chưa đọc khi người khác gửi đến cho mình
+      if (currentUserId === newMessage.recipient && currentUserId !== newMessage.sender) {
+        // Cập nhật unread count mà không gọi API
+        chatStore.unreadCount++;
+        console.log('📧 [Socket] Tăng unread count:', chatStore.unreadCount);
+      }
       
-      // Đưa cuộc trò chuyện lên đầu
+      // Cập nhật cuộc trò chuyện để đưa lên đầu danh sách
+      chatStore.updateConversation(newMessage.sender, newMessage.recipient);
       chatStore.sortConversationToTop(newMessage);
-    }
-    
-    // Luôn tải tin nhắn mới nhất cho tất cả cuộc trò chuyện để cập nhật giao diện
-    // Lưu ý: Điều này đảm bảo danh sách cuộc trò chuyện luôn có tin nhắn mới nhất
-    setTimeout(() => {
-      chatStore.fetchLatestMessages().then(() => {
-        // Latest messages updated
-      });
-    }, 500);
-    
-    // Hiển thị thông báo mới (chỉ khi là người nhận tin nhắn)
-    if (currentUserId === newMessage.recipient) {
-      this.notificationStore.showNewMessageNotification(messageData);
     }
   }
 

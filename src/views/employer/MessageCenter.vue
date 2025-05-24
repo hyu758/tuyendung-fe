@@ -140,16 +140,6 @@ const updateUserInfoForConversations = async () => {
     const otherUserId = conversation.sender === currentUserId 
       ? conversation.recipient 
       : conversation.sender;
-    
-    // Nếu chưa có thông tin người dùng trong cache, tải thông tin
-    if (!chatStore.userInfoCache[otherUserId]) {
-      try {
-        await chatStore.fetchUserInfo(otherUserId);
-        console.log(`Đã tải thông tin cho người dùng ${otherUserId}`);
-      } catch (error) {
-        console.error(`Lỗi khi tải thông tin cho người dùng ${otherUserId}:`, error);
-      }
-    }
   }
 };
 

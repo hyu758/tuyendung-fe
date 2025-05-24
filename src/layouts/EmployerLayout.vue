@@ -256,6 +256,7 @@ import { useNotificationStore } from '../stores/notification'
 import { useChatStore } from '../stores/chat'
 import NotificationDropdown from '../components/employer/NotificationDropdown.vue'
 import ChatNotificationButton from '../components/chat/ChatNotificationButton.vue'
+import socketService from '../services/socketService'
 
 const route = useRoute()
 const router = useRouter()
@@ -270,26 +271,49 @@ const showSidebar = ref(window.innerWidth >= 768) // Mặc định hiển thị 
 const userFullName = computed(() => authStore.userFullName || 'Người dùng')
 const unreadMessageCount = computed(() => chatStore.unreadCount || 0)
 
-// Cập nhật đồng bộ số tin nhắn chưa đọc mỗi 30 giây
-let messageCheckInterval = null
-
 const isCurrentRoute = (path) => {
   return route.path.startsWith(path)
 }
 
-// Thiết lập cập nhật tin nhắn định kỳ
-const setupMessageCheck = () => {
-  messageCheckInterval = setInterval(async () => {
-    if (authStore.isAuthenticated) {
-      try {
-        await chatStore.fetchUnreadMessages()
-        console.log('Cập nhật số lượng tin nhắn chưa đọc:', chatStore.unreadCount)
-      } catch (error) {
-        console.error('Lỗi khi cập nhật số lượng tin nhắn chưa đọc:', error)
+// Xử lý tin nhắn mới từ socket để cập nhật real-time
+const handleSocketMessage = (data) => {
+  if (data && (data.type === 'new_message' || (data.data && data.data.type === 'new_message'))) {
+    // Lấy dữ liệu tin nhắn đúng cách
+    const messageData = data.data?.type === 'new_message' ? data.data : data;
+    const currentUserId = authStore.userInfo?.user_id;
+    
+    if (currentUserId) {
+      const newMessage = {
+        sender: parseInt(messageData.sender_id, 10),
+        recipient: parseInt(messageData.recipient_id, 10)
+      };
+      
+      // Logic cập nhật unread count đã được xử lý trong socketService
+      // Chỉ log khi người khác gửi tin nhắn đến cho mình
+      if (currentUserId === newMessage.recipient && currentUserId !== newMessage.sender) {
+        console.log('📧 [EmployerLayout] Nhận tin nhắn mới từ người khác, unread count đã được cập nhật bởi socket');
       }
     }
-  }, 30000) // Cập nhật mỗi 30 giây
-}
+  }
+};
+
+// Khởi tạo kết nối socket
+const initSocketConnection = () => {
+  console.log('🔗 [EmployerLayout] Khởi tạo kết nối socket');
+  socketService.init();
+  
+  // Đăng ký listener cho tin nhắn mới
+  socketService.onMessage(handleSocketMessage);
+  
+  // Kiểm tra trạng thái kết nối sau 2 giây
+  setTimeout(() => {
+    if (!socketService.connected) {
+      console.log('🔄 [EmployerLayout] Thử kết nối lại socket');
+      socketService.disconnect(); 
+      socketService.init(); 
+    }
+  }, 2000);
+};
 
 // Mở/đóng sidebar
 const toggleSidebar = () => {
@@ -338,13 +362,13 @@ onMounted(async () => {
   // Tải số lượng tin nhắn chưa đọc khi component được mounted
   if (authStore.isAuthenticated) {
     try {
-      await chatStore.fetchUnreadMessages()
-      console.log('Số lượng tin nhắn chưa đọc:', chatStore.unreadCount)
+      await chatStore.updateUnreadCount()
+      console.log('📊 [EmployerLayout] Số lượng tin nhắn chưa đọc:', chatStore.unreadCount)
       
-      // Thiết lập cập nhật tin nhắn định kỳ
-      setupMessageCheck()
+      // Khởi tạo kết nối socket để nhận tin nhắn real-time
+      initSocketConnection()
     } catch (error) {
-      console.error('Lỗi khi tải số lượng tin nhắn chưa đọc:', error)
+      console.error('❌ [EmployerLayout] Lỗi khi tải số lượng tin nhắn chưa đọc:', error)
     }
   }
 })
@@ -353,19 +377,23 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   window.removeEventListener('resize', handleResize)
   
-  // Xóa interval khi component bị hủy
-  if (messageCheckInterval) {
-    clearInterval(messageCheckInterval)
-  }
+  console.log('🔌 [EmployerLayout] Component unmounted, ngắt kết nối socket')
+  
+  // Hủy đăng ký listener và ngắt kết nối socket
+  socketService.offMessage(handleSocketMessage)
+  socketService.disconnect()
 })
 
 // Theo dõi thay đổi trạng thái đăng nhập
 watch(() => authStore.isAuthenticated, (isAuthenticated) => {
   if (isAuthenticated) {
-    chatStore.fetchUnreadMessages()
-    setupMessageCheck()
-  } else if (messageCheckInterval) {
-    clearInterval(messageCheckInterval)
+    console.log('✅ [EmployerLayout] User đã đăng nhập, tải unread messages và khởi tạo socket')
+    chatStore.updateUnreadCount()
+    initSocketConnection()
+  } else {
+    console.log('❌ [EmployerLayout] User đã đăng xuất, ngắt kết nối socket')
+    socketService.offMessage(handleSocketMessage)
+    socketService.disconnect()
   }
 })
 

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { useAuthStore } from './auth'
 
 export const useNotificationStore = defineStore('notification', {
   state: () => ({
@@ -234,16 +235,24 @@ export const useNotificationStore = defineStore('notification', {
       this.isDropdownOpen = isOpen;
     },
 
-    showNewMessageNotification(messageData) {
-      // Tạo thông báo tin nhắn mới
-      this.createNotification({
-        title: 'Tin nhắn mới',
-        message: messageData.content.length > 30 
-          ? messageData.content.substring(0, 30) + '...' 
-          : messageData.content,
-        type: 'info',
-        link: `/messages?user=${messageData.sender_id}`
+    createNotification(notificationData) {
+      // Lưu thông báo vào localStorage để hiển thị toast
+      const { title, message, type = 'info', link = null } = notificationData;
+      
+      // Tạo toast notification
+      localStorage.setItem('notification', JSON.stringify({
+        type: type,
+        message: `${title}: ${message}`,
+        show: true
+      }));
+      
+      // Tự động reload trang để hiển thị toast (nếu cần)
+      const event = new CustomEvent('notification-created', {
+        detail: { title, message, type, link }
       });
-    }
+      window.dispatchEvent(event);
+    },
+
+
   }
 }) 
