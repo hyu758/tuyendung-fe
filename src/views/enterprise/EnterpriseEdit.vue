@@ -24,29 +24,46 @@
             <form @submit.prevent="handleSubmit" class="space-y-8">
               <!-- Logo và ảnh nền -->
               <div>
-                <h2 class="text-lg font-medium text-gray-900 mb-4">Hình ảnh doanh nghiệp</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <!-- Logo -->
-                  <BaseFileUpload
-                    v-model="form.logo"
-                    label="Logo công ty"
-                    :error="errors.logo"
-                    accept="image/*"
-                    icon="fas fa-building"
-                    previewContainerClass="h-40"
-                    helpText="Tải lên logo công ty (JPG, PNG, tối đa 2MB)"
-                    @error="handleFileError($event, 'logo')"
-                  />
-                  
-                  <!-- Ảnh nền -->
+                <h2 class="text-lg font-medium text-gray-900 mb-6">Hình ảnh doanh nghiệp</h2>
+                
+                <!-- Logo -->
+                <div class="mb-8">
+                  <div class="flex flex-col lg:flex-row lg:items-start gap-6">
+                    <div class="flex-shrink-0">
+                      <BaseFileUpload
+                        v-model="form.logo"
+                        label="Logo công ty"
+                        :error="errors.logo"
+                        accept="image/*"
+                        icon="fas fa-building"
+                        previewType="cover"
+                        previewContainerClass="h-32 w-32 mx-auto lg:mx-0"
+                        helpText="Tải lên logo công ty (JPG, PNG, tối đa 2MB)"
+                        @error="handleFileError($event, 'logo')"
+                      />
+                    </div>
+                    <div class="flex-1 lg:ml-4">
+                      <h3 class="text-sm font-medium text-gray-900 mb-2">Hướng dẫn logo</h3>
+                      <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Kích thước khuyến nghị: 200x200px hoặc lớn hơn</li>
+                        <li>• Định dạng: JPG, PNG</li>
+                        <li>• Nền trong suốt (PNG) để hiển thị tốt nhất</li>
+                        <li>• Logo sẽ được hiển thị dạng hình vuông</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ảnh nền -->
+                <div>
                   <BaseFileUpload
                     v-model="form.background_image"
                     label="Ảnh nền doanh nghiệp"
                     :error="errors.background_image"
                     accept="image/*"
                     icon="fas fa-image"
-                    previewContainerClass="h-40"
-                    helpText="Tải lên ảnh nền doanh nghiệp (JPG, PNG, tối đa 2MB)"
+                    previewContainerClass="h-48 w-full"
+                    helpText="Tải lên ảnh nền doanh nghiệp (JPG, PNG, tối đa 2MB) - Kích thước khuyến nghị: 1200x400px"
                     @error="handleFileError($event, 'background_image')"
                   />
                 </div>
@@ -55,17 +72,34 @@
               <!-- Giấy phép kinh doanh -->
               <div>
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Giấy phép kinh doanh</h2>
-                <BaseFileUpload
-                  v-model="form.business_certificate"
-                  label="Giấy phép kinh doanh (Ảnh)"
-                  :error="errors.business_certificate"
-                  accept="image/*"
-                  icon="fas fa-file-alt"
-                  previewType="contain"
-                  previewContainerClass="h-60"
-                  helpText="Tải lên ảnh giấy phép kinh doanh (JPG, PNG, tối đa 2MB)"
-                  @error="handleFileError($event, 'business_certificate')"
-                />
+                <!-- Chỉ hiển thị ảnh hiện tại, không cho phép thay đổi -->
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div class="flex items-center mb-3">
+                    <i class="fas fa-file-alt text-gray-500 mr-2"></i>
+                    <span class="text-sm font-medium text-gray-700">Giấy phép kinh doanh hiện tại</span>
+                  </div>
+                  
+                  <div v-if="form.business_certificate" class="relative">
+                    <div class="h-60 border border-gray-200 rounded-lg overflow-hidden bg-white">
+                      <img 
+                        :src="form.business_certificate" 
+                        alt="Giấy phép kinh doanh"
+                        class="w-full h-full object-contain"
+                      />
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                      <i class="fas fa-info-circle mr-1"></i>
+                      Giấy phép kinh doanh đã được xác thực. Liên hệ admin để thay đổi.
+                    </p>
+                  </div>
+                  
+                  <div v-else class="h-60 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                    <div class="text-center">
+                      <i class="fas fa-file-alt text-gray-400 text-3xl mb-2"></i>
+                      <p class="text-sm text-gray-500">Chưa có giấy phép kinh doanh</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Thông tin cơ bản -->
@@ -266,7 +300,6 @@ const loading = ref(true)
 const isSubmitting = ref(false)
 const logoPreview = ref(null)
 const backgroundPreview = ref(null)
-const certificatePreview = ref(null)
 const errors = ref({})
 const cities = ref([])
 
@@ -357,30 +390,6 @@ const validateUrl = () => {
   } catch (_) {
     errors.value.link_web_site = 'URL không hợp lệ. Vui lòng nhập đúng định dạng (ví dụ: https://example.com)'
   }
-}
-
-// Xử lý upload giấy phép kinh doanh
-const handleCertificateUpload = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    if (file.size > 2 * 1024 * 1024) {
-      errors.value.business_certificate = 'Kích thước file không được vượt quá 2MB'
-      return
-    }
-    if (!file.type.match('image.*')) {
-      errors.value.business_certificate = 'Vui lòng chọn file hình ảnh'
-      return
-    }
-    form.business_certificate = file
-    certificatePreview.value = URL.createObjectURL(file)
-    errors.value.business_certificate = ''
-  }
-}
-
-// Xóa giấy phép kinh doanh
-const removeCertificate = () => {
-  form.business_certificate = null
-  certificatePreview.value = null
 }
 
 // Submit form

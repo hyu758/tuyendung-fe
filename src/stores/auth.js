@@ -39,7 +39,6 @@ export const useAuthStore = defineStore('auth', {
     },
     
     userInfo() {
-      console.log("USER INFO CALLED", this.user);
       if (this.user) return this.user
       const decoded = this.decodedToken
       if (!decoded) return null
@@ -99,7 +98,6 @@ export const useAuthStore = defineStore('auth', {
         })
         
         if (response.data.status === 200) {
-          console.log('Full login response:', response.data)
           
           // Lưu token
           const accessToken = response.data.data.access
@@ -543,7 +541,6 @@ export const useAuthStore = defineStore('auth', {
         // Nếu có trường errors, lưu lại để hiển thị lỗi cụ thể cho từng trường
         if (data.errors) {
           fieldErrors = data.errors
-          console.log('Server returned field errors:', data.errors)
         }
       } else if (error.request) {
         // Yêu cầu đã được gửi nhưng không nhận được phản hồi

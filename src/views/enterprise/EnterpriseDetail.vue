@@ -28,13 +28,13 @@
             <div class="flex-1 min-w-0 mb-2 sm:mb-4">
               <div class="flex flex-col space-y-3">
                 <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight">
-                  {{ enterprise?.company_name || 'TLU' }}
-                </h1>
+                {{ enterprise?.company_name || 'TLU' }}
+              </h1>
                 
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                   <div class="flex items-center text-white/90 text-sm sm:text-base">
-                    <i class="fas fa-users mr-2"></i>
-                    <span>{{ enterprise?.scale || '11-50' }} nhân viên</span>
+                <i class="fas fa-users mr-2"></i>
+                <span>{{ enterprise?.scale || '11-50' }} nhân viên</span>
                   </div>
                   
                   <span v-if="enterprise?.is_premium" class="inline-flex items-center px-3 py-1 bg-amber-400 text-white rounded-full text-xs font-semibold shadow animate-pulse self-start">
@@ -104,12 +104,12 @@
                   
                   <!-- Logo và thông tin chính -->
                   <div class="flex items-start space-x-4 flex-1 min-w-0">
-                    <img 
-                      :src="job.enterprise_logo" 
-                      :alt="job.enterprise_name"
+                  <img 
+                    :src="job.enterprise_logo" 
+                    :alt="job.enterprise_name"
                       class="w-12 h-12 sm:w-16 sm:h-16 rounded object-contain bg-white p-1 flex-shrink-0"
-                      @error="handleImageError"
-                    />
+                    @error="handleImageError"
+                  />
                     <div class="flex-1 min-w-0">
                       <h3 class="font-medium text-gray-900 group-hover:text-blue-600 transition-colors text-sm sm:text-base line-clamp-2">
                         {{ job.title }}
@@ -118,11 +118,11 @@
                       
                       <!-- Mobile: Stack vertically -->
                       <div class="mt-2 flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm text-gray-500 space-y-1 sm:space-y-0 sm:space-x-4">
-                        <div class="flex items-center">
+                      <div class="flex items-center">
                           <i class="fas fa-map-marker-alt mr-1 text-gray-400"></i>
                           <span class="truncate">{{ job.city }}</span>
-                        </div>
-                        <div class="flex items-center">
+                      </div>
+                      <div class="flex items-center">
                           <i class="fas fa-clock mr-1 text-gray-400"></i>
                           <span>Hạn: {{ new Date(job.deadline).toLocaleDateString('vi-VN') }}</span>
                         </div>

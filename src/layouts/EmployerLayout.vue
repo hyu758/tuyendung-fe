@@ -135,10 +135,10 @@
             <i class="fas fa-chevron-right ml-auto text-yellow-400 group-hover:translate-x-1 transition-transform"></i>
           </router-link>
           
-          <!-- Nút đăng xuất cho mobile -->
+          <!-- Nút đăng xuất -->
           <button
             @click="logout"
-            class="md:hidden flex items-center w-full px-4 py-2 mt-4 text-gray-700 hover:bg-gray-50 rounded-md text-left"
+            class="flex items-center w-full px-4 py-2 mt-4 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md text-left transition-colors duration-200 border-t border-gray-200 pt-4"
           >
             <i class="fas fa-sign-out-alt w-5 h-5 mr-3"></i>
             <span>Đăng xuất</span>

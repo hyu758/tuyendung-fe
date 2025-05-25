@@ -6,7 +6,7 @@
       <!-- Preview -->
       <div class="mb-4">
         <div 
-          class="w-full rounded-lg overflow-hidden bg-gray-50 border border-gray-200 shadow-sm transition-all duration-200"
+          class="rounded-lg overflow-hidden bg-gray-50 border border-gray-200 shadow-sm transition-all duration-200"
           :class="[
             previewContainerClass,
             error ? 'border-red-300' : 'hover:border-blue-300',
@@ -19,20 +19,30 @@
         >
           <!-- Với file hình ảnh -->
           <template v-if="modelValue && isImage">
-            <div class="relative group">
+            <div class="relative">
               <img 
                 :src="previewSrc" 
                 :class="[
-                  'w-full object-center transition duration-200',
+                  'h-full w-full object-center transition duration-200',
                   previewType === 'cover' ? 'object-cover' : 'object-contain'
                 ]"
                 :alt="alt || label"
               />
-              <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100">
+              <!-- Nút chỉnh sửa và xóa luôn hiển thị -->
+              <div class="absolute top-2 right-2 flex space-x-2 z-10">
+                <button 
+                  type="button" 
+                  @click.stop="triggerFileInput"
+                  class="bg-white text-blue-600 p-2 rounded-full shadow-lg border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                  title="Thay đổi ảnh"
+                >
+                  <i class="fas fa-edit text-sm"></i>
+                </button>
                 <button 
                   type="button" 
                   @click.stop="clearFile"
-                  class="bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-red-50 hover:text-red-500 transition-all duration-200 transform scale-90 hover:scale-100"
+                  class="bg-white text-red-600 p-2 rounded-full shadow-lg border border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
+                  title="Xóa ảnh"
                 >
                   <i class="fas fa-trash text-sm"></i>
                 </button>
@@ -109,7 +119,7 @@ import { ref, computed, onMounted } from 'vue'
 
 const props = defineProps({
   modelValue: {
-    type: [File, null],
+    type: [File, String, null],
     default: null
   },
   label: {
@@ -139,7 +149,7 @@ const props = defineProps({
   },
   previewContainerClass: {
     type: String,
-    default: 'h-48'
+    default: 'h-48 w-full'
   },
   icon: {
     type: String,
@@ -193,11 +203,14 @@ const isImage = computed(() => {
   if (props.modelValue instanceof File) {
     return props.modelValue.type.startsWith('image/')
   }
-  // Nếu là string URL, kiểm tra đuôi file
-  const fileExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
-  return fileExtensions.some(ext => 
-    typeof props.modelValue === 'string' && props.modelValue.toLowerCase().endsWith(ext)
-  )
+  // Nếu là string URL, kiểm tra đuôi file hoặc có chứa từ khóa image
+  if (typeof props.modelValue === 'string') {
+    const url = props.modelValue.toLowerCase()
+    const fileExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
+    const result = fileExtensions.some(ext => url.includes(ext)) || url.includes('image')
+    return result
+  }
+  return false
 })
 
 const validateFile = (file) => {

@@ -154,134 +154,134 @@
     <div class="h-full hidden md:flex md:flex-col bg-white shadow-md rounded-lg overflow-hidden">
       <!-- Desktop header -->
       <div class="chat-header flex-shrink-0">
-        <h1 class="text-2xl font-bold">Trợ lý tuyển dụng thông minh</h1>
-        <div class="flex items-center space-x-2">
-          <span v-if="isLoading" class="text-sm text-gray-500">Đang xử lý...</span>
-          <button @click="createNewChat" class="new-chat-btn">
-            <i class="fas fa-plus-circle mr-1"></i> Cuộc trò chuyện mới
-          </button>
-        </div>
+      <h1 class="text-2xl font-bold">Trợ lý tuyển dụng thông minh</h1>
+      <div class="flex items-center space-x-2">
+        <span v-if="isLoading" class="text-sm text-gray-500">Đang xử lý...</span>
+        <button @click="createNewChat" class="new-chat-btn">
+          <i class="fas fa-plus-circle mr-1"></i> Cuộc trò chuyện mới
+        </button>
       </div>
+    </div>
 
       <div class="chat-layout flex-1">
         <!-- Desktop sidebar -->
-        <div class="chat-sidebar">
-          <div class="sidebar-header">
-            <h2 class="text-lg font-semibold">Lịch sử trò chuyện</h2>
-          </div>
-          <div v-if="isLoadingSessions" class="flex justify-center py-4">
-            <div class="loader"></div>
-          </div>
-          <div v-else class="chat-sessions">
-            <div 
-              v-for="session in chatSessions" 
-              :key="session.id" 
-              :class="['chat-session-item group', { active: currentSession?.id === session.id, 'new_chat': session.isNew }]"
-              @click="loadChatSession(session.id)"
-            >
-              <div class="flex items-center w-full justify-between">
-                <div class="truncate flex-1">
-                  <div class="flex items-center">
-                    <i class="fas fa-comment-dots mr-2 text-indigo-600"></i>
-                    <span class="truncate">{{ session.title }}</span>
-                  </div>
-                </div>
-                <div class="actions opacity-0 group-hover:opacity-100">
-                  <button 
-                    v-if="currentSession?.id === session.id"
-                    @click.stop="openEditTitleDialog(session)" 
-                    class="edit-title-btn text-gray-500 hover:text-indigo-600"
-                  >
-                    <i class="fas fa-edit"></i>
-                  </button>
+      <div class="chat-sidebar">
+        <div class="sidebar-header">
+          <h2 class="text-lg font-semibold">Lịch sử trò chuyện</h2>
+        </div>
+        <div v-if="isLoadingSessions" class="flex justify-center py-4">
+          <div class="loader"></div>
+        </div>
+        <div v-else class="chat-sessions">
+          <div 
+            v-for="session in chatSessions" 
+            :key="session.id" 
+            :class="['chat-session-item group', { active: currentSession?.id === session.id, 'new_chat': session.isNew }]"
+            @click="loadChatSession(session.id)"
+          >
+            <div class="flex items-center w-full justify-between">
+              <div class="truncate flex-1">
+                <div class="flex items-center">
+                  <i class="fas fa-comment-dots mr-2 text-indigo-600"></i>
+                  <span class="truncate">{{ session.title }}</span>
                 </div>
               </div>
-              <div class="text-xs text-gray-500 mt-1">
-                {{ formatDate(session.updated_at) }}
+              <div class="actions opacity-0 group-hover:opacity-100">
+                <button 
+                  v-if="currentSession?.id === session.id"
+                  @click.stop="openEditTitleDialog(session)" 
+                  class="edit-title-btn text-gray-500 hover:text-indigo-600"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
               </div>
             </div>
-            <div v-if="chatSessions.length === 0" class="py-4 text-center text-gray-500">
-              Chưa có lịch sử trò chuyện
+            <div class="text-xs text-gray-500 mt-1">
+              {{ formatDate(session.updated_at) }}
             </div>
+          </div>
+          <div v-if="chatSessions.length === 0" class="py-4 text-center text-gray-500">
+            Chưa có lịch sử trò chuyện
           </div>
         </div>
+      </div>
 
-        <!-- Khu vực hiển thị tin nhắn -->
-        <div class="chat-content">
-          <div ref="messagesContainer" class="messages-container">
-            <div v-if="!currentSession" class="empty-chat">
-              <div class="empty-chat-content">
-                <div class="icon-container">
+      <!-- Khu vực hiển thị tin nhắn -->
+      <div class="chat-content">
+        <div ref="messagesContainer" class="messages-container">
+          <div v-if="!currentSession" class="empty-chat">
+            <div class="empty-chat-content">
+              <div class="icon-container">
                   <i class="fas fa-robot text-3xl md:text-5xl text-indigo-600 mb-4"></i>
-                </div>
+              </div>
                 <h3 class="text-lg md:text-xl font-bold mb-2">Trợ lý tuyển dụng thông minh</h3>
                 <p class="text-sm md:text-base text-gray-600 mb-4 px-4 md:px-0">
-                  Hỏi bất cứ điều gì về việc tìm kiếm việc làm, viết CV, phỏng vấn hoặc đăng tin tuyển dụng.
-                </p>
-                <div class="example-questions">
-                  <button @click="setMessage('Làm thế nào để viết một CV hiệu quả?')" class="example-question">
-                    Làm thế nào để viết một CV hiệu quả?
-                  </button>
-                  <button @click="setMessage('Giúp tôi chuẩn bị phỏng vấn cho vị trí developer')" class="example-question">
-                    Giúp tôi chuẩn bị phỏng vấn cho vị trí developer
-                  </button>
-                  <button @click="setMessage('Tìm kiếm việc làm ở Hà Nội')" class="example-question">
-                    Tìm kiếm việc làm ở Hà Nội
-                  </button>
-                </div>
+                Hỏi bất cứ điều gì về việc tìm kiếm việc làm, viết CV, phỏng vấn hoặc đăng tin tuyển dụng.
+              </p>
+              <div class="example-questions">
+                <button @click="setMessage('Làm thế nào để viết một CV hiệu quả?')" class="example-question">
+                  Làm thế nào để viết một CV hiệu quả?
+                </button>
+                <button @click="setMessage('Giúp tôi chuẩn bị phỏng vấn cho vị trí developer')" class="example-question">
+                  Giúp tôi chuẩn bị phỏng vấn cho vị trí developer
+                </button>
+                <button @click="setMessage('Tìm kiếm việc làm ở Hà Nội')" class="example-question">
+                  Tìm kiếm việc làm ở Hà Nội
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <template v-else>
+            <div v-for="(message, index) in currentSession.messages" :key="index" 
+                :class="['message', message.role === 'user' ? 'user-message' : 'bot-message']">
+              <div class="message-avatar">
+                <i :class="[message.role === 'user' ? 'fas fa-user' : 'fas fa-robot', 'avatar-icon']"></i>
+              </div>
+              <div class="message-content">
+                <div class="message-sender">{{ message.role === 'user' ? 'Bạn' : 'JobHub AI' }}</div>
+                <div class="message-text" v-html="formatMessage(message.content)"></div>
+                <div class="message-time">{{ formatTime(message.timestamp) }}</div>
               </div>
             </div>
             
-            <template v-else>
-              <div v-for="(message, index) in currentSession.messages" :key="index" 
-                  :class="['message', message.role === 'user' ? 'user-message' : 'bot-message']">
-                <div class="message-avatar">
-                  <i :class="[message.role === 'user' ? 'fas fa-user' : 'fas fa-robot', 'avatar-icon']"></i>
-                </div>
-                <div class="message-content">
-                  <div class="message-sender">{{ message.role === 'user' ? 'Bạn' : 'JobHub AI' }}</div>
-                  <div class="message-text" v-html="formatMessage(message.content)"></div>
-                  <div class="message-time">{{ formatTime(message.timestamp) }}</div>
+            <div v-if="isTyping" class="message bot-message">
+              <div class="message-avatar">
+                <i class="fas fa-robot avatar-icon"></i>
+              </div>
+              <div class="message-content">
+                <div class="message-sender">JobHub AI</div>
+                <div class="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
                 </div>
               </div>
-              
-              <div v-if="isTyping" class="message bot-message">
-                <div class="message-avatar">
-                  <i class="fas fa-robot avatar-icon"></i>
-                </div>
-                <div class="message-content">
-                  <div class="message-sender">JobHub AI</div>
-                  <div class="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
-              </div>
-            </template>
-          </div>
+            </div>
+          </template>
+        </div>
 
-          <!-- Input để nhập tin nhắn -->
-          <div class="message-input-container">
-            <textarea
-              v-model="message"
-              @keydown.enter.prevent="sendMessage"
-              placeholder="Nhập tin nhắn của bạn..."
-              rows="1"
-              ref="messageInput"
-              class="message-input"
-              :disabled="isLoading || !isAuthenticated"
-            ></textarea>
-            <button
-              @click="sendMessage"
-              class="send-button"
-              :disabled="isLoading || !message || !isAuthenticated"
-            >
-              <i class="fas fa-paper-plane"></i>
-            </button>
-          </div>
-          
-          <div v-if="!isAuthenticated" class="auth-prompt">
+        <!-- Input để nhập tin nhắn -->
+        <div class="message-input-container">
+          <textarea
+            v-model="message"
+            @keydown.enter.prevent="sendMessage"
+            placeholder="Nhập tin nhắn của bạn..."
+            rows="1"
+            ref="messageInput"
+            class="message-input"
+            :disabled="isLoading || !isAuthenticated"
+          ></textarea>
+          <button
+            @click="sendMessage"
+            class="send-button"
+            :disabled="isLoading || !message || !isAuthenticated"
+          >
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+        
+        <div v-if="!isAuthenticated" class="auth-prompt">
             <p class="text-sm md:text-base">Vui lòng <router-link to="/login" class="text-indigo-600 hover:underline">đăng nhập</router-link> để sử dụng JobHub AI</p>
           </div>
         </div>
@@ -566,7 +566,7 @@ export default {
       
       
       try {
-        const date = new Date(dateString);     
+      const date = new Date(dateString);
         // Kiểm tra xem date có hợp lệ không
         if (isNaN(date.getTime())) {
           return 'Invalid Date';
@@ -584,7 +584,7 @@ export default {
       if (!dateString) return '';
       
       try {
-        const date = new Date(dateString);
+      const date = new Date(dateString);
         
         // Kiểm tra xem date có hợp lệ không
         if (isNaN(date.getTime())) {
@@ -592,20 +592,20 @@ export default {
           return '';
         }
         
-        const now = new Date();
-        
-        // Nếu cùng ngày, hiển thị giờ
-        if (date.toDateString() === now.toDateString()) {
-          return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        }
-        
-        // Nếu trong năm hiện tại, hiển thị ngày và tháng
-        if (date.getFullYear() === now.getFullYear()) {
-          return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-        }
-        
-        // Nếu khác năm, hiển thị đầy đủ
-        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const now = new Date();
+      
+      // Nếu cùng ngày, hiển thị giờ
+      if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      }
+      
+      // Nếu trong năm hiện tại, hiển thị ngày và tháng
+      if (date.getFullYear() === now.getFullYear()) {
+        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+      }
+      
+      // Nếu khác năm, hiển thị đầy đủ
+      return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
       } catch (error) {
         console.error('Error formatting date:', error, dateString);
         return '';
