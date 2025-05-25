@@ -2,47 +2,69 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Banner section -->
     <div
-      class="h-64 sm:h-72 md:h-80 lg:h-96 relative bg-cover bg-center premium-banner"
+      class="h-80 sm:h-96 relative bg-cover bg-center"
+      :class="{ 'premium-banner-border': enterprise?.is_premium }"
       :style="{ backgroundImage: `url(${enterprise?.background_image_url})` }"
     >
-      <div class="absolute inset-0 bg-black/50"></div>
+      <!-- Premium overlay pattern -->
+      <div v-if="enterprise?.is_premium" class="absolute inset-0 premium-pattern opacity-10"></div>
+      
+      <!-- Overlay -->
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+      
+      <!-- Premium border glow -->
+      <div v-if="enterprise?.is_premium" class="absolute inset-0 premium-border-glow"></div>
+      
+      <!-- Content -->
       <div class="container mx-auto px-4 sm:px-6 lg:px-8 h-full relative">
-        <div class="absolute -bottom-8 sm:-bottom-12 md:-bottom-16 flex items-end w-full">
-          <div class="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6 md:space-x-8 w-full">
+        <div class="flex items-end h-full pb-8">
+          <div class="flex items-center space-x-6 w-full">
             <!-- Logo -->
-            <div
-              class="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 bg-white rounded-lg shadow-lg p-2 relative flex items-center justify-center flex-shrink-0"
+            <div 
+              class="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-lg shadow-lg p-2 flex-shrink-0 relative"
+              :class="{ 'premium-logo-glow': enterprise?.is_premium }"
             >
+              <!-- Premium crown icon -->
+              <div v-if="enterprise?.is_premium" class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-lg premium-crown-pulse">
+                <i class="fas fa-crown text-white text-xs"></i>
+              </div>
+              
               <img
                 v-if="enterprise?.logo_url"
                 :src="enterprise.logo_url"
                 :alt="enterprise?.company_name"
-                class="w-full h-full object-contain rounded-lg"
+                class="w-full h-full object-contain rounded"
               />
-              <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                <i class="fas fa-building text-gray-400 text-2xl sm:text-3xl md:text-4xl"></i>
+              <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 rounded">
+                <i class="fas fa-building text-gray-400 text-xl sm:text-2xl"></i>
               </div>
             </div>
             
             <!-- Company Info -->
-            <div class="flex-1 min-w-0 mb-2 sm:mb-4">
-              <div class="flex flex-col space-y-3">
-                <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight">
-                {{ enterprise?.company_name || 'TLU' }}
-              </h1>
-                
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <div class="flex items-center text-white/90 text-sm sm:text-base">
-                <i class="fas fa-users mr-2"></i>
-                <span>{{ enterprise?.scale || '11-50' }} nhân viên</span>
-                  </div>
-                  
-                  <span v-if="enterprise?.is_premium" class="inline-flex items-center px-3 py-1 bg-amber-400 text-white rounded-full text-xs font-semibold shadow animate-pulse self-start">
-                    <i class="fas fa-star mr-1"></i> 
-                    <span class="hidden sm:inline">Pro Company</span>
-                    <span class="sm:hidden">Pro</span>
-                  </span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-3 mb-2">
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+                  {{ enterprise?.company_name || 'TLU' }}
+                </h1>
+                <!-- Premium verified badge -->
+                <div v-if="enterprise?.is_premium" class="premium-verified-badge">
+                  <i class="fas fa-check-circle text-blue-400"></i>
                 </div>
+              </div>
+              
+              <div class="flex flex-wrap items-center gap-3">
+                <!-- Scale badge -->
+                <span class="inline-flex items-center px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white text-sm rounded-lg border border-white/30">
+                  <i class="fas fa-users mr-2 text-blue-200"></i>
+                  {{ enterprise?.scale || '11-50' }} nhân viên
+                </span>
+                
+                <!-- Premium badge -->
+                <span v-if="enterprise?.is_premium" class="premium-badge">
+                  <i class="fas fa-crown mr-2"></i>
+                  <span class="premium-text">Premium Partner</span>
+                  <div class="premium-shine"></div>
+                </span>
               </div>
             </div>
           </div>
@@ -51,7 +73,7 @@
     </div>
 
     <!-- Main content -->
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 lg:pt-28">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         <!-- Left column -->
         <div class="lg:col-span-8">
@@ -98,7 +120,9 @@
               </div>
               
               <div v-else v-for="job in jobs" :key="job.id" 
-                class="group border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+                class="group border border-gray-200 rounded-lg hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
+                :class="{ 'premium-job-card': enterprise?.is_premium }"
+              >
                 <router-link :to="{ name: 'JobDetail', params: { id: job.id }}" 
                   class="flex flex-col sm:flex-row items-start sm:items-center p-4 sm:p-6 space-y-4 sm:space-y-0">
                   
@@ -152,7 +176,10 @@
 
         <!-- Right column -->
         <div class="lg:col-span-4">
-          <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm sticky top-4">
+          <div 
+            class="bg-white rounded-lg p-4 sm:p-6 shadow-sm sticky top-4"
+            :class="{ 'premium-contact-card': enterprise?.is_premium }"
+          >
             <h3 class="text-lg font-semibold mb-4 flex items-center">
               <i class="fas fa-address-card mr-2 text-blue-500"></i>
               Thông tin liên hệ
@@ -313,12 +340,227 @@ onMounted(() => {
   animation: glow 2s infinite alternate;
 }
 
-@keyframes glow {
+/* Premium Banner Border */
+.premium-banner-border {
+  position: relative;
+}
+
+.premium-banner-border::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: linear-gradient(45deg, #ffd700, #ff6b35, #f7931e, #ffd700);
+  background-size: 400% 400%;
+  border-radius: 12px;
+  z-index: -1;
+  animation: premium-border-flow 3s ease-in-out infinite;
+}
+
+@keyframes premium-border-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Premium Border Glow */
+.premium-border-glow {
+  border: 2px solid transparent;
+  background: linear-gradient(45deg, rgba(255, 215, 0, 0.3), rgba(255, 107, 53, 0.3)) border-box;
+  border-radius: 12px;
+  animation: premium-glow-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes premium-glow-pulse {
   0% { 
-    box-shadow: 0 0 0 6px rgba(253, 200, 48, 0.25), 0 0 32px 8px rgba(253, 200, 48, 0.25), 0 4px 24px 0 rgba(253, 200, 48, 0.15); 
+    box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.2), 0 0 20px rgba(255, 215, 0, 0.1);
   }
   100% { 
-    box-shadow: 0 0 0 12px rgba(253, 200, 48, 0.35), 0 0 48px 16px rgba(253, 200, 48, 0.35), 0 8px 32px 0 rgba(253, 200, 48, 0.25); 
+    box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2);
+  }
+}
+
+/* Premium Pattern Background */
+.premium-pattern {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 40%, rgba(255, 215, 0, 0.05) 50%, transparent 60%);
+  background-size: 100px 100px, 150px 150px, 200px 200px;
+  animation: premium-pattern-move 20s linear infinite;
+}
+
+@keyframes premium-pattern-move {
+  0% { background-position: 0% 0%, 0% 0%, 0% 0%; }
+  100% { background-position: 100% 100%, -100% -100%, 50% 50%; }
+}
+
+/* Premium Logo Glow */
+.premium-logo-glow {
+  position: relative;
+  animation: premium-logo-pulse 3s ease-in-out infinite;
+}
+
+.premium-logo-glow::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg, #ffd700, #ff6b35, #f7931e, #ffd700);
+  background-size: 400% 400%;
+  border-radius: 12px;
+  z-index: -1;
+  animation: premium-logo-border 4s ease-in-out infinite;
+}
+
+@keyframes premium-logo-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 40px rgba(255, 215, 0, 0.1);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), 0 0 60px rgba(255, 215, 0, 0.2);
+  }
+}
+
+@keyframes premium-logo-border {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Premium Crown Pulse */
+.premium-crown-pulse {
+  animation: premium-crown-bounce 2s ease-in-out infinite;
+}
+
+@keyframes premium-crown-bounce {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  }
+  50% { 
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  }
+}
+
+/* Premium Verified Badge */
+.premium-verified-badge {
+  animation: premium-verified-pulse 2s ease-in-out infinite;
+}
+
+@keyframes premium-verified-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5));
+  }
+  50% { 
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.8));
+  }
+}
+
+/* Premium Badge */
+.premium-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #ffd700 0%, #ff6b35 50%, #f7931e 100%);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  overflow: hidden;
+  animation: premium-badge-glow 3s ease-in-out infinite;
+}
+
+.premium-text {
+  position: relative;
+  z-index: 2;
+}
+
+.premium-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: premium-shine 3s ease-in-out infinite;
+}
+
+@keyframes premium-badge-glow {
+  0%, 100% { 
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1);
+    transform: translateY(0);
+  }
+  50% { 
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.2);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes premium-shine {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
+}
+
+/* Premium Job Cards Enhancement */
+.premium-job-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.premium-job-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #ffd700, #ff6b35);
+  border-radius: inherit;
+  padding: 2px;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: -1;
+}
+
+/* Premium Contact Card */
+.premium-contact-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.premium-contact-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 107, 53, 0.3));
+  border-radius: inherit;
+  z-index: -1;
+  animation: premium-contact-glow 4s ease-in-out infinite alternate;
+}
+
+@keyframes premium-contact-glow {
+  0% { 
+    opacity: 0.3;
+    filter: blur(1px);
+  }
+  100% { 
+    opacity: 0.6;
+    filter: blur(2px);
   }
 }
 
@@ -351,6 +593,16 @@ h1 {
   h1 {
     line-height: 1.1;
     word-break: break-word;
+  }
+  
+  /* Reduce premium effects on mobile for performance */
+  .premium-banner-border::before,
+  .premium-logo-glow::before {
+    animation-duration: 6s;
+  }
+  
+  .premium-pattern {
+    animation-duration: 30s;
   }
 }
 
@@ -431,6 +683,28 @@ button:focus {
   .shadow-lg {
     box-shadow: none !important;
     border: 1px solid #e5e7eb !important;
+  }
+  
+  /* Hide premium effects in print */
+  .premium-banner-border::before,
+  .premium-logo-glow::before,
+  .premium-pattern,
+  .premium-border-glow,
+  .premium-shine {
+    display: none !important;
+  }
+}
+
+/* Accessibility - Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .premium-banner-border::before,
+  .premium-logo-glow,
+  .premium-crown-pulse,
+  .premium-verified-badge,
+  .premium-badge,
+  .premium-shine,
+  .premium-pattern {
+    animation: none !important;
   }
 }
 </style>

@@ -182,17 +182,25 @@
           </div>
 
           <!-- Tab filter ngành nghề -->
-          <div class="flex overflow-x-auto gap-2 mb-8 scrollbar-hide pb-2">
-            <button class="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium shadow-sm whitespace-nowrap flex-shrink-0">
+          <div v-if="!loadingPremium && allPremiumEnterprises.length > 0 && premiumCategories.length > 0" 
+            class="flex overflow-x-auto gap-2 mb-8 scrollbar-hide pb-2">
+            <button 
+              @click="selectedCategory = 'Tất cả'; filterPremiumByCategory()"
+              :class="selectedCategory === 'Tất cả' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900'"
+              class="px-4 py-2 rounded-full text-sm font-medium shadow-sm whitespace-nowrap flex-shrink-0 transition-colors"
+            >
               Tất cả
+              <span class="ml-1 text-xs opacity-75">({{ countPremiumByCategory('Tất cả') }})</span>
             </button>
             <button 
-              v-for="category in categories.slice(0, 8)" 
-              :key="category.id"
-              @click="searchByCategory(category.name)"
-              class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 hover:text-gray-900 transition-colors whitespace-nowrap flex-shrink-0"
+              v-for="category in premiumCategories" 
+              :key="category"
+              @click="selectedCategory = category; filterPremiumByCategory()"
+              :class="selectedCategory === category ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900'"
+              class="px-4 py-2 rounded-full text-sm transition-colors whitespace-nowrap flex-shrink-0"
             >
-              {{ category.name }}
+              {{ category }}
+              <span class="ml-1 text-xs opacity-75">({{ countPremiumByCategory(category) }})</span>
             </button>
           </div>
 
@@ -221,13 +229,20 @@
             </div>
           </div>
           
-          <div v-else-if="premiumEnterprises.length === 0" 
+          <div v-else-if="!loadingPremium && (allPremiumEnterprises.length === 0 || premiumEnterprises.length === 0)" 
             class="text-center py-16 border border-gray-200 rounded-xl"
           >
             <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
               <font-awesome-icon icon="building" class="text-gray-400 text-2xl" />
             </div>
-            <p class="text-gray-500">Chưa có doanh nghiệp Pro</p>
+            <p class="text-gray-500">
+              {{ allPremiumEnterprises.length === 0 
+                ? 'Chưa có doanh nghiệp Premium' 
+                : selectedCategory === 'Tất cả' 
+                  ? 'Chưa có doanh nghiệp Premium' 
+                  : `Chưa có doanh nghiệp Premium trong lĩnh vực ${selectedCategory}` 
+              }}
+            </p>
           </div>
           
           <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
@@ -464,8 +479,11 @@ const featuredJobs = ref([])
 
 // Premium Enterprises
 const premiumEnterprises = ref([])
+const allPremiumEnterprises = ref([]) // Lưu toàn bộ danh sách để filter
 const loadingPremium = ref(true)
 const premiumSlider = ref(null)
+const selectedCategory = ref('Tất cả') // Category đang được chọn
+const premiumCategories = ref([]) // Danh mục được tạo từ field_of_activity của doanh nghiệp Premium
 
 // Dữ liệu mẫu (thường sẽ được lấy từ API)
 const popularTags = [
@@ -495,12 +513,23 @@ const fetchPremiumEnterprises = async () => {
     const result = await enterpriseStore.fetchPremiumEnterprises()
     if (result.success) {
       premiumEnterprises.value = result.data
+      allPremiumEnterprises.value = result.data
+      generatePremiumCategories()
     }
     loadingPremium.value = false
   } catch (error) {
     console.error('Không thể lấy danh sách doanh nghiệp premium:', error)
     loadingPremium.value = false
   }
+}
+
+// Tạo danh mục từ field_of_activity của doanh nghiệp Premium
+const generatePremiumCategories = () => {
+  const uniqueCategories = [...new Set(allPremiumEnterprises.value
+    .map(enterprise => enterprise.field_of_activity)
+    .filter(activity => activity && activity.trim() !== '')
+  )]
+  premiumCategories.value = uniqueCategories.sort()
 }
 
 // Xử lý sự kiện scroll cho slider
@@ -599,6 +628,23 @@ const handleSaveJob = async (jobId) => {
     console.error('Error handling save job:', error);
     toast.error('Có lỗi xảy ra khi thực hiện thao tác');
   }
+}
+
+// Filter Premium Enterprises
+const filterPremiumByCategory = () => {
+  if (selectedCategory.value === 'Tất cả') {
+    premiumEnterprises.value = allPremiumEnterprises.value;
+  } else {
+    premiumEnterprises.value = allPremiumEnterprises.value.filter(enterprise => enterprise.field_of_activity === selectedCategory.value);
+  }
+}
+
+// Đếm số lượng doanh nghiệp Premium theo category
+const countPremiumByCategory = (categoryName) => {
+  if (categoryName === 'Tất cả') {
+    return allPremiumEnterprises.value.length;
+  }
+  return allPremiumEnterprises.value.filter(enterprise => enterprise.field_of_activity === categoryName).length;
 }
 </script>
 

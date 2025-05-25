@@ -342,7 +342,7 @@ const pagination = ref({
   currentPage: 1,
   totalPages: 1,
   totalItems: 0,
-  pageSize: 10
+  pageSize: 12
 })
 
 const searchParams = reactive({
@@ -351,7 +351,7 @@ const searchParams = reactive({
   field: '',
   scale: '',
   page: 1,
-  page_size: 10,
+  page_size: 12,
   sort_by: 'company_name',
   sort_order: 'asc'
 })
