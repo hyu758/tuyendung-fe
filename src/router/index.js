@@ -248,16 +248,6 @@ const routes = [
     }
   },
   {
-    path: '/job-recommendations',
-    name: 'JobRecommendations',
-    component: () => import('../views/candidate/JobRecommendations.vue'),
-    meta: {
-      requiresAuth: true,
-      candidateOnly: true,
-      title: 'Việc làm gợi ý'
-    }
-  },
-  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')

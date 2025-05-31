@@ -100,28 +100,6 @@
               </div>
             </div>
 
-            <!-- Suggested jobs based on criteria -->
-            <div class="mt-8 border-t border-gray-200 pt-6">
-              <div class="flex justify-between items-center">
-                <h3 class="text-lg font-medium text-gray-900">Việc làm phù hợp</h3>
-                <router-link 
-                  to="/job-recommendations" 
-                  class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                  Xem tất cả
-                  <i class="fas fa-arrow-right ml-1"></i>
-                </router-link>
-              </div>
-              <p class="text-sm text-gray-600 mt-1">Dựa trên tiêu chí tìm việc của bạn</p>
-              
-              <button 
-                @click="navigateToRecommendations"
-                class="mt-4 w-full py-2 px-4 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <i class="fas fa-list-ul mr-2"></i>
-                Xem việc làm gợi ý
-              </button>
-            </div>
           </div>
         </div>
 

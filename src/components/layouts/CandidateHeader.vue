@@ -236,14 +236,6 @@
                     Tiêu chí tìm việc
                   </router-link>
                   <router-link 
-                    to="/job-recommendations" 
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
-                    role="menuitem"
-                  >
-                    <i class="fas fa-thumbs-up mr-2"></i>
-                    Việc làm gợi ý
-                  </router-link>
-                  <router-link 
                     to="/gemini-chat" 
                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
                     role="menuitem"
