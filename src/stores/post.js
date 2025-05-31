@@ -200,6 +200,21 @@ export const usePostStore = defineStore('post', {
         }
       }
     },
+    async fetchPostDetailForEnterprise(id) {
+      try {
+        const response = await axios.get(`/api/post/enterprise/${id}/`)
+        return {
+          success: true,
+          data: response.data
+        } 
+      } catch (error) {
+        console.error('Error fetching post detail for enterprise:', error)
+        return {
+          success: false,
+          error: error.response?.data?.message || 'Có lỗi xảy ra khi tải thông tin tin tuyển dụng'
+        } 
+      }
+    },
 
     // Thêm action mới để lấy danh sách việc làm được gợi ý
     async fetchRecommendedPosts(page = 1, pageSize = 10) {

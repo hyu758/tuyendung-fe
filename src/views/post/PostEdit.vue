@@ -27,12 +27,11 @@
                     :class="{ 'border-red-500': errors.title }">
                   <p v-if="errors.title" class="mt-1 text-sm text-red-500">{{ errors.title }}</p>
                 </div>
-                <!-- Thêm một select box lấy thông tin lĩnh vực theo id, API là /api/fields/id. để readonly-->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Lĩnh vực <span
                       class="text-red-500">*</span></label>
                   <input 
-                    :value="currentField?.name || 'Đang tải...'" 
+                    :value="form.field || 'Đang tải...'" 
                     type="text" 
                     readonly
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 bg-gray-50 text-gray-500 cursor-not-allowed"
@@ -42,7 +41,7 @@
                   <label class="block text-sm font-medium text-gray-700 mb-1">Vị trí <span
                       class="text-red-500">*</span></label>
                   <input 
-                    :value="currentPosition?.name || 'Đang tải...'" 
+                    :value="positionName || 'Đang tải...'" 
                     type="text" 
                     readonly
                     class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 bg-gray-50 text-gray-500 cursor-not-allowed"
@@ -282,17 +281,14 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePostStore } from '../../stores/post'
-import { useFieldStore } from '../../stores/field'
 import { showSuccess, showError, notificationTemplates } from '../../utils/notifications'
 
+const positionName = ref('')
 const router = useRouter()
 const postStore = usePostStore()
-const fieldStore = useFieldStore()
 
 const isSubmitting = ref(false)
 const errors = ref({})
-const currentField = ref(null)
-const currentPosition = ref(null)
 const form = ref({
   title: '',
   deadline: '',
@@ -317,7 +313,7 @@ const postId = router.currentRoute.value.params.id
 onMounted(async () => {
   try {
     // Fetch post data
-    const result = await postStore.fetchPostById(postId)
+    const result = await postStore.fetchPostDetailForEnterprise(postId)
     if (!result.success) {
       router.push('/employer/posts')
       return
@@ -328,22 +324,9 @@ onMounted(async () => {
       ...form.value,
       ...result.data.data
     }
+    positionName.value = form.value.position.name
+    console.log(form.value)
 
-    // Load field data
-    if (form.value.field) {
-      const fieldResult = await fieldStore.getFieldById(form.value.field)
-      if (fieldResult.success) {
-        currentField.value = fieldResult.data
-      }
-    }
-
-    // Load position data
-    if (form.value.position) {
-      const positionResult = await fieldStore.getPositionById(form.value.position)
-      if (positionResult.success) {
-        currentPosition.value = positionResult.data
-      }
-    }
   } catch (error) {
     console.error('Error loading post data:', error)
     router.push('/employer/posts')
