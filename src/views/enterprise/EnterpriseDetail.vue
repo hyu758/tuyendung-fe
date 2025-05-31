@@ -20,7 +20,7 @@
         <div class="flex items-end h-full pb-8">
           <div class="flex items-center space-x-6 w-full">
             <!-- Logo -->
-            <div 
+            <div
               class="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-lg shadow-lg p-2 flex-shrink-0 relative"
               :class="{ 'premium-logo-glow': enterprise?.is_premium }"
             >
@@ -44,7 +44,7 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-3 mb-2">
                 <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
-                  {{ enterprise?.company_name || 'TLU' }}
+                {{ enterprise?.company_name || 'TLU' }}
                 </h1>
                 <!-- Premium verified badge -->
                 <div v-if="enterprise?.is_premium" class="premium-verified-badge">

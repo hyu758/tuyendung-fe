@@ -12,15 +12,10 @@
           <!-- Sidebar -->
           <div class="md:w-1/4 bg-gray-50 p-6 border-b md:border-b-0 md:border-r border-gray-200">
             <div class="flex flex-col items-center mb-8">
-              <div class="relative group mb-4">
-                <div class="w-28 h-28 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden border-4 border-white shadow-md transform transition hover:scale-105">
-                  <font-awesome-icon :icon="['fas', 'user']" class="text-white text-4xl" />
-                </div>
-                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <span class="text-white text-xs font-medium">Thay đổi</span>
-                </div>
+              <div class="w-28 h-28 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden border-4 border-white shadow-md">
+                <font-awesome-icon :icon="['fas', 'user']" class="text-white text-4xl" />
               </div>
-              <h3 class="text-lg font-semibold text-gray-800">{{ profileStore.profile?.fullname || 'Người dùng' }}</h3>
+              <h3 class="text-lg font-semibold text-gray-800 mt-4">{{ profileStore.profile?.fullname || 'Người dùng' }}</h3>
               <div v-if="isPremium" class="text-xs font-bold bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-3 py-1 rounded-full mb-1 shadow-sm flex items-center justify-center">
                 <font-awesome-icon :icon="['fas', 'crown']" class="mr-1 text-xs" />
                 {{ profileStore.profile?.name_display || 'Premium' }}
@@ -335,10 +330,12 @@ import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useProfileStore } from '../stores/profile'
 import { useAuthStore } from '../stores/auth'
 import { usePremiumStore } from '../stores/premium'
+import { useToast } from 'vue-toastification'
 
 const profileStore = useProfileStore()
 const authStore = useAuthStore()
 const premiumStore = usePremiumStore()
+const toast = useToast()
 const activeTab = ref('profile')
 const passwordError = ref('')
 const passwordErrors = ref(null)
@@ -508,7 +505,17 @@ async function checkAndCancelPremium() {
 
 // Cập nhật thông tin hồ sơ
 async function updateProfile() {
-  await profileStore.updateProfile(profileForm)
+  try {
+    const result = await profileStore.updateProfile(profileForm)
+    if (result.success) {
+      toast.success('Cập nhật thông tin thành công!')
+    } else {
+      toast.error(result.error || 'Có lỗi xảy ra khi cập nhật thông tin')
+    }
+  } catch (error) {
+    console.error('Error updating profile:', error)
+    toast.error('Có lỗi xảy ra khi cập nhật thông tin')
+  }
 }
 
 // Đổi mật khẩu
@@ -519,31 +526,47 @@ async function changePassword() {
   // Kiểm tra mật khẩu mới và xác nhận mật khẩu có khớp nhau không
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
     passwordError.value = 'Mật khẩu mới và xác nhận mật khẩu không khớp nhau'
+    toast.error('Mật khẩu mới và xác nhận mật khẩu không khớp nhau')
     return
   }
   
   // Kiểm tra độ dài mật khẩu
   if (passwordForm.newPassword.length < 6) {
     passwordError.value = 'Mật khẩu mới phải có ít nhất 6 ký tự'
+    toast.error('Mật khẩu mới phải có ít nhất 6 ký tự')
     return
   }
   
-  const result = await profileStore.changePassword(passwordForm)
-  
-  if (result.success) {
-    // Xóa form nếu thành công
-    passwordForm.currentPassword = ''
-    passwordForm.newPassword = ''
-    passwordForm.confirmPassword = ''
-    passwordStrength.value = 0
-  } else {
-    // Hiển thị lỗi nếu có
-    passwordError.value = result.error
+  try {
+    const result = await profileStore.changePassword(passwordForm)
     
-    // Hiển thị chi tiết lỗi nếu API trả về
-    if (result.errors) {
-      passwordErrors.value = result.errors
+    if (result.success) {
+      // Xóa form nếu thành công
+      passwordForm.currentPassword = ''
+      passwordForm.newPassword = ''
+      passwordForm.confirmPassword = ''
+      passwordStrength.value = 0
+      toast.success('Đổi mật khẩu thành công!')
+    } else {
+      // Hiển thị lỗi nếu có
+      passwordError.value = result.error
+      toast.error(result.error || 'Có lỗi xảy ra khi đổi mật khẩu')
+      
+      // Hiển thị chi tiết lỗi nếu API trả về
+      if (result.errors) {
+        passwordErrors.value = result.errors
+        Object.values(result.errors).forEach(error => {
+          if (Array.isArray(error)) {
+            toast.error(error[0])
+          } else {
+            toast.error(error)
+          }
+        })
+      }
     }
+  } catch (error) {
+    console.error('Error changing password:', error)
+    toast.error('Có lỗi xảy ra khi đổi mật khẩu')
   }
 }
 </script> 

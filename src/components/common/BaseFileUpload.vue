@@ -206,7 +206,7 @@ const isImage = computed(() => {
   // Nếu là string URL, kiểm tra đuôi file hoặc có chứa từ khóa image
   if (typeof props.modelValue === 'string') {
     const url = props.modelValue.toLowerCase()
-    const fileExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
+  const fileExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
     const result = fileExtensions.some(ext => url.includes(ext)) || url.includes('image')
     return result
   }

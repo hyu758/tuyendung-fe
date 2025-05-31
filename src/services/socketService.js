@@ -4,7 +4,7 @@ import { useChatStore } from '../stores/chat';
 import { useAuthStore } from '../stores/auth';
 
 // URL của WebSocket API - sử dụng biến môi trường hoặc fallback về localhost
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.tuyendungtlu.site';
 const SOCKET_URL = API_URL.replace(/^http/, 'ws');
 
 class SocketService {

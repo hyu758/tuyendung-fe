@@ -127,7 +127,7 @@ library.add(
 // Xác định baseURL dựa trên môi trường
 const isProd = import.meta.env.PROD
 const baseURL = isProd 
-  ? import.meta.env.VITE_API_URL || 'https://api.tuyendungtlu.site' // URL mặc định nếu không có biến môi trường
+  ? import.meta.env.VITE_API_URL // URL mặc định nếu không có biến môi trường
   : 'http://127.0.0.1:8000'
 
 axios.defaults.baseURL = baseURL
