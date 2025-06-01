@@ -129,7 +129,8 @@ export const useAuthStore = defineStore('auth', {
           // Thông báo đăng nhập thành công
           this.createNotification('success', 'Đăng nhập thành công!')
           
-          // Khởi tạo kết nối WebSocket
+          // Bật lại khả năng kết nối WebSocket và khởi tạo kết nối
+          socketService.enableReconnection();
           socketService.init();
           
           // Chuyển hướng tùy theo role của người dùng
@@ -365,7 +366,7 @@ export const useAuthStore = defineStore('auth', {
     },
     
     logout(redirect = true) {
-      // Đóng kết nối WebSocket khi đăng xuất
+      // Đóng kết nối WebSocket và tắt tự động kết nối lại
       socketService.disconnect();
       
       // Xóa thông tin người dùng

@@ -480,26 +480,16 @@ const getDisplayName = (conversation) => {
   return conversation.displayName || `Người dùng #${conversation.userId}`;
 };
 
-// Chọn một cuộc trò chuyện
 const selectConversation = async (userId) => {
-  console.log(`🚀 [selectConversation] Selecting conversation with user ${userId}`);
   chatStore.activeConversation = userId;
   activeConversationId.value = userId;
-  
-  // BỎ LOGIC KIỂM TRA KHÔNG HỢP LÝ - luôn fetch tin nhắn khi chọn cuộc trò chuyện
-  // if (chatStore.activeConversation === userId && chatStore.sortedMessages.length > 0) {
-  //   return;
-  // }
-  
-  // Reset trạng thái phân trang
+
   chatStore.page = 1;
   chatStore.hasMoreMessages = true;
   
   try {
-    // Luôn refresh để load đầy đủ cuộc trò chuyện
-    console.log(`📥 [selectConversation] Fetching messages for user ${userId}...`);
+
     const messages = await chatStore.fetchMessages(userId, true);
-    console.log(`✅ [selectConversation] Loaded ${messages?.length || 0} messages`);
     
     if (!messages || messages.length < 20) {
       chatStore.hasMoreMessages = false;
@@ -514,18 +504,15 @@ const selectConversation = async (userId) => {
     if (showMobileChat.value) {
       // Mobile - delay lâu hơn
   setTimeout(() => {
-        console.log(`📱 [selectConversation Mobile] Scrolling to bottom...`);
         scrollToBottom();
       }, 200);
       
       setTimeout(() => {
-        console.log(`📱 [selectConversation Mobile] Final scroll...`);
         scrollToBottom();
       }, 500);
     } else {
       // Desktop
       setTimeout(() => {
-        console.log(`💻 [selectConversation Desktop] Scrolling to bottom...`);
     scrollToBottom();
   }, 100);
     }
@@ -538,14 +525,12 @@ const selectConversation = async (userId) => {
 
 // Đánh dấu tin nhắn đã đọc
 const markMessagesAsRead = async () => {
-  // Lọc các tin nhắn chưa đọc từ người khác
   const unreadMessages = chatStore.sortedMessages.filter(
     msg => !msg.is_read && msg.sender !== currentUserId.value
   );
   
   if (unreadMessages.length > 0) {
     
-    // Đánh dấu từng tin nhắn là đã đọc
     for (const message of unreadMessages) {
       try {
         await chatStore.markMessageAsRead(message.id);
@@ -561,10 +546,8 @@ const sendMessage = async (content) => {
   if (!chatStore.activeConversation) return;
   
   try {
-    // Gửi tin nhắn và lấy kết quả trả về
     const newMessage = await chatStore.sendMessage(chatStore.activeConversation, content);
 
-    // Cập nhật tin nhắn cuối cùng cho cuộc trò chuyện hiện tại
     const currentConversation = processedConversations.value.find(
       conv => conv.userId === chatStore.activeConversation
     );
@@ -574,11 +557,9 @@ const sendMessage = async (content) => {
       currentConversation.lastMessageTime = new Date().toISOString();
     }
     
-    // Cuộn xuống để hiển thị tin nhắn mới
     await nextTick();
     scrollToBottom();
     
-    // Tải tin nhắn mới nhất sau khi gửi tin nhắn để cập nhật danh sách (không blocking)
     setTimeout(async () => {
       try {
         await chatStore.fetchLatestMessages();
@@ -595,23 +576,18 @@ const sendMessage = async (content) => {
 // Cuộn xuống tin nhắn cuối cùng
 const scrollToBottom = () => {
   if (messagesContainer.value) {
-    console.log('🔄 [scrollToBottom] Bắt đầu cuộn xuống...');
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     
-    // Thử cuộn xuống lần nữa sau một khoảng thời gian ngắn
     setTimeout(() => {
       if (messagesContainer.value) {
         messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-        console.log(`📍 [scrollToBottom] Đã cuộn xuống - scrollTop: ${messagesContainer.value.scrollTop}, scrollHeight: ${messagesContainer.value.scrollHeight}`);
       }
     }, 100);
     
-    // Thêm một lần cuộn nữa cho mobile để đảm bảo
     if (showMobileChat.value) {
       setTimeout(() => {
         if (messagesContainer.value) {
           messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-          console.log(`📱 [scrollToBottom Mobile] Final scroll - scrollTop: ${messagesContainer.value.scrollTop}`);
         }
       }, 300);
     }
@@ -626,40 +602,30 @@ const handleScroll = async () => {
   
   const { scrollTop, clientHeight, scrollHeight } = messagesContainer.value;
   
-  // Kiểm tra xem người dùng có đang ở cuối không
   isAtBottom.value = scrollHeight - scrollTop - clientHeight < 100;
   
-  // Khi người dùng cuộn lên gần đầu (20px từ đỉnh), tải thêm tin nhắn cũ hơn
   if (scrollTop <= 20 && !loadingOlderMessages.value && chatStore.hasMoreMessages) {
     
-    // Lưu lại vị trí cuộn và chiều cao trước khi tải
     const previousScrollHeight = scrollHeight;
     
-    // Đánh dấu đang tải tin nhắn cũ
     loadingOlderMessages.value = true;
     
     try {
-      // Chỉ tải 1 trang khi cuộn lên vì đã tải nhiều trang lúc đầu
       await chatStore.fetchMessages(chatStore.activeConversation);
       
-      // Đợi DOM cập nhật
       await nextTick();
       
-      // Điều chỉnh vị trí cuộn để giữ nguyên vị trí người dùng đang xem
       if (messagesContainer.value) {
         const newScrollHeight = messagesContainer.value.scrollHeight;
         const heightDifference = newScrollHeight - previousScrollHeight;
         
-        // Cộng thêm 20px để tránh kích hoạt ngay lập tức sự kiện tải thêm
         const newScrollTop = heightDifference + 20;
         
-        // Điều chỉnh cuộn để giữ vị trí người dùng đang xem
         messagesContainer.value.scrollTop = newScrollTop;
       }
     } catch (error) {
       console.error('Lỗi khi tải thêm tin nhắn cũ hơn:', error);
     } finally {
-      // Đợi một chút trước khi bỏ trạng thái loading để tránh tải liên tục
       setTimeout(() => {
         loadingOlderMessages.value = false;
       }, 500);
@@ -675,36 +641,23 @@ const isRecentMessage = (message) => {
   const now = new Date();
   const timeDiff = now - messageTime;
   
-  // Tin nhắn được coi là "mới" nếu được tạo trong vòng 10 giây
   return timeDiff < 10000;
 };
 
 // Theo dõi nội dung tin nhắn để phát hiện thay đổi
 watch(() => JSON.stringify(chatStore.sortedMessages), () => {
-  console.log(`📝 [Messages Watcher] Messages changed, length: ${chatStore.sortedMessages.length}`);
   
-  // Đánh dấu tin nhắn mới là đã đọc
   markMessagesAsRead();
   
-  // CHỈ cuộn xuống khi không đang tải tin nhắn cũ
   if (messagesContainer.value && !loadingOlderMessages.value) {
     const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
-    // Tăng khoảng cách từ cuối lên 300px để dễ dàng cuộn xuống
     const isNearBottom = scrollHeight - scrollTop - clientHeight < 300;
     
-    // Kiểm tra tin nhắn cuối có phải mới không
     const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
     const isFromCurrentUser = latestMessage && latestMessage.sender === currentUserId.value;
     const isRecentMsg = latestMessage && isRecentMessage(latestMessage);
     
-    console.log(`📊 [Messages Watcher] isNearBottom: ${isNearBottom}, isFromCurrentUser: ${isFromCurrentUser}, isRecent: ${isRecentMsg}, isMobile: ${showMobileChat.value}`);
-    
-    // Chỉ cuộn xuống khi:
-    // 1. Người dùng đang gần cuối VÀ tin nhắn cuối là tin nhắn mới (recent)
-    // 2. HOẶC tin nhắn mới là từ người dùng hiện tại  
-    // 3. HOẶC đang ở mobile (cuộn xuống luôn để UX tốt hơn)
     if ((isNearBottom && isRecentMsg) || isFromCurrentUser || showMobileChat.value) {
-      console.log(`✅ [Messages Watcher] Scrolling to bottom...`);
       scrollToBottom();
       nextTick(() => {
         scrollToBottom();
@@ -713,20 +666,14 @@ watch(() => JSON.stringify(chatStore.sortedMessages), () => {
   }
 });
 
-// Cập nhật watcher cho tin nhắn - đảm bảo theo dõi tin nhắn cuối cùng
 watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
-  // CHỈ xử lý khi có tin nhắn mới được thêm vào VÀ không đang tải tin nhắn cũ
   if (newLength > oldLength && !loadingOlderMessages.value) {
     
-    // Nếu có tin nhắn mới và người dùng đang ở gần cuối hoặc tin nhắn là từ người dùng hiện tại, cuộn xuống
     const latestMessage = chatStore.sortedMessages[chatStore.sortedMessages.length - 1];
     if (latestMessage && messagesContainer.value) {
-      // Đảm bảo thông tin người dùng được cập nhật khi có tin nhắn mới
       if (latestMessage.sender !== currentUserId.value) {
-        // Nếu tin nhắn từ người khác
         const userInfo = chatStore.userInfoCache[latestMessage.sender];
         if (userInfo && userInfo.avatar && !chatStore.activeConversation?.avatar) {
-          // Cập nhật avatar nếu chưa có
           if (chatStore.activeConversation) {
             chatStore.activeConversation.avatar = userInfo.avatar;
           }
@@ -738,9 +685,6 @@ watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
       const isFromCurrentUser = latestMessage.sender === currentUserId.value;
       const isRecentMsg = isRecentMessage(latestMessage);
       
-      // Chỉ cuộn xuống nếu:
-      // 1. Tin nhắn từ user hiện tại
-      // 2. HOẶC (user đang gần cuối VÀ tin nhắn là tin nhắn mới)
       if (isFromCurrentUser || (isNearBottom && isRecentMsg)) {
         scrollToBottom();
       }
@@ -752,11 +696,9 @@ watch(() => chatStore.sortedMessages.length, (newLength, oldLength) => {
 watch(() => chatStore.activeConversation, (newConversation, oldConversation) => {
   if (newConversation !== oldConversation) {
     
-    // Cuộn xuống khi chuyển sang cuộc trò chuyện mới
     nextTick(() => {
       scrollToBottom();
       
-      // Đặc biệt cho mobile - cuộn lại sau một chút để đảm bảo
       if (showMobileChat.value) {
         setTimeout(() => {
           scrollToBottom();
@@ -766,17 +708,13 @@ watch(() => chatStore.activeConversation, (newConversation, oldConversation) => 
   }
 });
 
-// Thêm theo dõi thay đổi tin nhắn để cập nhật danh sách cuộc trò chuyện
 watch(() => chatStore.sortedMessages, (newMessages, oldMessages) => {
   
-  // Kiểm tra nếu có tin nhắn mới được thêm vào
   if (newMessages.length > oldMessages.length) {
     const latestMessage = newMessages[newMessages.length - 1];
     
-    // Kiểm tra nếu tin nhắn mới thuộc cuộc trò chuyện đang mở
     if (chatStore.activeConversation === latestMessage.sender) {
         
-        // Đánh dấu tin nhắn đã đọc nếu người dùng hiện tại là người nhận
         if (latestMessage.recipient === currentUserId.value && !latestMessage.is_read) {
           chatStore.markMessageAsRead(latestMessage.id);
       }
@@ -784,29 +722,21 @@ watch(() => chatStore.sortedMessages, (newMessages, oldMessages) => {
   }
 }, { deep: true });
 
-// Thêm vào ngay trước onMounted
-// Xử lý cập nhật tin nhắn thông qua socket
 const handleSocketMessage = (data) => {
-  // Logic xử lý tin nhắn đã được chuyển vào socketService
-  // Chỉ cần cuộn xuống nếu tin nhắn thuộc cuộc trò chuyện đang mở
   if (data && (data.type === 'new_message' || (data.data && data.data.type === 'new_message'))) {
-    // Lấy dữ liệu tin nhắn đúng cách
     const messageData = data.data?.type === 'new_message' ? data.data : data;
     const currentUserId = authStore.userInfo?.user_id;
     
     if (currentUserId) {
-      // Tạo đối tượng tin nhắn từ dữ liệu nhận được
       const newMessage = {
         sender: parseInt(messageData.sender_id, 10),
         recipient: parseInt(messageData.recipient_id, 10)
       };
       
-      // Xác định ID của người đối thoại
       const otherPartyId = currentUserId === newMessage.sender 
                          ? newMessage.recipient 
                          : newMessage.sender;
       
-      // Nếu tin nhắn thuộc cuộc trò chuyện đang mở, cuộn xuống
       if (chatStore.activeConversation === otherPartyId) {
       nextTick(() => {
         scrollToBottom();
@@ -818,10 +748,8 @@ const handleSocketMessage = (data) => {
 
 const handleAvatarError = (e) => {
   console.warn('Lỗi khi tải avatar trong header:', e);
-  // Xóa thuộc tính src để tránh tiếp tục gây lỗi
   e.target.src = '';
   
-  // Lấy tên và chữ cái đầu của người dùng
   const name = getActiveUserName();
   const initials = getActiveUserInitials();
   
@@ -904,7 +832,6 @@ const getActiveUserInitials = () => {
 
 // Mobile chat functions
 const openMobileChat = async (userId) => {
-  console.log(`📱 [openMobileChat] Opening mobile chat for user ${userId}`);
   showMobileChat.value = true;
   
   await selectConversation(userId);
@@ -913,17 +840,14 @@ const openMobileChat = async (userId) => {
   await nextTick();
   
   setTimeout(() => {
-    console.log(`📱 [openMobileChat] First scroll attempt...`);
     scrollToBottom();
   }, 100);
   
   setTimeout(() => {
-    console.log(`📱 [openMobileChat] Second scroll attempt...`);
     scrollToBottom();
   }, 300);
   
   setTimeout(() => {
-    console.log(`📱 [openMobileChat] Final scroll attempt...`);
     scrollToBottom();
   }, 600);
 };
@@ -949,22 +873,18 @@ const formatTime = (timeStr) => {
   } else if (diffInMinutes < 60) {
     return `${diffInMinutes} phút`;
   } else if (diffInHours < 24 && date.getDate() === now.getDate()) {
-    // Nếu là trong ngày hiện tại, hiển thị giờ
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   } else if (diffInDays < 7) {
-    // Nếu trong vòng 7 ngày, hiển thị thứ
     const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
     const dayOfWeek = weekdays[date.getDay()];
     return dayOfWeek;
   } else if (date.getFullYear() === now.getFullYear()) {
-    // Nếu cùng năm, hiển thị ngày/tháng
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     return `${day}/${month}`;
   } else {
-    // Nếu khác năm, hiển thị ngày/tháng/năm
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear().toString().slice(2);

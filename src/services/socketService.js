@@ -19,11 +19,12 @@ class SocketService {
     
     // Vô hiệu hóa Socket.IO hoàn toàn
     this.enableSocketIO = false;
+    this.shouldReconnect = true; // Thêm biến kiểm soát việc tự động kết nối lại
   }
 
   // Khởi tạo kết nối WebSocket
   init() {
-    if (this.connecting || this.connected) {
+    if (this.connecting || this.connected || !this.shouldReconnect) {
       return;
     }
 
@@ -96,6 +97,10 @@ class SocketService {
 
   // Kết nối WebSocket thông thường
   connectWebSocket() {
+    if (!this.shouldReconnect) {
+      return;
+    }
+
     try {
       this.useSocketIO = false;
       
@@ -131,8 +136,8 @@ class SocketService {
         this.connected = false;
         this.connecting = false;
         
-        // Tự động kết nối lại sau 3 giây nếu không phải là đóng có chủ ý
-        if (event.code !== 1000) {
+        // Chỉ tự động kết nối lại nếu shouldReconnect = true
+        if (event.code !== 1000 && this.shouldReconnect) {
           setTimeout(() => {
             this.init();
           }, 3000);
@@ -154,17 +159,15 @@ class SocketService {
 
   // Thử phương thức kết nối thay thế nếu phương thức hiện tại thất bại
   tryAlternativeConnection() {
-    if (this.connectionAttempts >= this.maxConnectionAttempts) {
+    if (!this.shouldReconnect || this.connectionAttempts >= this.maxConnectionAttempts) {
       return;
     }
 
     if (this.useSocketIO && this.enableSocketIO) {
       this.connectWebSocket();
     } else {
-      // Chỉ tăng số lần thử và thử lại WebSocket
       this.connectionAttempts++;
       
-      // Thử lại WebSocket sau 3 giây
       setTimeout(() => {
         this.connectWebSocket();
       }, 3000);
@@ -345,6 +348,8 @@ class SocketService {
 
   // Đóng kết nối WebSocket
   disconnect() {
+    this.shouldReconnect = false; // Tắt tự động kết nối lại
+    
     if (!this.socket) return;
 
     if (this.useSocketIO) {
@@ -353,13 +358,16 @@ class SocketService {
       }
     } else {
       if (this.connected) {
-        this.socket.close(1000, 'User logout'); // 1000 là mã đóng kết nối bình thường
+        this.socket.close(1000, 'User logout');
       }
     }
 
+    // Reset tất cả các trạng thái
     this.socket = null;
     this.connected = false;
     this.connecting = false;
+    this.connectionAttempts = 0;
+    this.messageHandlers = [];
   }
   
   // Mảng để lưu trữ các hàm xử lý tin nhắn
@@ -389,6 +397,11 @@ class SocketService {
     if (index !== -1) {
       this.messageHandlers.splice(index, 1);
     }
+  }
+
+  // Thêm phương thức mới để bật lại kết nối
+  enableReconnection() {
+    this.shouldReconnect = true;
   }
 }
 
